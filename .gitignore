@@ -1,0 +1,8 @@
+# секреты — только в Settings → Secrets на GitHub, сюда никогда
+bot_token.txt
+discogs_token.txt
+owner_id.txt
+diary_chat_id.txt
+*.session
+__pycache__/
+*.tmp

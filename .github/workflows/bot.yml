@@ -1,0 +1,47 @@
+name: Бот архива
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"     # примерно раз в 10 минут (GitHub может запускать с опозданием)
+  workflow_dispatch:            # кнопка «Run workflow» — запустить вручную
+
+concurrency:
+  group: bot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pillow для обложек
+        run: pip install pillow
+
+      - name: Забрать новое из Telegram
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+          OWNER_ID: ${{ secrets.OWNER_ID }}
+          DIARY_CHAT_ID: ${{ secrets.DIARY_CHAT_ID }}
+        run: python bot/bot.py
+
+      - name: Сохранить архив
+        run: |
+          git config user.name "volodyamusicbox-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add albums.json data.json covers bot_state.json
+          if git diff --cached --quiet; then
+            echo "Ничего нового"
+          else
+            git commit -m "Архив: обновление от бота"
+            git push
+          fi

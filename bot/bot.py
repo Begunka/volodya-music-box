@@ -1,0 +1,655 @@
+"""Бот архива Volodya Music Box.
+
+Что делает:
+  • новый пост с альбомом в канале → добавляет альбом в архив (год первого выхода
+    и жанры через Discogs/MusicBrainz, обложку берёт из поста) и пишет комментарий
+    под постом со ссылкой на архив;
+  • пост, пересланный ему из канала владельцем → привязывает ссылку на этот пост
+    к альбому в архиве (так подтягиваются старые посты), или добавляет альбом,
+    если его ещё нет;
+  • присылает владельцу сводку и посты, которые не смог разобрать.
+
+Запуск:
+  python bot/bot.py           — забрать всё накопившееся и выйти (так запускает GitHub)
+  python bot/bot.py --watch   — работать постоянно, пока не закроешь окно
+  python bot/bot.py --scan    — один раз прочитать всю историю канала (бот должен
+                                 быть админом канала)
+
+Нужны файлы в корне архива (или переменные окружения BOT_TOKEN / DISCOGS_TOKEN):
+  bot_token.txt, discogs_token.txt
+Только стандартный Python. Если установлен Pillow (pip install pillow),
+обложки сжимаются в .webp, иначе сохраняются как .jpg.
+"""
+import html
+import json
+import os
+import sys
+import time
+import urllib.parse
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from parser import parse_post, is_track_post, looks_almost_like_album, album_key, clean_title  # noqa: E402
+from enrich import enrich  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+ARCHIVE = ROOT / "albums.json"        # полный архив
+SITE_DATA = ROOT / "data.json"        # облегчённая версия для витрины
+COVERS = ROOT / "covers"
+STATE = ROOT / "bot_state.json"       # номер последнего обработанного события, владелец
+
+CHANNEL = "volodyamusicbox"
+# Ссылка на мини-приложение. Появится после /newapp в BotFather; пока пусто — в комментарии
+# будет ссылка на бота.
+MINIAPP = os.environ.get("MINIAPP_LINK", "https://t.me/volodyamusicbox_bot/archive")
+
+
+def secret(name, filename):
+    if os.environ.get(name):
+        return os.environ[name].strip()
+    p = ROOT / filename
+    return p.read_text(encoding="utf-8").strip() if p.exists() else None
+
+
+TOKEN = secret("BOT_TOKEN", "bot_token.txt")
+OWNER_ID = secret("OWNER_ID", "owner_id.txt")            # твой Telegram ID — жёстко, чтобы никто не перехватил
+DIARY_CHAT_ID = secret("DIARY_CHAT_ID", "diary_chat_id.txt")
+BOT_USERNAME = f"{CHANNEL}_bot"
+DISCOGS = secret("DISCOGS_TOKEN", "discogs_token.txt")
+API = f"https://api.telegram.org/bot{TOKEN}/"
+
+
+# ---------------- Telegram ----------------
+
+class TgError(RuntimeError):
+    def __init__(self, method, res):
+        super().__init__(f"{method}: {res.get('description')}")
+        self.code = res.get("error_code")
+        self.description = res.get("description", "")
+        self.retry_after = (res.get("parameters") or {}).get("retry_after")
+
+
+def tg(method, **params):
+    data = json.dumps(params).encode("utf-8")
+    req = urllib.request.Request(API + method, data=data, headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            res = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:   # 400/403/429 — Telegram присылает объяснение в теле ответа
+        try:
+            res = json.loads(e.read().decode("utf-8"))
+        except Exception:
+            raise e
+    if not res.get("ok"):
+        raise TgError(method, res)
+    return res["result"]
+
+
+def say(chat_id, text, **kw):
+    try:
+        return tg("sendMessage", chat_id=chat_id, text=text, parse_mode="HTML",
+                  link_preview_options={"is_disabled": True}, **kw)
+    except Exception as e:
+        print("  не смог отправить сообщение:", e)
+
+
+def react(chat_id, msg_id, emoji):
+    """Ставит реакцию на сообщение — чтобы сразу было видно, что бот пост увидел."""
+    try:
+        tg("setMessageReaction", chat_id=chat_id, message_id=msg_id,
+           reaction=[{"type": "emoji", "emoji": emoji}])
+    except Exception as e:
+        print("  реакция не поставилась:", e)
+
+
+def save_cover(raw, album_id):
+    """Сжимает картинку в .webp 400px (если есть Pillow), иначе сохраняет как есть."""
+    COVERS.mkdir(exist_ok=True)
+    try:
+        from io import BytesIO
+        from PIL import Image
+        im = Image.open(BytesIO(raw)).convert("RGB")
+        im.thumbnail((400, 400))
+        im.save(COVERS / f"{album_id}.webp", "WEBP", quality=78)
+        return "webp"
+    except ImportError:
+        (COVERS / f"{album_id}.jpg").write_bytes(raw)
+        return "jpg"
+
+
+def fetch(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "VolodyaAlbumArchive/0.1 ( https://t.me/volodyamusicbox )"})
+    return urllib.request.urlopen(req, timeout=60).read()
+
+
+def get_cover(photo_sizes, album, album_id):
+    """Обложка: из картинки поста, а если её нет — из Discogs / Cover Art Archive / iTunes.
+    Возвращает расширение файла или None."""
+    if photo_sizes:
+        try:
+            f = tg("getFile", file_id=photo_sizes[-1]["file_id"])
+            return save_cover(fetch(f"https://api.telegram.org/file/bot{TOKEN}/{f['file_path']}"), album_id)
+        except Exception as e:
+            print("  обложка из поста не скачалась:", e)
+    candidates = list(album.pop("_cover_candidates", []) or [])
+    if album.get("artist") and album.get("title"):
+        q = urllib.parse.urlencode({"term": f"{album['artist']} {album['title']}", "entity": "album", "limit": 1})
+        candidates.append(("itunes", "https://itunes.apple.com/search?" + q))
+    for c in candidates:
+        try:
+            if isinstance(c, tuple):      # iTunes отдаёт ссылку на картинку в ответе поиска
+                res = json.loads(fetch(c[1]).decode("utf-8")).get("results") or []
+                if not res:
+                    continue
+                c = res[0]["artworkUrl100"].replace("100x100", "600x600")
+            ext = save_cover(fetch(c), album_id)
+            if ext:
+                return ext
+        except Exception as e:
+            print("  обложка не нашлась тут:", str(e)[:80])
+    return None
+
+
+# ---------------- архив ----------------
+
+def load_json(path, default):
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else default
+
+
+def save_json(path, data, compact=False):
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=None if compact else 1,
+                              separators=(",", ":") if compact else None), encoding="utf-8")
+    tmp.replace(path)
+
+
+SITE_FIELDS = ["id", "title", "artist", "year", "reissue_year", "tracks", "added", "listen_url",
+               "needs_fix", "note", "genres", "styles", "post_url", "cover_ext"]
+
+
+def export_site_data(albums):
+    out = []
+    for a in albums:
+        d = {k: a[k] for k in SITE_FIELDS if a.get(k) not in (None, "", [])}
+        if a.get("cover") or a.get("cover_ext"):
+            d["has_cover"] = True
+        if not a.get("year_checked"):
+            d["unverified"] = True
+        out.append(d)
+    save_json(SITE_DATA, out, compact=True)
+
+
+class Archive:
+    def __init__(self):
+        self.albums = load_json(ARCHIVE, [])
+        self.by_key = {}
+        self.by_link = {a["listen_url"]: a for a in self.albums if a.get("listen_url")}
+        for a in self.albums:
+            self.by_key[album_key(a.get("artist"), a.get("title"))] = a
+            if a.get("title_full"):
+                self.by_key.setdefault(album_key(a.get("artist"), a["title_full"]), a)
+        self.changed = False
+
+    def find(self, parsed):
+        # 1) по исполнителю и названию
+        a = self.by_key.get(album_key(parsed.get("artist"), parsed.get("title")))
+        if a:
+            return a
+        # 2) по ссылке (посты, где вместо названия стоит ссылка на Spotify и т.п.)
+        if parsed.get("listen_url") and parsed["listen_url"] in self.by_link:
+            return self.by_link[parsed["listen_url"]]
+        # 3) исполнитель в посте не указан — по одному названию, если оно уникально
+        if not parsed.get("artist"):
+            t = album_key("", parsed.get("title")).split("|", 1)[1]
+            same = [x for k, x in self.by_key.items() if k.split("|", 1)[1] == t]
+            if len({id(x) for x in same}) == 1:
+                return same[0]
+        return None
+
+    def add(self, parsed, date, photo):
+        a = dict(parsed)
+        full = a["title"]
+        a["title"] = clean_title(full)
+        if a["title"] != full:
+            a["title_full"] = full
+        a["id"] = max((x["id"] for x in self.albums), default=0) + 1
+        a["added"] = date
+        enrich(a, DISCOGS)
+        ext = get_cover(photo, a, a["id"])
+        a.pop("_cover_candidates", None)
+        if ext:
+            a["cover_ext"] = ext
+        else:
+            a["no_cover"] = True
+        self.albums.append(a)
+        self.by_key[album_key(a.get("artist"), a["title"])] = a
+        if a.get("listen_url"):
+            self.by_link[a["listen_url"]] = a
+        self.changed = True
+        return a
+
+    def save(self):
+        if self.changed:
+            save_json(ARCHIVE, self.albums)
+            export_site_data(self.albums)
+            self.changed = False
+
+
+def post_url(msg_id):
+    return f"https://t.me/{CHANNEL}/{msg_id}"
+
+
+def archive_link(album_id=None):
+    """Ссылка, которая сразу открывает мини-приложение (на карточке альбома, если указан)."""
+    if MINIAPP:
+        return MINIAPP + (f"?startapp=album_{album_id}" if album_id else "")
+    return f"https://t.me/{BOT_USERNAME}" + (f"?start=album_{album_id}" if album_id else "")
+
+
+def iso(ts):
+    return datetime.fromtimestamp(ts, tz=timezone.utc).astimezone().replace(tzinfo=None).isoformat(timespec="seconds")
+
+
+PHOTO_WAIT = 15 * 60   # сколько ждать подпись к картинке, присланной без текста
+
+
+class Bot:
+    def __init__(self):
+        self.state = load_json(STATE, {})
+        self.state.setdefault("offset", 0)
+        self.state.setdefault("pending_comments", {})
+        self.state.setdefault("pending_photo", None)
+        self.archive = Archive()
+        self.summary = self.empty_summary()
+
+    @staticmethod
+    def empty_summary():
+        return {"linked": 0, "known": 0, "added": [], "skipped": 0, "failed": [], "foreign": 0,
+                "missing": []}
+
+    def owner(self):
+        return int(OWNER_ID) if OWNER_ID else self.state.get("owner_id")
+
+    def diary(self):
+        return int(DIARY_CHAT_ID) if DIARY_CHAT_ID else self.state.get("diary_chat_id")
+
+    # ---------- канал: только привязка и комментарий ----------
+    def on_channel_post(self, m):
+        if (m["chat"].get("username") or "").lower() != CHANNEL:
+            return
+        text = m.get("text") or m.get("caption") or ""
+        if not text or is_track_post(text):
+            return
+        parsed = parse_post(text, links_of(m))
+        if not parsed:
+            return
+        a = self.archive.find(parsed)
+        if a:
+            if a.get("post_url") != post_url(m["message_id"]):
+                a["post_url"] = post_url(m["message_id"])
+                self.archive.changed = True
+        else:
+            self.summary["missing"].append(
+                f"{parsed.get('artist') or '?'} — {parsed.get('title')} ({post_url(m['message_id'])})")
+        # комментарий напишем, когда копия поста появится в группе обсуждения
+        self.state["pending_comments"][str(m["message_id"])] = a["id"] if a else 0
+
+    def comment(self, m):
+        origin = m.get("forward_origin") or {}
+        post_id = str(origin.get("message_id") or m.get("forward_from_message_id") or "")
+        if post_id not in self.state["pending_comments"]:
+            return
+        album_id = self.state["pending_comments"].pop(post_id)
+        a = next((x for x in self.archive.albums if x["id"] == album_id), None) if album_id else None
+        total = len(self.archive.albums)
+        if a:
+            bits = [b for b in (a.get("year"), ", ".join((a.get("styles") or [])[:2])) if b]
+            text = (f"📀 <b>Пластинка №{a['id']} сдана в архив.</b>\n"
+                    + (" · ".join(bits) + " · " if bits else "")
+                    + f"ещё {total - 1} на полках")
+            button = archive_link(a["id"])
+        else:
+            text = f"📀 <b>В архиве канала уже {total} пластинок.</b>\nВсе обложки, годы и стили — на полках."
+            button = archive_link()
+        say(m["chat"]["id"], text, reply_parameters={"message_id": m["message_id"]},
+            reply_markup={"inline_keyboard": [[{"text": "🗄 Открыть архив", "url": button}]]})
+
+    # ---------- группы ----------
+    def on_group_message(self, m):
+        if m.get("is_automatic_forward"):
+            self.comment(m)
+            return
+        uid = (m.get("from") or {}).get("id")
+        if uid != self.owner():
+            return
+        text = m.get("text") or ""
+        if text.startswith("/diary"):
+            self.state["diary_chat_id"] = m["chat"]["id"]
+            say(m["chat"]["id"], "Запомнил: этот чат — дневник. Всё, что сюда кидаешь, попадает в архив.")
+            return
+        if m["chat"]["id"] == self.diary():
+            self.on_diary(m)
+
+    # ---------- чат-дневник: единственный источник архива ----------
+    def on_diary(self, m):
+        me = (m["chat"]["id"], m["message_id"])
+        if "audio" in m or "voice" in m or "document" in m and not m.get("caption"):
+            return   # треки и файлы не трогаем
+        text = m.get("text") or m.get("caption") or ""
+        photo = m.get("photo")
+
+        if photo and not text:
+            # картинка без подписи — ждём текст следующим сообщением или ответом на неё
+            self.state["pending_photo"] = {"message_id": m["message_id"], "photo": photo, "date": m["date"]}
+            return
+        if not text or is_track_post(text):
+            return
+
+        if not photo:
+            reply = m.get("reply_to_message") or {}
+            pend = self.state.get("pending_photo")
+            if reply.get("photo"):
+                photo = reply["photo"]
+            elif pend and m["date"] - pend["date"] <= PHOTO_WAIT:
+                photo = pend["photo"]
+                self.state["pending_photo"] = None
+
+        parsed = parse_post(text, links_of(m))
+        if not parsed:
+            if looks_almost_like_album(text):
+                react(*me, "🤨")
+                self.summary["failed"].append(text.split("\n", 1)[0][:60])
+            return
+        a = self.archive.find(parsed)
+        if a:
+            self.summary["known"] += 1
+            react(*me, "👌")
+            return
+        a = self.archive.add(parsed, iso(m["date"]), photo)
+        self.summary["added"].append(a)
+        react(*me, "🔥")
+
+    # ---------- личка ----------
+    def on_private(self, m):
+        uid = m["from"]["id"]
+        text = m.get("text") or m.get("caption") or ""
+        if text.startswith("/start"):
+            arg = text.split(maxsplit=1)[1] if " " in text else ""
+            if not self.owner() and not arg:
+                self.state["owner_id"] = uid
+                say(uid, "Готово, ты записан как владелец архива.")
+                return
+            album_id = arg.split("_", 1)[1] if arg.startswith("album_") else None
+            say(uid, "📀 Архив альбомов канала @volodyamusicbox.",
+                reply_markup={"inline_keyboard": [[{"text": "🗄 Открыть архив",
+                                                    "url": archive_link(album_id)}]]})
+            return
+        if uid != self.owner():
+            return
+        origin = m.get("forward_origin") or {}
+        chat = origin.get("chat") or m.get("forward_from_chat") or {}
+        me = (m["chat"]["id"], m["message_id"])
+        if (chat.get("username") or "").lower() != CHANNEL:
+            self.summary["foreign"] += 1
+            react(*me, "🤔")
+            return
+        msg_id = origin.get("message_id") or m.get("forward_from_message_id")
+        self.process_post(msg_id, text, links_of(m), origin.get("date") or m["date"], m.get("photo"), me)
+
+    def process_post(self, msg_id, text, links, date, photo, me=None):
+        """Пост канала с известным номером: привязать к альбому или добавить альбом."""
+        if not text or is_track_post(text):
+            self.summary["skipped"] += 1
+            me and react(*me, "🤷")
+            return
+        parsed = parse_post(text, links)
+        if not parsed:
+            self.summary["skipped"] += 1
+            if looks_almost_like_album(text):
+                self.summary["failed"].append(post_url(msg_id))
+                me and react(*me, "🤨")
+            else:
+                me and react(*me, "🤷")
+            return
+        a = self.archive.find(parsed)
+        if a is None:
+            a = self.archive.add(parsed, iso(date), photo)
+            self.summary["added"].append(a)
+            emoji = "🔥"   # новый альбом в архиве
+        elif a.get("post_url") == post_url(msg_id):
+            self.summary["known"] += 1
+            emoji = "👌"   # уже был привязан
+        else:
+            emoji = "👍"   # привязал сейчас
+        if a.get("post_url") != post_url(msg_id):
+            a["post_url"] = post_url(msg_id)
+            self.archive.changed = True
+            if emoji == "👍":
+                self.summary["linked"] += 1
+        me and react(*me, emoji)
+
+    def handle(self, u):
+        if "channel_post" in u:
+            self.on_channel_post(u["channel_post"])
+        elif "message" in u:
+            m = u["message"]
+            if m["chat"]["type"] == "private":
+                self.on_private(m)
+            elif m["chat"]["type"] in ("group", "supergroup"):
+                self.on_group_message(m)
+
+    def report(self):
+        """Сводка владельцу в личку — только если случилось что-то важное."""
+        s = self.summary
+        if not self.owner() or not any(s[k] for k in ("linked", "added", "failed", "foreign", "missing")):
+            self.summary = self.empty_summary()
+            return
+        lines = [f"<b>Архив: {len(self.archive.albums)} альбомов</b>, "
+                 f"из них с постом в канале: {sum(1 for a in self.archive.albums if a.get('post_url'))}"]
+        if s["added"]:
+            lines.append(f"🔥 Добавил: {len(s['added'])}")
+            for a in s["added"][:10]:
+                mark = "" if a.get("year_checked") else " — год не нашёл, оставил твой"
+                if a.get("no_cover"):
+                    mark += ", обложку не нашёл"
+                lines.append(f"  • {html.escape(a.get('artist') or '?')} — {html.escape(a['title'])} "
+                             f"({a.get('year') or '?'}){mark}")
+        if s["linked"]:
+            lines.append(f"👍 Привязал к постам: {s['linked']}")
+        if s["known"]:
+            lines.append(f"👌 Уже были: {s['known']}")
+        if s["skipped"]:
+            lines.append(f"🤷 Не альбомы: {s['skipped']}")
+        if s["missing"]:
+            lines.append("📭 В канале вышло, а в архиве нет — закинь в дневник:")
+            lines += [f"  • {html.escape(x)}" for x in s["missing"][:10]]
+        if s["foreign"]:
+            lines.append(f"🤔 Переслано не из канала: {s['foreign']}")
+        if s["failed"]:
+            lines.append("🤨 Похоже на альбом, но не разобрал:")
+            lines += [f"  • {html.escape(u)}" for u in s["failed"][:15]]
+        say(self.owner(), "\n".join(lines))
+        self.summary = self.empty_summary()
+
+    def poll(self, timeout):
+        updates = tg("getUpdates", offset=self.state["offset"], timeout=timeout,
+                     allowed_updates=["message", "channel_post"])
+        for u in updates:
+            try:
+                self.handle(u)
+            except Exception as e:
+                print("ошибка при обработке события:", e)
+            self.state["offset"] = u["update_id"] + 1
+        if updates:
+            self.archive.save()
+            save_json(STATE, self.state)
+        return len(updates)
+
+    def run_once(self):
+        total = 0
+        while True:
+            n = self.poll(timeout=0)
+            total += n
+            if n == 0:
+                break
+        self.report()
+        save_json(STATE, self.state)
+        print(f"Обработано событий: {total}")
+
+    def scan_channel(self):
+        """Читает ВСЮ историю канала по номерам постов: бот пересылает себе в личку
+        владельца пост №1, №2, … (без звука), читает текст и сразу удаляет копию.
+        Работает и для постов, которые в канал были пересланы от других ботов.
+
+        Треки после альбомного поста не читаются по одному: если в посте
+        «Total tracks: 12», бот перепрыгивает сразу через 12 номеров и проверяет
+        только, не перепрыгнул ли лишнего (вдруг треков выложено меньше).
+
+        Нужно: бот — админ канала, владелец нажал /start."""
+        owner = self.owner()
+        if not owner:
+            sys.exit("Сначала нажми /start у бота, чтобы он знал, куда пересылать.")
+        known = [int(a["post_url"].rsplit("/", 1)[1]) for a in self.archive.albums if a.get("post_url")]
+        last_known = max(known, default=0)
+        pos = self.state.get("scan_pos", 1)
+        misses, seen = 0, 0
+
+        def peek(n):
+            """Переслать пост №n себе, прочитать, удалить. None — такого номера нет."""
+            while True:
+                try:
+                    fwd = tg("forwardMessage", chat_id=owner, from_chat_id="@" + CHANNEL,
+                             message_id=n, disable_notification=True)
+                    break
+                except TgError as e:
+                    if e.code == 429:   # слишком часто — Telegram просит подождать
+                        print(f"  Telegram просит паузу {e.retry_after or 5} с")
+                        time.sleep((e.retry_after or 5) + 1)
+                        continue
+                    d = e.description.lower()
+                    if "not found" in d or "can't be forwarded" in d:
+                        return None
+                    raise
+                except (OSError, urllib.error.URLError) as e:
+                    # обрыв связи / провайдер сбросил соединение — ждём и пробуем тот же пост снова
+                    print(f"  сеть: {e} — пробую снова через 10 с")
+                    time.sleep(10)
+            try:
+                tg("deleteMessage", chat_id=owner, message_id=fwd["message_id"])
+            except Exception:
+                pass
+            time.sleep(1.05)   # не чаще раза в секунду в один чат
+            return fwd
+
+        def is_track(m):
+            return ("audio" in m or "voice" in m
+                    or (m.get("document") or {}).get("mime_type", "").startswith("audio"))
+
+        def handle(n, m):
+            if is_track(m):
+                return None
+            text = m.get("text") or m.get("caption") or ""
+            date = (m.get("forward_origin") or {}).get("date") or m["date"]
+            self.process_post(n, text, links_of(m), date, m.get("photo"))
+            parsed = parse_post(text) if text else None
+            return parsed
+
+        print(f"Сканирую канал с поста №{pos}. Остановить можно Ctrl+C — потом продолжит с того же места.")
+        try:
+            while True:
+                m = peek(pos)
+                if m is None:
+                    misses += 1
+                    if pos > last_known and misses > 300:
+                        break   # дальше постов уже нет
+                    pos += 1
+                    continue
+                misses = 0
+                seen += 1
+                parsed = handle(pos, m)
+                tracks = (parsed or {}).get("tracks") or 0
+                if tracks > 1:
+                    target = pos + tracks + 1          # первый номер после последнего трека
+                    # не перепрыгнули ли лишнего? идём назад, пока не упрёмся в трек
+                    back = target - 1
+                    while back > pos:
+                        mb = peek(back)
+                        if mb is None:                 # удалённое сообщение — смотрим дальше назад
+                            back -= 1
+                            continue
+                        if is_track(mb):
+                            break
+                        handle(back, mb)               # это был пост, а не трек — учли его
+                        back -= 1
+                    pos = target
+                else:
+                    pos += 1
+                if seen % 25 == 0:
+                    print(f"  дошёл до поста №{pos}…")
+                    self.archive.save()
+                    self.state["scan_pos"] = pos
+                    save_json(STATE, self.state)
+        except KeyboardInterrupt:
+            print("Остановлено.")
+        except Exception as e:
+            print("Неожиданная ошибка, прогресс сохранён:", e)
+        self.state["scan_pos"] = pos
+        self.archive.save()
+        save_json(STATE, self.state)
+        self.report()
+        print(f"Готово, дошёл до поста №{pos}.")
+
+    def watch(self):
+        print("Бот работает. Пересылай посты; закрыть — Ctrl+C.")
+        try:
+            me = tg("getMe")
+            print(f"Подключился как @{me['username']}")
+        except Exception as e:
+            print("Не могу достучаться до Telegram:", e)
+        idle = 0
+        while True:
+            try:
+                n = self.poll(timeout=25)
+                if n:
+                    print(f"получил {n} сообщ.")
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print("сеть:", e, "— пробую снова через 5 с")
+                time.sleep(5)
+                continue
+            # сводку шлём, когда поток пересылок затих
+            idle = 0 if n else idle + 1
+            if idle == 1:
+                self.report()
+        self.archive.save()
+        save_json(STATE, self.state)
+
+
+def links_of(m):
+    """{текст: ссылка} из форматирования сообщения (название альбома со ссылкой на Deezer и т.п.)."""
+    text = m.get("text") or m.get("caption") or ""
+    ents = m.get("entities") or m.get("caption_entities") or []
+    # смещения в Telegram считаются в UTF-16
+    u16 = text.encode("utf-16-le")
+    links = {}
+    for e in ents:
+        if e["type"] == "text_link":
+            part = u16[e["offset"] * 2:(e["offset"] + e["length"]) * 2].decode("utf-16-le").strip()
+            links[part] = e["url"]
+    return links
+
+
+if __name__ == "__main__":
+    if not TOKEN:
+        sys.exit("Нет токена бота: положи его в bot_token.txt рядом с albums.json")
+    bot = Bot()
+    if "--scan" in sys.argv:
+        bot.scan_channel()
+    elif "--watch" in sys.argv:
+        bot.watch()
+    else:
+        bot.run_once()

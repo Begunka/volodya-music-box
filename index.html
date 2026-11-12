@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Volodya Music Box</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: a record crate — sticky search bar, a dense wall of sleeves, a sheet that slides up for one record. */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#14161c; --muted:#646a7a; --line:#dfe2ea;
+  --accent:#2a44e6; --accent-ink:#ffffff; --chip:#e7e9f1; --shade:rgba(10,12,20,.45);
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1116; --surface:#181b23; --ink:#eceef4; --muted:#9097a8; --line:#272b36;
+  --accent:#8c9cff; --accent-ink:#0f1116; --chip:#20242e; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1116; --surface:#181b23; --ink:#eceef4; --muted:#9097a8; --line:#272b36;
+  --accent:#8c9cff; --accent-ink:#0f1116; --chip:#20242e; --shade:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.top{padding-block:22px 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,5vw,30px);letter-spacing:-.01em;margin:0;line-height:1.05;text-wrap:balance}
+.brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.count{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
+.row{display:flex;gap:8px;align-items:center;min-width:0}
+.bar>*{min-width:0}
+.search{flex:1;min-width:0;position:relative}
+.search input{width:100%;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;padding:0 14px 0 38px}
+.search input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted)}
+button{font:inherit;cursor:pointer}
+.btn{height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible,.chip:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select.btn{appearance:none;padding-right:14px}
+.chips{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--chip);color:var(--ink);font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+main{padding-block:16px 40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 14px}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr);gap:16px 12px}}
+.tile{display:flex;flex-direction:column;gap:7px;background:none;border:0;padding:0;text-align:left;color:inherit;min-width:0}
+.sleeve{position:relative;aspect-ratio:1;max-width:100%;border-radius:6px;overflow:hidden;background:var(--chip);box-shadow:0 1px 0 var(--line)}
+.sleeve img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+.tile:hover .sleeve img{transform:scale(1.03)}
+.cat{position:absolute;left:6px;top:6px;font-family:var(--mono);font-size:10px;padding:2px 5px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-variant-numeric:tabular-nums}
+.blank{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:12px;color:#fff}
+.blank b{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.1;overflow-wrap:anywhere}
+.blank span{font-family:var(--mono);font-size:10px;opacity:.85}
+.meta{min-width:0}
+.meta .t{font-weight:600;font-size:14px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta .a{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .y{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.flag{color:var(--accent)}
+.empty{padding:60px 0;text-align:center;color:var(--muted)}
+.more{display:flex;justify-content:center;padding-top:26px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:var(--shade);z-index:20;opacity:0;transition:opacity .2s}
+.scrim.on{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:18px 18px 0 0;max-height:92%;overflow:auto;
+  padding:10px max(18px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);max-width:560px;margin:0 auto}
+.sheet.on{transform:none}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim,.sleeve img{transition:none}}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet .cover{width:min(100%,360px);aspect-ratio:1;margin:0 auto;border-radius:8px;overflow:hidden;position:relative;background:var(--chip)}
+.sheet .cover img{width:100%;height:100%;object-fit:cover;display:block}
+.sheet h2{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.15;margin:18px 0 4px;text-wrap:balance;overflow-wrap:anywhere}
+.sheet .who{font-size:16px;color:var(--muted);margin:0}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:16px 0}
+.facts div{background:var(--surface);padding:10px 12px;min-width:0}
+.facts dt{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.note{font-size:13px;color:var(--muted);margin:0 0 14px}
+.btn.small{height:32px;font-size:13px;flex:1;min-width:0;padding:0 10px;text-overflow:ellipsis}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.tag{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font-size:12px}
+.tag:hover{border-color:var(--accent);color:var(--accent)}
+.filter-pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 12px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:12px;border:0;flex:none}
+.filter-pill span{font-size:15px;line-height:1}
+.actions{display:grid;grid-template-columns:1fr;gap:8px}
+.actions a,.actions button{display:flex;align-items:center;justify-content:center;height:46px;border-radius:12px;text-decoration:none;font-weight:600}
+.actions .go{background:var(--accent);color:var(--accent-ink)}
+.actions .alt{background:var(--chip);color:var(--ink)}
+.actions .off{background:var(--chip);color:var(--muted);border:0;cursor:default;font-size:13px;font-weight:500;text-align:center;line-height:1.2;padding:0 8px}
+.close{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;width:34px;height:34px;border-radius:50%;border:0;background:var(--chip);color:var(--ink);font-size:18px;line-height:1}
+.proto{font-size:12px;color:var(--muted);text-align:center;padding-top:28px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>volodya music box</h1>
+      <p>Архив всех альбомов из канала</p>
+    </div>
+    <div class="count" id="count">…</div>
+  </header>
+
+  <div class="bar">
+    <div class="row">
+      <label class="search" for="q">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Альбом или исполнитель" autocomplete="off" aria-label="Поиск по архиву">
+      </label>
+      <button class="btn primary" id="rnd" type="button" title="Открыть случайный альбом">Наугад</button>
+    </div>
+    <div class="row">
+      <button class="filter-pill" id="stylepill" type="button" hidden title="Сбросить стиль"></button>
+      <div class="chips" id="decades" role="group" aria-label="Десятилетие"></div>
+    </div>
+    <div class="row">
+      <select class="btn small" id="genre" aria-label="Жанр"><option value="">Все жанры</option></select>
+      <select class="btn small" id="sort" aria-label="Сортировка">
+        <option value="new">Сначала новые</option>
+        <option value="old">Сначала старые</option>
+        <option value="year">По году выхода</option>
+        <option value="artist">По исполнителю</option>
+      </select>
+    </div>
+  </div>
+
+  <main>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
+    <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
+    <p class="proto">Годы и жанры — из Discogs и MusicBrainz. Пополняется ботом @volodyamusicbox_bot.</p>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="s-title" hidden>
+  <div class="grab"></div>
+  <button class="close" id="close" type="button" aria-label="Закрыть">×</button>
+  <div class="cover" id="s-cover"></div>
+  <h2 id="s-title"></h2>
+  <p class="who" id="s-artist"></p>
+  <dl class="facts" id="s-facts"></dl>
+  <div class="tags" id="s-tags" hidden></div>
+  <p class="note" id="s-note" hidden></p>
+  <div class="actions" id="s-actions"></div>
+</section>
+
+<script>
+(() => {
+  const PAGE = 60;
+  let all = [], view = [], shown = 0, decade = "all", style = "";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const norm = s => (s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ё/g, "е");
+
+  function hue(str){ let h = 0; for (const c of str || "?") h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+  function sleeveInner(a, big){
+    const cat = `<span class="cat">№${a.id}</span>`;
+    if (a.has_cover) return `<img src="covers/${a.id}.${a.cover_ext || "webp"}" data-id="${a.id}" alt="" loading="lazy" decoding="async">${big ? "" : cat}`;
+    const h = hue(a.artist + a.title);
+    return `<div class="blank" style="background:linear-gradient(150deg,hsl(${h} 45% 34%),hsl(${(h+40)%360} 50% 18%))">
+      <span>№${a.id}</span><b>${esc(a.title)}</b><span>${esc(a.artist || "исполнитель?")}</span></div>`;
+  }
+  // Обложки, которых нет отдельным файлом, лежат пачками по 50 (covers/pack-N.json).
+  const packs = {};
+  window.coverFallback = img => {
+    const id = +img.dataset.id; img.onerror = null;
+    const k = Math.floor(id / 50);
+    packs[k] = packs[k] || fetch(`covers/pack-${k}.json`).then(r => r.json()).catch(() => ({}));
+    packs[k].then(p => { if (p[id]) img.src = p[id]; });
+  };
+  const decadeOf = a => a.year ? a.year.slice(0,3) + "0" : null;
+
+  function buildGenres(){
+    const c = {};
+    all.forEach(a => (a.genres || []).forEach(g => c[g] = (c[g] || 0) + 1));
+    $("genre").insertAdjacentHTML("beforeend", Object.entries(c).sort((x, y) => y[1] - x[1])
+      .map(([g, n]) => `<option value="${esc(g)}">${esc(g)} · ${n}</option>`).join(""));
+  }
+  function setStyle(s){
+    style = s || "";
+    $("stylepill").hidden = !style;
+    $("stylepill").innerHTML = style ? `${esc(style)} <span aria-hidden="true">×</span>` : "";
+    apply();
+  }
+  function buildDecades(){
+    const counts = {};
+    all.forEach(a => { const d = decadeOf(a); if (d) counts[d] = (counts[d] || 0) + 1; });
+    const ds = Object.keys(counts).sort();
+    $("decades").innerHTML = [`<button class="chip" data-d="all" aria-pressed="true">все</button>`]
+      .concat(ds.map(d => `<button class="chip" data-d="${d}" aria-pressed="false">${d.slice(2)}-е · ${counts[d]}</button>`)).join("");
+  }
+
+  function apply(){
+    const q = norm($("q").value.trim());
+    const g = $("genre").value;
+    view = all.filter(a => (decade === "all" || decadeOf(a) === decade) &&
+      (!g || (a.genres || []).includes(g)) &&
+      (!style || (a.styles || []).includes(style)) &&
+      (!q || norm(a.title + " " + (a.artist || "")).includes(q)));
+    const s = $("sort").value;
+    const by = {
+      new: (x, y) => (y.added || "").localeCompare(x.added || ""),
+      old: (x, y) => (x.added || "").localeCompare(y.added || ""),
+      year: (x, y) => (x.year || "9999").localeCompare(y.year || "9999") || x.title.localeCompare(y.title),
+      artist: (x, y) => (x.artist || "я").localeCompare(y.artist || "я", "ru") || (x.year || "").localeCompare(y.year || ""),
+    }[s];
+    view.sort(by);
+    shown = 0; $("grid").innerHTML = "";
+    $("empty").hidden = view.length > 0;
+    $("count").textContent = view.length === all.length ? `${all.length} альбомов` : `${view.length} из ${all.length}`;
+    more();
+  }
+
+  function more(){
+    const chunk = view.slice(shown, shown + PAGE);
+    $("grid").insertAdjacentHTML("beforeend", chunk.map(a => `
+      <button class="tile" type="button" data-id="${a.id}">
+        <div class="sleeve">${sleeveInner(a)}</div>
+        <div class="meta">
+          <div class="t">${esc(a.title)}</div>
+          <div class="a">${esc(a.artist || "исполнитель неизвестен")}</div>
+          <div class="y">${a.year || "год ?"}${a.styles ? " · " + esc(a.styles[0]) : ""}${a.needs_fix ? ' <span class="flag">· уточнить</span>' : ""}</div>
+        </div>
+      </button>`).join(""));
+    shown += chunk.length;
+    $("more").hidden = shown >= view.length;
+  }
+
+  function open(id){
+    const a = all.find(x => x.id === id); if (!a) return;
+    $("s-cover").innerHTML = sleeveInner(a, true);
+    $("s-title").textContent = a.title;
+    $("s-artist").textContent = a.artist || "Исполнитель неизвестен";
+    const facts = [
+      ["Год", a.year || "?"],
+      ["Треков", a.tracks || "—"],
+      ["В архиве", "№" + a.id],
+    ];
+    $("s-facts").innerHTML = facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
+    const tags = (a.genres || []).concat(a.styles || []);
+    $("s-tags").innerHTML = tags.map((s, i) => i < (a.genres || []).length
+      ? `<button class="tag" type="button" data-genre="${esc(s)}">${esc(s)}</button>`
+      : `<button class="tag" type="button" data-style="${esc(s)}">${esc(s)}</button>`).join("");
+    $("s-tags").hidden = !tags.length;
+    const notes = [];
+    if (a.note) notes.push(a.note);
+    if (a.reissue_year) notes.push(`В посте стоял год переиздания: ${a.reissue_year}`);
+    else if (a.unverified) notes.push("Год взят из поста, в базах не нашёлся");
+    if (a.added) notes.push("Добавлен " + new Date(a.added).toLocaleDateString("ru-RU", {day:"numeric", month:"long", year:"numeric"}));
+    $("s-note").textContent = notes.join(" · "); $("s-note").hidden = !notes.length;
+    $("s-actions").innerHTML =
+      (a.post_url ? `<a class="go" href="${esc(a.post_url)}" target="_blank" rel="noopener">Пост в канале</a>` : "") +
+      (a.listen_url ? `<a class="${a.post_url ? "alt" : "go"}" href="${esc(a.listen_url)}" target="_blank" rel="noopener">Слушать</a>` : "");
+    $("s-actions").hidden = !a.listen_url && !a.post_url;
+    $("s-actions").style.gridTemplateColumns = a.listen_url && a.post_url ? "1fr 1fr" : "1fr";
+    $("scrim").hidden = false; $("sheet").hidden = false;
+    requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
+    $("sheet").scrollTop = 0; $("close").focus({preventScroll:true});
+    if (location.hash !== "#album-" + id) history.replaceState(null, "", "#album-" + id);
+  }
+  function close(){
+    $("scrim").classList.remove("on"); $("sheet").classList.remove("on");
+    setTimeout(() => { $("scrim").hidden = true; $("sheet").hidden = true; }, 260);
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  }
+  function fromHash(){ const m = location.hash.match(/^#album-(\d+)$/); if (m) open(+m[1]); }
+  // Внутри Telegram: тема, растяжка на весь экран и открытие альбома по ссылке ?startapp=album_N
+  const tgApp = window.Telegram && window.Telegram.WebApp;
+  function fromTelegram(){
+    if (!tgApp || !tgApp.initData) return;
+    const m = (tgApp.initDataUnsafe.start_param || "").match(/^album_(\d+)$/);
+    if (m) open(+m[1]);
+  }
+  if (tgApp && tgApp.initData) {
+    tgApp.ready(); tgApp.expand();
+    document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
+    tgApp.onEvent("themeChanged", () =>
+      document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light"));
+  }
+
+  $("grid").addEventListener("click", e => { const t = e.target.closest(".tile"); if (t) open(+t.dataset.id); });
+  $("decades").addEventListener("click", e => {
+    const c = e.target.closest(".chip"); if (!c) return;
+    decade = c.dataset.d;
+    document.querySelectorAll("#decades .chip").forEach(x => x.setAttribute("aria-pressed", x === c));
+    apply();
+  });
+  let t; $("q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(apply, 120); });
+  $("sort").addEventListener("change", apply);
+  $("genre").addEventListener("change", apply);
+  $("stylepill").addEventListener("click", () => setStyle(""));
+  $("s-tags").addEventListener("click", e => {
+    const b = e.target.closest(".tag"); if (!b) return;
+    if (b.dataset.genre) { $("genre").value = b.dataset.genre; style = ""; $("stylepill").hidden = true; apply(); }
+    else setStyle(b.dataset.style);
+    close(); window.scrollTo({top: 0});
+  });
+  $("more").addEventListener("click", more);
+  $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });
+  $("scrim").addEventListener("click", close);
+  $("close").addEventListener("click", close);
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("sheet").hidden) close(); });
+  window.addEventListener("hashchange", fromHash);
+
+  fetch("data.json").then(r => r.json()).then(d => {
+    all = d; buildGenres(); buildDecades(); apply(); fromHash(); fromTelegram();
+  }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });
+})();
+</script>
+
+</body>
+</html>
