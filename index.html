@@ -568,7 +568,8 @@ main{padding-block:16px 96px}
         html += `<h3>Ждём соперника</h3><p>Ответить сможет один человек — кто первым нажмёт кнопку в сообщении.</p>`;
       }
       html += table(mine, "ты", right, right ? other : (d.claimed ? d.b_name : ""), d.claimed ? "отвечает" : "ждём");
-      if (isAuthor && !right && !d.claimed) html += `<button class="go" data-x="send">Отправить вызов в чат</button>`;
+      if (isAuthor && !right && !d.claimed) html += `<button class="go" data-x="send">Отправить вызов в чат</button>
+        <p style="font-size:13px">Выбери чат — над полем ввода всплывёт карточка «⚔️ Отправить вызов». Нажми на неё.</p>`;
       if (right) {
         const ra = match(mine, set.map(id => { const a = byId(id); return a && a.author ? (a.author > 0 ? 1 : 2) : 0; }));
         if (ra.pct !== null) html += `<p>С автором канала: <b style="color:var(--ink)">${ra.pct}%</b> (по ${ra.both} альбомам).</p>`;
@@ -641,7 +642,8 @@ main{padding-block:16px 96px}
       if (x.dataset.x === "fresh") fresh();
       if (x.dataset.x === "claim") claim();
       if (x.dataset.x === "send" && d) {
-        try { tgApp.switchInlineQuery(`вызов ${d.id}`, ["users", "groups"]); }
+        // пустой запрос: бот сам первой строкой предложит этот вызов
+        try { tgApp.switchInlineQuery("", ["users", "groups"]); }
         catch (err) { fail("Обнови Telegram: эта версия не умеет отправлять вызовы из мини-приложения."); }
       }
     });

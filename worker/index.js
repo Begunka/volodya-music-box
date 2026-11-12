@@ -236,6 +236,19 @@ async function chosen(c, env) {
 
 // ---------------- инлайн-режим ----------------
 
+// карточка «Отправить вызов» — по умолчанию вызов принимает тот, кто первым нажмёт
+function duelArticle(id, who, env) {
+  return {
+    type: "article", id: "duel-" + id, title: "⚔️ Отправить вызов",
+    description: "Твои ответы уже сохранены. Ответит тот, кто первым примет",
+    input_message_content: {
+      message_text: `${esc(who)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты. Ответить может один человек — кто первым нажмёт.`,
+      parse_mode: "HTML",
+    },
+    reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${id}` }]] },
+  };
+}
+
 async function archive(env) {
   // архив лежит рядом, в статике воркера
   const r = await env.ASSETS.fetch(new Request(env.PAGES + "data.json"));
@@ -281,15 +294,7 @@ async function inline(q, env) {
   if (duel) {
     const d = await env.DB.prepare("SELECT a_id, b_id FROM duels WHERE id = ?").bind(duel[1]).first();
     if (d && d.a_id === q.from.id && !d.b_id) {
-      results = [{
-        type: "article", id: "duel-" + duel[1], title: "Отправить вызов",
-        description: "Ответить сможет один человек — кто первым нажмёт",
-        input_message_content: {
-          message_text: `${esc(who)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты. Ответить может один человек — кто первым нажмёт.`,
-          parse_mode: "HTML",
-        },
-        reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${duel[1]}` }]] },
-      }];
+      results = [duelArticle(duel[1], who, env)];
     } else results = [];
   } else if (/^вызов$/.test(raw)) {
     results = [{
@@ -301,10 +306,13 @@ async function inline(q, env) {
   } else if (!query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
+    const pending = q.from ? await env.DB.prepare(
+      "SELECT id FROM duels WHERE a_id = ? AND b_id IS NULL AND msg IS NULL ORDER BY created DESC LIMIT 1").bind(q.from.id).first() : null;
     results = [
+      ...(pending ? [duelArticle(pending.id, who, env)] : []),
       card(rnd, env, "🎲 Посоветовать случайный альбом"),
       {
-        type: "article", id: "duel-new", title: "⚔️ Сравнить вкусы",
+        type: "article", id: "duel-new", title: pending ? "⚔️ Новый вызов" : "⚔️ Сравнить вкусы",
         description: "15 альбомов, потом процент совпадения с другом",
         thumbnail_url: `${env.PAGES}covers/jpg/${fresh[1].id}.jpg`,
         input_message_content: { message_text: "Сравнение музыкальных вкусов: ответь про 15 альбомов из архива @volodyamusicbox и отправь вызов кому хочешь.", parse_mode: "HTML" },
