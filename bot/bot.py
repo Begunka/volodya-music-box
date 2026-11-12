@@ -61,6 +61,13 @@ def secret(name, filename):
 TOKEN = secret("BOT_TOKEN", "bot_token.txt")
 OWNER_ID = secret("OWNER_ID", "owner_id.txt")            # твой Telegram ID — жёстко, чтобы никто не перехватил
 DIARY_CHAT_ID = secret("DIARY_CHAT_ID", "diary_chat_id.txt")
+CRONJOB_KEY = secret("CRONJOB_API_KEY", "cronjob_api_key.txt")
+# адрес Cloudflare-воркера записывает сам процесс его развёртывания
+WORKER_URL = (os.environ.get("WORKER_URL") or
+              ((ROOT / "worker_url.txt").read_text(encoding="utf-8").strip() if (ROOT / "worker_url.txt").exists() else ""))
+# секрет между Telegram/GitHub и воркером — выводится из токена бота, отдельно хранить не нужно
+HOOK_SECRET = hmac.new((TOKEN or "").encode(), b"webhook", hashlib.sha256).hexdigest()[:32]
+UPDATE_TYPES = ["message", "channel_post", "inline_query"]
 BOT_USERNAME = f"{CHANNEL}_bot"
 DISCOGS = secret("DISCOGS_TOKEN", "discogs_token.txt")
 API = f"https://api.telegram.org/bot{TOKEN}/"
@@ -118,6 +125,10 @@ def save_cover(raw, album_id):
         im = Image.open(BytesIO(raw)).convert("RGB")
         im.thumbnail((400, 400))
         im.save(COVERS / f"{album_id}.webp", "WEBP", quality=78)
+        # маленький .jpg — для инлайн-режима (Telegram показывает превью только из jpg)
+        (COVERS / "jpg").mkdir(exist_ok=True)
+        im.thumbnail((320, 320))
+        im.save(COVERS / "jpg" / f"{album_id}.jpg", "JPEG", quality=80, optimize=True)
         return "webp"
     except ImportError:
         (COVERS / f"{album_id}.jpg").write_bytes(raw)
@@ -599,8 +610,13 @@ class Bot:
     def poll(self, timeout):
         updates = tg("getUpdates", offset=self.state["offset"], timeout=timeout,
                      allowed_updates=["message", "channel_post"])
+        return self.process(updates)
+
+    def process(self, updates):
         # посты канала — первыми, потом всё остальное (копии постов в группе ссылаются на них)
         for u in sorted(updates, key=lambda u: "channel_post" not in u):
+            if "inline_query" in u:
+                continue   # на инлайн отвечает воркер; в запасном режиме инлайн просто молчит
             try:
                 self.handle(u)
             except Exception as e:
@@ -611,16 +627,94 @@ class Bot:
             save_json(STATE, self.state)
         return len(updates)
 
+    # ---------- Cloudflare: основной режим, GitHub: запасной ----------
+    def worker(self, path, data=None):
+        req = urllib.request.Request(WORKER_URL.rstrip("/") + path,
+                                     data=json.dumps(data).encode() if data is not None else None,
+                                     headers={"Authorization": f"Bearer {HOOK_SECRET}",
+                                              "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read().decode("utf-8") or "{}")
+
+    def worker_alive(self):
+        if not WORKER_URL:
+            return False
+        try:
+            return self.worker("/health").get("ok") is True
+        except Exception as e:
+            print("Cloudflare не отвечает:", e)
+            return False
+
+    def fast_alarm(self, on):
+        """Включить/выключить быстрый будильник cron-job.org («… быстрый», раз в 3 минуты)."""
+        if not CRONJOB_KEY:
+            return
+        def api(method, path, body=None):
+            req = urllib.request.Request("https://api.cron-job.org" + path, method=method,
+                                         data=json.dumps(body).encode() if body else None,
+                                         headers={"Authorization": f"Bearer {CRONJOB_KEY}",
+                                                  "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.loads(r.read().decode("utf-8") or "{}")
+        try:
+            job = self.state.get("fast_job_id")
+            if not job:
+                jobs = api("GET", "/jobs").get("jobs", [])
+                job = next((j["jobId"] for j in jobs if "быстр" in (j.get("title") or "").lower()), None)
+                self.state["fast_job_id"] = job
+            if job:
+                api("PATCH", f"/jobs/{job}", {"job": {"enabled": on}})
+        except Exception as e:
+            print("cron-job.org:", e)
+
+    def ensure_mode(self):
+        """Решает, кто сейчас принимает сообщения от Telegram, и переключает при необходимости.
+        Возвращает "worker" или "polling"."""
+        alive = self.worker_alive()
+        info = tg("getWebhookInfo")
+        hook = WORKER_URL.rstrip("/") + "/tg" if WORKER_URL else ""
+        mode = self.state.get("mode")
+        if alive:
+            if info.get("url") != hook:
+                tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
+                   max_connections=10)
+            if mode != "worker":
+                self.fast_alarm(False)
+                if mode == "polling" and self.owner():
+                    say(self.owner(), "☁️ Cloudflare снова в строю — вернул основной режим, инлайн работает.")
+            self.state["mode"] = "worker"
+        else:
+            if info.get("url"):
+                tg("deleteWebhook", drop_pending_updates=False)
+            if mode != "polling":
+                self.fast_alarm(True)
+                if mode == "worker" and self.owner():
+                    say(self.owner(), "⚠️ Cloudflare не отвечает (наверное, кончился лимит на сутки). "
+                                      "Перешёл на запасной режим через GitHub: всё работает, "
+                                      "только инлайн-список молчит. Вернусь сам, когда он оживёт.")
+            self.state["mode"] = "polling"
+        return self.state["mode"]
+
     def run_once(self):
         total = 0
-        while True:
-            n = self.poll(timeout=0)
-            total += n
-            if n == 0:
-                break
+        mode = self.ensure_mode() if WORKER_URL else "polling"
+        if mode == "worker":
+            # забираем очередь, которую накопил воркер; повторяем, пока не опустеет
+            for _ in range(20):
+                batch = self.worker("/queue").get("updates", [])
+                if not batch:
+                    break
+                total += self.process(batch)
+                self.worker("/ack", {"max_id": max(u["update_id"] for u in batch)})
+        else:
+            while True:
+                n = self.poll(timeout=0)
+                total += n
+                if n == 0:
+                    break
         self.report()
         save_json(STATE, self.state)
-        print(f"Обработано событий: {total}")
+        print(f"Режим: {mode}. Обработано событий: {total}")
 
     def scan_channel(self):
         """Читает ВСЮ историю канала по номерам постов: бот пересылает себе в личку

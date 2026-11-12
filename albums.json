@@ -29,7 +29,7 @@
   "artist": "The Beach Boys",
   "date": "1977 (Unreleased / Recorded)",
   "tracks": 12,
-  "year": "1985",
+  "year": "1977",
   "id": 2,
   "added": "2026-04-12T23:27:44",
   "year_checked": true,
@@ -40,7 +40,8 @@
    "Classic Rock"
   ],
   "post_url": "https://t.me/volodyamusicbox/2864",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "note": "записан в 1977, официально не издан"
  },
  {
   "title": "…Because I’m Young Arrogant and Hate Everything You Stand For",
@@ -125,7 +126,7 @@
   "artist": "The Moody Blues",
   "date": "2017-11-17",
   "tracks": 33,
-  "year": "2018",
+  "year": "1967",
   "id": 7,
   "added": "2026-04-18T19:37:09",
   "title_full": "Days Of Future Passed (Deluxe Version)",
@@ -139,7 +140,8 @@
    "Pop Rock"
   ],
   "post_url": "https://t.me/volodyamusicbox/4625",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "reissue_year": "2017"
  },
  {
   "title": "Abbey Road",

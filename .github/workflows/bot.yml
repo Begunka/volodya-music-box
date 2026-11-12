@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main     # всегда самая свежая версия, даже если запуск стоял в очереди
 
       - uses: actions/setup-python@v6
         with:
@@ -32,6 +34,7 @@ jobs:
           DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
           OWNER_ID: ${{ secrets.OWNER_ID }}
           DIARY_CHAT_ID: ${{ secrets.DIARY_CHAT_ID }}
+          CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
         run: python bot/bot.py
 
       - name: Сохранить архив
@@ -43,5 +46,6 @@ jobs:
             echo "Ничего нового"
           else
             git commit -m "Архив: обновление от бота"
+            git pull --rebase
             git push
           fi
