@@ -12521,5 +12521,25 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2468"
+ },
+ {
+  "title": "Yellow House",
+  "artist": "Grizzly Bear",
+  "date": "2006-09-04",
+  "tracks": 10,
+  "year": "2006",
+  "id": 680,
+  "added": "2026-11-12T11:47:22",
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Indie Rock",
+   "Prog Rock"
+  ],
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
