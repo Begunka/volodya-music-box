@@ -5,5 +5,7 @@
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
  "orphans": {},
- "group_copies": {}
+ "group_copies": {},
+ "fast_job_id": 8850719,
+ "mode": "polling"
 }
