@@ -10,4 +10,4 @@ MINIAPP = "https://t.me/volodyamusicbox_bot/archive"
 [[d1_databases]]
 binding = "DB"
 database_name = "archive-queue"
-database_id = "ВСТАВИТЬ_ID_БАЗЫ"
+database_id = "8473585c-83de-47b8-899a-3b1541d36b51"
