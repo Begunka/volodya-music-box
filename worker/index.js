@@ -23,6 +23,10 @@ export default {
     if (url.pathname === "/tg" && req.method === "POST") {
       if (req.headers.get("X-Telegram-Bot-Api-Secret-Token") !== secret) return new Response("no", { status: 403 });
       const u = await req.json();
+      if (u.chosen_inline_result) {
+        ctx.waitUntil(chosen(u.chosen_inline_result, env).catch(e => console.log("chosen", e)));
+        return new Response("ok");
+      }
       if (u.inline_query) {
         ctx.waitUntil(inline(u.inline_query, env).catch(e => console.log("inline", e)));
         return new Response("ok");
@@ -33,6 +37,9 @@ export default {
       ctx.waitUntil(wakeGithub(env));
       return new Response("ok");
     }
+
+    // ----- мини-приложение: дуэли -----
+    if (url.pathname.startsWith("/api/")) return api(req, url, env, ctx);
 
     // ----- бот на GitHub забирает очередь -----
     if (url.pathname === "/queue") {
@@ -94,17 +101,103 @@ async function wakeGithub(env) {
   });
 }
 
+// ---------------- дуэли ----------------
+// Одна дуэль — одно сообщение и один соперник: кто первым ответил, тот и соперник.
+// Когда он ответит, бот правит само сообщение в чате и пишет автору в личку.
+
+// Проверка, что запрос пришёл из мини-приложения от настоящего пользователя Telegram
+async function tgUser(initData, token) {
+  const params = new URLSearchParams(initData || "");
+  const hash = params.get("hash");
+  if (!hash) return null;
+  params.delete("hash");
+  const check = [...params.entries()].map(([k, v]) => `${k}=${v}`).sort().join("\n");
+  const enc = new TextEncoder();
+  const k1 = await crypto.subtle.importKey("raw", enc.encode("WebAppData"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const secret = await crypto.subtle.sign("HMAC", k1, enc.encode(token));
+  const k2 = await crypto.subtle.importKey("raw", secret, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = [...new Uint8Array(await crypto.subtle.sign("HMAC", k2, enc.encode(check)))].map(b => b.toString(16).padStart(2, "0")).join("");
+  if (sig !== hash) return null;
+  try { return JSON.parse(params.get("user")); } catch (e) { return null; }
+}
+const handle = u => u ? (u.username ? "@" + u.username : (u.first_name || "кто-то")) : "кто-то";
+
+function duelMatch(a, b) {
+  let both = 0, same = 0;
+  a.forEach((x, i) => { if (x && b[i]) { both++; if (x === b[i]) same++; } });
+  return { both, same, pct: both >= 3 ? Math.round(same / both * 100) : null };
+}
+
+async function tgCall(env, method, body) {
+  const r = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/${method}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+function duelView(d, me) {
+  const role = me === d.a_id ? "author" : (d.b_id ? (me === d.b_id ? "opponent" : "other") : "new");
+  return {
+    id: d.id, role, ids: JSON.parse(d.ids), a_name: d.a_name, b_name: d.b_name,
+    a_ans: JSON.parse(d.a_ans), b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans,
+  };
+}
+
+async function api(req, url, env, ctx) {
+  const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+  const user = await tgUser(body.initData || url.searchParams.get("initData"), env.BOT_TOKEN);
+  if (!user) return json({ error: "Открой через Telegram" });
+
+  // создать дуэль: 15 альбомов и ответы автора
+  if (url.pathname === "/api/duel/new" && req.method === "POST") {
+    const ids = (body.ids || []).slice(0, 20).map(Number), ans = (body.answers || []).slice(0, 20).map(Number);
+    if (ids.length < 5 || ids.length !== ans.length) return json({ error: "bad" });
+    const id = crypto.randomUUID().replace(/-/g, "").slice(0, 10);
+    await env.DB.prepare("INSERT INTO duels (id, created, a_id, a_name, ids, a_ans) VALUES (?, ?, ?, ?, ?, ?)")
+      .bind(id, Date.now(), user.id, handle(user), JSON.stringify(ids), JSON.stringify(ans)).run();
+    return json({ id });
+  }
+
+  const m = url.pathname.match(/^\/api\/duel\/([a-f0-9]{10})(\/answer)?$/);
+  if (!m) return json({ error: "not found" });
+  const d = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(m[1]).first();
+  if (!d) return json({ error: "not found" });
+
+  if (!m[2]) return json(duelView(d, user.id));
+
+  // ответ соперника — принимается один раз и только от первого ответившего
+  if (user.id === d.a_id) return json(duelView(d, user.id));
+  if (d.b_id && d.b_id !== user.id) return json(duelView(d, user.id));
+  if (d.b_ans) return json(duelView(d, user.id));
+  const ans = (body.answers || []).map(Number);
+  const r = duelMatch(JSON.parse(d.a_ans), ans);
+  const upd = await env.DB.prepare(
+    "UPDATE duels SET b_id = ?, b_name = ?, b_ans = ?, pct = ? WHERE id = ? AND b_id IS NULL")
+    .bind(user.id, handle(user), JSON.stringify(ans), r.pct, d.id).run();
+  const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
+  if (upd.meta && upd.meta.changes) ctx.waitUntil(announce(fresh, r, env).catch(e => console.log("announce", e)));
+  return json(duelView(fresh, user.id));
+}
+
+// соперник ответил: правим сообщение с вызовом и пишем автору
+async function announce(d, r, env) {
+  const line = r.pct === null
+    ? `${esc(d.a_name)} и ${esc(d.b_name)} почти не пересеклись: оба слышали только ${r.both} из 15.`
+    : `Сравнение вкусов: ${esc(d.a_name)} и ${esc(d.b_name)} — <b>${r.pct}%</b>\nОба слышали ${r.both} из 15, одинаково оценили ${r.same}.`;
+  const markup = { inline_keyboard: [[{ text: "Подробнее", url: `${env.MINIAPP}?startapp=x${d.id}` }]] };
+  if (d.msg) await tgCall(env, "editMessageText", { inline_message_id: d.msg, text: line, parse_mode: "HTML", reply_markup: markup });
+  await tgCall(env, "sendMessage", { chat_id: d.a_id, text: `${esc(d.b_name)} ответил на твой вызов.\n${line}`, parse_mode: "HTML", reply_markup: markup });
+}
+
+// Telegram сообщает, что вызов отправлен в чат — запоминаем сообщение, чтобы потом его обновить
+async function chosen(c, env) {
+  const m = (c.query || "").match(/^вызов ([a-f0-9]{10})$/);
+  if (!m || !c.inline_message_id) return;
+  await env.DB.prepare("UPDATE duels SET msg = ? WHERE id = ? AND a_id = ? AND msg IS NULL")
+    .bind(c.inline_message_id, m[1], c.from.id).run();
+}
+
 // ---------------- инлайн-режим ----------------
 
-// кто прислал вызов: в коде зашит его @ник (новые вызовы «e…») или имя (старые «d…»)
-function duelAuthor(code) {
-  try {
-    const s = code.slice(1).replace(/-/g, "+").replace(/_/g, "/");
-    const bytes = Uint8Array.from(atob(s), c => c.charCodeAt(0));
-    let rest = bytes.slice(1 + Math.ceil(bytes[0] * 14 / 8));
-    if (code[0] === "e") { rest = rest.slice(3); return rest.length ? "@" + String.fromCharCode(...rest) : ""; }
-    return new TextDecoder().decode(rest);
-  } catch (e) { return ""; }
 }
 
 async function archive(env) {
@@ -143,37 +236,21 @@ async function inline(q, env) {
   const raw = q.query.trim();
   const query = norm(raw);
   let results;
-  const C = "([de][A-Za-z0-9_-]{10,63})";
-  const duel = raw.match(new RegExp(`^вызов ${C}(?: (@\\w{3,32}))?$`));
-  const result = raw.match(new RegExp(`^итог (\\d{1,3}) ${C} ${C}(?: (@\\w{3,32}))?$`));
+  const duel = raw.match(/^вызов ([a-f0-9]{10})$/);
   const who = q.from && q.from.username ? "@" + q.from.username : (q.from && q.from.first_name) || "Кто-то";
-  const btn = c => ({ inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${c}` }]] });
   if (duel) {
-    const to = duel[2];
-    results = [{
-      type: "article", id: "duel-" + duel[1].slice(-40), title: to ? `Отправить вызов ${to}` : "Отправить вызов",
-      description: to ? `Ответить сможет только ${to}` : "Ответить сможет любой, кто нажмёт кнопку",
-      input_message_content: {
-        message_text: (to ? `${esc(who)} вызывает ${esc(to)} сравнить музыкальные вкусы.`
-                          : `${esc(who)} предлагает сравнить музыкальные вкусы — ответить может любой.`)
-          + `\n15 альбомов из архива @volodyamusicbox, около минуты. В конце — процент совпадения.`,
-        parse_mode: "HTML",
-      },
-      reply_markup: btn(duel[1]),
-    }];
-  } else if (result) {
-    const other = duelAuthor(result[2]) || "собеседник", to = result[4];
-    results = [{
-      type: "article", id: "res-" + result[3].slice(-40), title: `Отправить результат: ${result[1]}%`,
-      description: to ? `И вызвать ${to} на тот же тест` : "С кнопкой, чтобы другие сравнились с тобой",
-      input_message_content: {
-        message_text: `Сравнение вкусов: ${esc(who)} и ${esc(other)} — <b>${result[1]}%</b>\n`
-          + (to ? `${esc(who)} вызывает ${esc(to)} на тот же тест: 15 альбомов, около минуты.`
-                : `Сравнить свои вкусы с ${esc(who)}: 15 альбомов, около минуты.`),
-        parse_mode: "HTML",
-      },
-      reply_markup: btn(result[3]),
-    }];
+    const d = await env.DB.prepare("SELECT a_id, b_id FROM duels WHERE id = ?").bind(duel[1]).first();
+    if (d && d.a_id === q.from.id && !d.b_id) {
+      results = [{
+        type: "article", id: "duel-" + duel[1], title: "Отправить вызов",
+        description: "Ответить сможет один человек — кто первым нажмёт",
+        input_message_content: {
+          message_text: `${esc(who)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты. Ответить может один человек — кто первым нажмёт.`,
+          parse_mode: "HTML",
+        },
+        reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${duel[1]}` }]] },
+      }];
+    } else results = [];
   } else if (!query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
@@ -214,7 +291,7 @@ async function inline(q, env) {
     body: JSON.stringify({
       inline_query_id: q.id, results,
       // случайный альбом и вызовы — у каждого свои
-      cache_time: (query && !duel && !result) ? 120 : 5, is_personal: !query || !!duel || !!result,
+      cache_time: (query && !duel) ? 120 : 5, is_personal: !query || !!duel,
     }),
   });
 }

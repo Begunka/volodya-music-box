@@ -68,7 +68,7 @@ WORKER_URL = (os.environ.get("WORKER_URL") or
               ((ROOT / "worker_url.txt").read_text(encoding="utf-8").strip() if (ROOT / "worker_url.txt").exists() else ""))
 # секрет между Telegram/GitHub и воркером — выводится из токена бота, отдельно хранить не нужно
 HOOK_SECRET = hmac.new((TOKEN or "").encode(), b"webhook", hashlib.sha256).hexdigest()[:32]
-UPDATE_TYPES = ["message", "channel_post", "inline_query"]
+UPDATE_TYPES = ["message", "channel_post", "inline_query", "chosen_inline_result"]
 BOT_USERNAME = f"{CHANNEL}_bot"
 DISCOGS = secret("DISCOGS_TOKEN", "discogs_token.txt")
 API = f"https://api.telegram.org/bot{TOKEN}/"
@@ -616,7 +616,7 @@ class Bot:
     def process(self, updates):
         # посты канала — первыми, потом всё остальное (копии постов в группе ссылаются на них)
         for u in sorted(updates, key=lambda u: "channel_post" not in u):
-            if "inline_query" in u:
+            if "inline_query" in u or "chosen_inline_result" in u:
                 continue   # на инлайн отвечает воркер; в запасном режиме инлайн просто молчит
             try:
                 self.handle(u)
@@ -680,7 +680,7 @@ class Bot:
         hook = WORKER_URL.rstrip("/") + "/tg" if WORKER_URL else ""
         mode = self.state.get("mode")
         if alive:
-            if info.get("url") != hook:
+            if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
                 tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
                    max_connections=10)
             if mode != "worker":
