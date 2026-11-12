@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>
+  // Старая копия архива на GitHub Pages не умеет лайки и дуэли (там нет сервера).
+  // Если открыли её (например, старой кнопкой в боте) — переносим на основной адрес, сохраняя данные Telegram в #.
+  if (/github\.io$/.test(location.hostname)) location.replace("https://volodya-archive.zaharmakaka.workers.dev/" + location.search + location.hash);
+</script>
 <title>Volodya Music Box</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -476,7 +481,13 @@ main{padding-block:16px 40px}
   }
   // отправка оценок пачкой: ждём 2 секунды тишины после последнего нажатия
   let flushTimer = null, flushing = false;
-  function paintSendbar(){ if (!inTg) return; clearTimeout(flushTimer); flushTimer = setTimeout(flush, 2000); }
+  function paintSendbar(){ if (!inTg) return; clearTimeout(flushTimer); flushTimer = setTimeout(flush, 1000); }
+  // приложение закрывают — обычный запрос может не успеть, поэтому шлём «маяком», он доходит и после закрытия
+  function flushOnClose(){
+    if (!inTg || subscribed === false) return;
+    const diff = pending(); if (!Object.keys(diff).length) return;
+    try { navigator.sendBeacon("/api/vote", new Blob([JSON.stringify({initData: tgApp.initData, r: diff})], {type: "text/plain"})); } catch (e) {}
+  }
   async function flush(){
     if (!inTg || flushing || subscribed === false) return;
     const diff = pending(), ids = Object.keys(diff).slice(0, 300);
@@ -747,7 +758,8 @@ main{padding-block:16px 40px}
   $("duel-entry").addEventListener("click", () => Duel.start());
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   // закрывают приложение — дошлём оценки сразу
-  document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) flushOnClose(); });
+  window.addEventListener("pagehide", flushOnClose);
   $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });
   $("scrim").addEventListener("click", close);
   $("close").addEventListener("click", close);
