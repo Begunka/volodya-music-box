@@ -7,5 +7,5 @@
  "orphans": {},
  "group_copies": {},
  "fast_job_id": 8850719,
- "mode": "polling"
+ "mode": "worker"
 }
