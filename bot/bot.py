@@ -632,7 +632,8 @@ class Bot:
         req = urllib.request.Request(WORKER_URL.rstrip("/") + path,
                                      data=json.dumps(data).encode() if data is not None else None,
                                      headers={"Authorization": f"Bearer {HOOK_SECRET}",
-                                              "Content-Type": "application/json"})
+                                              "Content-Type": "application/json",
+                                              "User-Agent": "volodya-archive-bot"})
         with urllib.request.urlopen(req, timeout=20) as r:
             return json.loads(r.read().decode("utf-8") or "{}")
 
@@ -641,6 +642,9 @@ class Bot:
             return False
         try:
             return self.worker("/health").get("ok") is True
+        except urllib.error.HTTPError as e:
+            print("Cloudflare не отвечает:", e, e.read()[:200])
+            return False
         except Exception as e:
             print("Cloudflare не отвечает:", e)
             return False

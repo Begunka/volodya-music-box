@@ -10,10 +10,11 @@ const DISPATCH_EVERY = 30;   // будить GitHub не чаще, чем раз
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    env.BOT_TOKEN = (env.BOT_TOKEN || "").trim();   // на случай лишнего пробела/переноса в секрете
     const secret = await hookSecret(env.BOT_TOKEN);
 
     if (url.pathname === "/health") {
-      if (!authed(req, secret)) return new Response("no", { status: 403 });
+      if (!authed(req, secret)) return new Response("wrong key", { status: 403 });
       await env.DB.prepare("SELECT 1").first();
       return json({ ok: true });
     }
