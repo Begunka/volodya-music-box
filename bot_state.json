@@ -1,11 +1,21 @@
 {
- "offset": 857452274,
+ "offset": 857452304,
  "pending_comments": {},
  "pending_photo": null,
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
  "orphans": {},
- "group_copies": {},
+ "group_copies": {
+  "6282": {
+   "chat": {
+    "id": -1003224722462
+   },
+   "message_id": 24396,
+   "forward_origin": {
+    "message_id": 6282
+   }
+  }
+ },
  "fast_job_id": 8850719,
  "mode": "worker"
 }
