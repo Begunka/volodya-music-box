@@ -1,0 +1,13 @@
+name = "volodya-archive"
+main = "index.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+REPO = "Begunka/volodya-music-box"
+PAGES = "https://begunka.github.io/volodya-music-box/"
+MINIAPP = "https://t.me/volodyamusicbox_bot/archive"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "archive-queue"
+database_id = "ВСТАВИТЬ_ID_БАЗЫ"

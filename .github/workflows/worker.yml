@@ -1,0 +1,56 @@
+name: Развернуть Cloudflare-воркер
+
+on:
+  push:
+    branches: [main]
+    paths: ["worker/**", ".github/workflows/worker.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Таблицы очереди (если ещё нет)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: d1 execute archive-queue --remote --file schema.sql
+
+      - name: Развернуть воркер и его секреты
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
+          secrets: |
+            BOT_TOKEN
+            GH_TOKEN
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+
+      - name: Записать адрес воркера для бота
+        run: |
+          echo "${{ steps.deploy.outputs.deployment-url }}" | tr -d ' \n' > worker_url.txt
+          cat worker_url.txt
+          if [ ! -s worker_url.txt ]; then echo "Адрес воркера не получен"; exit 1; fi
+          git config user.name "volodyamusicbox-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add worker_url.txt
+          git diff --cached --quiet || (git commit -m "Адрес Cloudflare-воркера" && git pull --rebase && git push)
+
+      - name: Сразу запустить бота (он переключит Telegram на воркер)
+        run: gh workflow run bot.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
