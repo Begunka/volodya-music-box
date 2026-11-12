@@ -623,6 +623,7 @@ main{padding-block:16px 96px}
       try {
         if (!d) {
           const r = await call("/api/duel/new", {ids: set, answers: mine});
+          if (r.error === "limit") return fail("На сегодня вызовов хватит: не больше 10 в сутки. Завтра можно снова.");
           if (!r.id) throw 0;
           d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false, claimed: false};
         } else {
