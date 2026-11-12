@@ -3,7 +3,7 @@ name: Развернуть Cloudflare-воркер
 on:
   push:
     branches: [main]
-    paths: ["worker/**", ".github/workflows/worker.yml", "index.html"]
+    paths: ["worker/**", ".github/workflows/worker.yml", "index.html", "_headers"]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
       - name: Собрать мини-приложение для раздачи
         run: |
           mkdir -p worker/public
-          cp index.html data.json worker/public/
+          cp index.html data.json _headers worker/public/
           cp -r covers worker/public/covers
 
       - name: Таблицы очереди (если ещё нет)

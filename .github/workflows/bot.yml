@@ -56,7 +56,7 @@ jobs:
         if: steps.save.outputs.changed == 'yes'
         run: |
           mkdir -p worker/public
-          cp index.html data.json worker/public/
+          cp index.html data.json _headers worker/public/
           cp -r covers worker/public/covers
 
       - name: Обновить мини-приложение на Cloudflare
