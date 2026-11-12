@@ -57,7 +57,7 @@ select.btn{appearance:none;padding-right:14px}
 .chip{flex:none;height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--chip);color:var(--ink);font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 
-main{padding-block:16px 40px}
+main{padding-block:16px 96px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 14px}
 @media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr);gap:16px 12px}}
 .tile{display:flex;flex-direction:column;gap:7px;background:none;border:0;padding:0;text-align:left;color:inherit;min-width:0}
@@ -107,6 +107,18 @@ main{padding-block:16px 40px}
 .actions .off{background:var(--chip);color:var(--muted);border:0;cursor:default;font-size:13px;font-weight:500;text-align:center;line-height:1.2;padding:0 8px}
 .close{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;width:34px;height:34px;border-radius:50%;border:0;background:var(--chip);color:var(--ink);font-size:18px;line-height:1}
 .proto{font-size:12px;color:var(--muted);text-align:center;padding-top:28px}
+.vote{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.vote button{height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600}
+.vote button b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vote button[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);color:var(--accent)}
+.vote button[aria-pressed="true"] b{color:var(--accent)}
+.author{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0 0 12px}
+.author b{color:var(--ink);font-weight:600}
+.sendbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:12px;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sendbar span{flex:1;min-width:0;font-size:13px;line-height:1.3}
+.sendbar button{flex:none;height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.y .heart{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -139,6 +151,7 @@ main{padding-block:16px 40px}
         <option value="old">Сначала старые</option>
         <option value="year">По году выхода</option>
         <option value="artist">По исполнителю</option>
+        <option value="top">Народный топ</option>
       </select>
     </div>
   </div>
@@ -160,9 +173,19 @@ main{padding-block:16px 40px}
   <p class="who" id="s-artist"></p>
   <dl class="facts" id="s-facts"></dl>
   <div class="tags" id="s-tags" hidden></div>
+  <p class="author" id="s-author" hidden></p>
+  <div class="vote" id="s-vote">
+    <button type="button" data-v="1" aria-pressed="false">👍 Зашло <b id="s-likes">0</b></button>
+    <button type="button" data-v="-1" aria-pressed="false">👎 Не зашло <b id="s-dislikes">0</b></button>
+  </div>
   <p class="note" id="s-note" hidden></p>
   <div class="actions" id="s-actions"></div>
 </section>
+
+<div class="sendbar" id="sendbar" hidden>
+  <span id="sendbar-text"></span>
+  <button type="button" id="sendbar-btn"></button>
+</div>
 
 <script>
 (() => {
@@ -223,6 +246,7 @@ main{padding-block:16px 40px}
       old: (x, y) => (x.added || "").localeCompare(y.added || ""),
       year: (x, y) => (x.year || "9999").localeCompare(y.year || "9999") || x.title.localeCompare(y.title),
       artist: (x, y) => (x.artist || "я").localeCompare(y.artist || "я", "ru") || (x.year || "").localeCompare(y.year || ""),
+      top: (x, y) => { const [a1, d1] = counts(x), [a2, d2] = counts(y); return (a2 - d2) - (a1 - d1) || a2 - a1; },
     }[s];
     view.sort(by);
     shown = 0; $("grid").innerHTML = "";
@@ -231,6 +255,10 @@ main{padding-block:16px 40px}
     more();
   }
 
+  function tileY(a){
+    const l = counts(a)[0];
+    return `${a.year || "год ?"}${a.styles ? " · " + esc(a.styles[0]) : ""}${l ? ` · <span class="heart">♥ ${l}</span>` : ""}${a.needs_fix ? ' <span class="flag">· уточнить</span>' : ""}`;
+  }
   function more(){
     const chunk = view.slice(shown, shown + PAGE);
     $("grid").insertAdjacentHTML("beforeend", chunk.map(a => `
@@ -239,7 +267,7 @@ main{padding-block:16px 40px}
         <div class="meta">
           <div class="t">${esc(a.title)}</div>
           <div class="a">${esc(a.artist || "исполнитель неизвестен")}</div>
-          <div class="y">${a.year || "год ?"}${a.styles ? " · " + esc(a.styles[0]) : ""}${a.needs_fix ? ' <span class="flag">· уточнить</span>' : ""}</div>
+          <div class="y">${tileY(a)}</div>
         </div>
       </button>`).join(""));
     shown += chunk.length;
@@ -268,6 +296,9 @@ main{padding-block:16px 40px}
     else if (a.unverified) notes.push("Год взят из поста, в базах не нашёлся");
     if (a.added) notes.push("Добавлен " + new Date(a.added).toLocaleDateString("ru-RU", {day:"numeric", month:"long", year:"numeric"}));
     $("s-note").textContent = notes.join(" · "); $("s-note").hidden = !notes.length;
+    openId = a.id; paintVote();
+    $("s-author").hidden = !a.author;
+    if (a.author) $("s-author").innerHTML = a.author > 0 ? "♥ <b>Автору канала зашло</b>" : "Автору канала <b>не зашло</b>";
     $("s-actions").innerHTML =
       (a.post_url ? `<a class="go" href="${esc(a.post_url)}" target="_blank" rel="noopener">Пост в канале</a>` : "") +
       (a.listen_url ? `<a class="${a.post_url ? "alt" : "go"}" href="${esc(a.listen_url)}" target="_blank" rel="noopener">Слушать</a>` : "");
@@ -279,6 +310,7 @@ main{padding-block:16px 40px}
     if (location.hash !== "#album-" + id) history.replaceState(null, "", "#album-" + id);
   }
   function close(){
+    openId = null;
     $("scrim").classList.remove("on"); $("sheet").classList.remove("on");
     setTimeout(() => { $("scrim").hidden = true; $("sheet").hidden = true; }, 260);
     if (location.hash) history.replaceState(null, "", location.pathname + location.search);
@@ -291,6 +323,81 @@ main{padding-block:16px 40px}
     const m = (tgApp.initDataUnsafe.start_param || "").match(/^album_(\d+)$/);
     if (m) open(+m[1]);
   }
+  // ---------- оценки ----------
+  // cur — мои оценки сейчас, sent — те, что уже ушли боту. Разница = «не отправлено».
+  // Хранятся в облаке Telegram (видны на всех устройствах) и в браузере на всякий случай.
+  const inTg = !!(tgApp && tgApp.initData);
+  const canSend = inTg && new URLSearchParams(location.search).get("from") === "kb";
+  const cloud = inTg && tgApp.CloudStorage && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.9") ? tgApp.CloudStorage : null;
+  let cur = {}, sent = {};
+  function saveVotes(){
+    const s = JSON.stringify({cur, sent});
+    try { localStorage.setItem("votes", s); } catch (e) {}
+    if (!cloud) return Promise.resolve();
+    const parts = s.match(/[\s\S]{1,3500}/g) || [""];
+    const jobs = parts.map((part, i) => new Promise(r => cloud.setItem("v" + i, part, () => r())));
+    jobs.push(new Promise(r => cloud.setItem("vn", String(parts.length), () => r())));
+    return Promise.all(jobs);
+  }
+  function loadVotes(){
+    try { const s = JSON.parse(localStorage.getItem("votes") || "{}"); cur = s.cur || {}; sent = s.sent || {}; } catch (e) {}
+    if (!cloud) return Promise.resolve();
+    return new Promise(res => cloud.getItem("vn", (err, n) => {
+      n = parseInt(n || "0", 10);
+      if (err || !n) return res();
+      const keys = Array.from({length: n}, (_, i) => "v" + i);
+      cloud.getItems(keys, (err2, vals) => {
+        try {
+          if (!err2) { const s = JSON.parse(keys.map(k => vals[k] || "").join("")); cur = s.cur || {}; sent = s.sent || {}; }
+        } catch (e) {}
+        res();
+      });
+    }));
+  }
+  function pending(){
+    const diff = {};
+    new Set([...Object.keys(cur), ...Object.keys(sent)]).forEach(id => {
+      if ((cur[id] || 0) !== (sent[id] || 0)) diff[id] = cur[id] || 0;
+    });
+    return diff;
+  }
+  // счётчики с учётом моих свежих, ещё не отправленных оценок
+  function counts(a){
+    const id = String(a.id), was = sent[id] || 0, now = cur[id] || 0;
+    return [(a.likes || 0) - (was === 1) + (now === 1), (a.dislikes || 0) - (was === -1) + (now === -1)];
+  }
+  function vote(id, v){
+    id = String(id);
+    if (cur[id] === v) delete cur[id]; else cur[id] = v;
+    saveVotes(); paintVote(); paintSendbar();
+    const a = all.find(x => String(x.id) === id), y = document.querySelector(`.tile[data-id="${id}"] .y`);
+    if (a && y) y.innerHTML = tileY(a);
+    if (tgApp && tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
+  }
+  let openId = null;
+  function paintVote(){
+    const a = all.find(x => x.id === openId); if (!a) return;
+    const [l, d] = counts(a), my = cur[String(a.id)] || 0;
+    $("s-likes").textContent = l; $("s-dislikes").textContent = d;
+    $("s-vote").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === my));
+  }
+  function paintSendbar(){
+    const n = Object.keys(pending()).length;
+    $("sendbar").hidden = !n || !inTg;
+    if (!n || !inTg) return;
+    $("sendbar-text").textContent = canSend
+      ? `Оценок не отправлено: ${n}. Отправь, чтобы их увидели все.`
+      : `Оценок: ${n}. Чтобы их увидели все, открой архив через бота.`;
+    $("sendbar-btn").textContent = canSend ? "Отправить" : "Открыть бота";
+  }
+  function send(){
+    if (!canSend) { tgApp.openTelegramLink("https://t.me/volodyamusicbox_bot?start=rate"); return; }
+    const diff = pending(), ids = Object.keys(diff).slice(0, 300);   // лимит сообщения — 4 КБ
+    const batch = {}; ids.forEach(id => batch[id] = diff[id]);
+    ids.forEach(id => { if (batch[id] === 0) delete sent[id]; else sent[id] = batch[id]; });
+    saveVotes().then(() => tgApp.sendData(JSON.stringify({r: batch})));   // приложение после этого закроется
+  }
+
   if (tgApp && tgApp.initData) {
     tgApp.ready(); tgApp.expand();
     document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
@@ -316,6 +423,8 @@ main{padding-block:16px 40px}
     close(); window.scrollTo({top: 0});
   });
   $("more").addEventListener("click", more);
+  $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
+  $("sendbar-btn").addEventListener("click", send);
   $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });
   $("scrim").addEventListener("click", close);
   $("close").addEventListener("click", close);
@@ -323,7 +432,8 @@ main{padding-block:16px 40px}
   window.addEventListener("hashchange", fromHash);
 
   fetch("data.json").then(r => r.json()).then(d => {
-    all = d; buildGenres(); buildDecades(); apply(); fromHash(); fromTelegram();
+    all = d; buildGenres(); buildDecades();
+    loadVotes().then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
   }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });
 })();
 </script>

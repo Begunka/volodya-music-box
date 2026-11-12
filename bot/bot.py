@@ -20,6 +20,8 @@
 Только стандартный Python. Если установлен Pillow (pip install pillow),
 обложки сжимаются в .webp, иначе сохраняются как .jpg.
 """
+import hashlib
+import hmac
 import html
 import json
 import os
@@ -39,9 +41,11 @@ ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE = ROOT / "albums.json"        # полный архив
 SITE_DATA = ROOT / "data.json"        # облегчённая версия для витрины
 COVERS = ROOT / "covers"
+RATINGS = ROOT / "ratings.json"       # лайки/дизлайки подписчиков (ID зашифрованы)
 STATE = ROOT / "bot_state.json"       # номер последнего обработанного события, владелец
 
 CHANNEL = "volodyamusicbox"
+PAGES_URL = "https://begunka.github.io/volodya-music-box/"
 # Ссылка на мини-приложение. Появится после /newapp в BotFather; пока пусто — в комментарии
 # будет ссылка на бота.
 MINIAPP = os.environ.get("MINIAPP_LINK", "https://t.me/volodyamusicbox_bot/archive")
@@ -170,10 +174,27 @@ SITE_FIELDS = ["id", "title", "artist", "year", "reissue_year", "tracks", "added
                "needs_fix", "note", "genres", "styles", "post_url", "cover_ext"]
 
 
+def rating_counts():
+    """{album_id: [лайки, дизлайки]} и оценки автора канала {album_id: 1/-1}."""
+    r = load_json(RATINGS, {"users": {}, "author": {}})
+    counts = {}
+    for votes in r["users"].values():
+        for aid, v in votes.items():
+            c = counts.setdefault(aid, [0, 0])
+            c[0 if v > 0 else 1] += 1
+    return counts, r.get("author", {})
+
+
 def export_site_data(albums):
+    counts, author = rating_counts()
     out = []
     for a in albums:
         d = {k: a[k] for k in SITE_FIELDS if a.get(k) not in (None, "", [])}
+        c = counts.get(str(a["id"]))
+        if c:
+            d["likes"], d["dislikes"] = c
+        if str(a["id"]) in author:
+            d["author"] = author[str(a["id"])]
         if a.get("cover") or a.get("cover_ext"):
             d["has_cover"] = True
         if not a.get("year_checked"):
@@ -256,6 +277,14 @@ def iso(ts):
 # Текст комментария под постом в канале. {total} — сколько альбомов в архиве.
 COMMENT_TEXT = "🎧 <b>В архиве больше музыки</b>\nУже {total} альбомов канала — с годами, стилями и обложками."
 COMMENT_BUTTON = "🗄 Открыть архив"
+
+
+def archive_keyboard(album_id=None):
+    """Кнопка под полем ввода в личке с ботом. Только из неё мини-приложение может
+    отправить оценки боту (так устроен Telegram)."""
+    url = PAGES_URL + "?from=kb" + (f"#album-{album_id}" if album_id else "")
+    return {"keyboard": [[{"text": "🗄 Архив", "web_app": {"url": url}}]],
+            "resize_keyboard": True, "is_persistent": True}
 
 
 def comment_text(total):
@@ -429,9 +458,45 @@ class Bot:
         self.adopt_orphan(a)
         react(*me, "🔥")
 
+    # ---------- оценки из мини-приложения ----------
+    def on_ratings(self, m):
+        """Мини-приложение присылает пачку оценок: {"r": {"148": 1, "22": -1, "301": 0}}.
+        1 — зашло, -1 — не зашло, 0 — снять оценку. ID человека хранится зашифрованным."""
+        uid = m["from"]["id"]
+        try:
+            votes = json.loads(m["web_app_data"]["data"]).get("r", {})
+            assert isinstance(votes, dict)
+        except Exception:
+            return
+        known = {str(a["id"]) for a in self.archive.albums}
+        r = load_json(RATINGS, {"users": {}, "author": {}})
+        r.setdefault("author", {})
+        key = hmac.new(TOKEN.encode(), str(uid).encode(), hashlib.sha256).hexdigest()[:16]
+        mine = r["users"].setdefault(key, {})
+        n = 0
+        for aid, v in votes.items():
+            aid = str(aid)
+            if aid not in known or v not in (1, -1, 0):
+                continue
+            n += 1
+            for store in ([mine, r["author"]] if uid == self.owner() else [mine]):
+                if v == 0:
+                    store.pop(aid, None)
+                else:
+                    store[aid] = v
+        if not mine:
+            r["users"].pop(key, None)
+        save_json(RATINGS, r)
+        self.archive.changed = True   # пересчитать счётчики на витрине
+        say(uid, f"Учёл оценок: {n} 👍👎\nОбщий счёт на витрине обновится через пару минут.",
+            reply_markup=archive_keyboard())
+
     # ---------- личка ----------
     def on_private(self, m):
         uid = m["from"]["id"]
+        if m.get("web_app_data"):
+            self.on_ratings(m)
+            return
         text = m.get("text") or m.get("caption") or ""
         if text.startswith("/start"):
             arg = text.split(maxsplit=1)[1] if " " in text else ""
@@ -440,9 +505,9 @@ class Bot:
                 say(uid, "Готово, ты записан как владелец архива.")
                 return
             album_id = arg.split("_", 1)[1] if arg.startswith("album_") else None
-            say(uid, "📀 Архив альбомов канала @volodyamusicbox.",
-                reply_markup={"inline_keyboard": [[{"text": "🗄 Открыть архив",
-                                                    "url": archive_link(album_id)}]]})
+            say(uid, "📀 Архив альбомов канала @volodyamusicbox.\n"
+                     "Открывай кнопкой «🗄 Архив» внизу — так твои 👍 и 👎 попадут в общий счёт.",
+                reply_markup=archive_keyboard(album_id))
             return
         if uid != self.owner():
             return
