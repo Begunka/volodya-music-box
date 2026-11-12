@@ -1,6 +1,7 @@
 name = "volodya-archive"
 main = "index.js"
 compatibility_date = "2025-06-01"
+workers_dev = true
 
 [vars]
 REPO = "Begunka/volodya-music-box"
