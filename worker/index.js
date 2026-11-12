@@ -198,8 +198,6 @@ async function chosen(c, env) {
 
 // ---------------- инлайн-режим ----------------
 
-}
-
 async function archive(env) {
   // архив лежит рядом, в статике воркера
   const r = await env.ASSETS.fetch(new Request(env.PAGES + "data.json"));
