@@ -119,6 +119,36 @@ main{padding-block:16px 96px}
 .sendbar span{flex:1;min-width:0;font-size:13px;line-height:1.3}
 .sendbar button{flex:none;height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
 .y .heart{color:var(--accent)}
+.duel-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:14px 0 2px;padding:12px 14px;border-radius:12px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.duel-entry b{font-weight:600}
+.duel-entry span{color:var(--muted);font-size:13px}
+.duel{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;
+  padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.duel-in{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.duel-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.duel-top .step{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.duel-bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.duel-bar i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.duel h3{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;margin:0;text-wrap:balance}
+.duel p{margin:0;color:var(--muted)}
+.duel .dcover{width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--chip);position:relative}
+.duel .dcover img{width:100%;height:100%;object-fit:cover;display:block}
+.duel .dmeta b{display:block;font-size:17px;line-height:1.25}
+.duel .dmeta span{color:var(--muted)}
+.duel .answers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.duel .answers button{height:50px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600}
+.duel .answers button.wide{grid-column:1/-1;height:42px;font-weight:500;color:var(--muted)}
+.duel .big{font-family:var(--display);font-weight:700;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.duel .rows{display:flex;flex-direction:column;gap:8px}
+.duel .row{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;color:var(--ink);text-align:left;width:100%}
+.duel .row img,.duel .row .ph{width:44px;height:44px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
+.duel .row div{min-width:0;font-size:13px;line-height:1.3}
+.duel .row div b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.duel .row div span{color:var(--muted)}
+.duel .label{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.duel .go{height:48px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;width:100%}
+.duel .alt{height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500;width:100%}
 </style>
 </head>
 <body>
@@ -157,6 +187,10 @@ main{padding-block:16px 96px}
   </div>
 
   <main>
+    <button class="duel-entry" id="duel-entry" type="button">
+      <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
+      <span aria-hidden="true">→</span>
+    </button>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
     <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
@@ -181,6 +215,8 @@ main{padding-block:16px 96px}
   <p class="note" id="s-note" hidden></p>
   <div class="actions" id="s-actions"></div>
 </section>
+
+<section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
 
 <div class="sendbar" id="sendbar" hidden>
   <span id="sendbar-text"></span>
@@ -320,8 +356,11 @@ main{padding-block:16px 96px}
   const tgApp = window.Telegram && window.Telegram.WebApp;
   function fromTelegram(){
     if (!tgApp || !tgApp.initData) return;
-    const m = (tgApp.initDataUnsafe.start_param || "").match(/^album_(\d+)$/);
+    const sp = tgApp.initDataUnsafe.start_param || "";
+    const m = sp.match(/^album_(\d+)$/);
     if (m) open(+m[1]);
+    else if (sp === "duel") Duel.start();
+    else if (/^d[A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
   }
   // ---------- оценки ----------
   // cur — мои оценки сейчас, sent — те, что уже ушли боту. Разница = «не отправлено».
@@ -398,6 +437,169 @@ main{padding-block:16px 96px}
     saveVotes().then(() => tgApp.sendData(JSON.stringify({r: batch})));   // приложение после этого закроется
   }
 
+  // ---------- сравнение вкусов ----------
+  // Ссылка-вызов сама несёт 15 альбомов и ответы того, кто зовёт (без сервера):
+  // "d" + base64url( [15] [по 14 бит: id альбома (12) + ответ (2)] [имя, utf-8] ), всё влезает в 64 символа.
+  const Duel = (() => {
+    const N = 15, ANS = {heard: 0, yes: 1, no: 2};   // 0 — не слышал
+    let set = [], mine = [], theirs = null, theirName = "", idx = 0;
+    const b64 = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const unb64 = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    function encode(ids, answers, name){
+      let bits = "";
+      ids.forEach((id, i) => { bits += id.toString(2).padStart(12, "0") + answers[i].toString(2).padStart(2, "0"); });
+      while (bits.length % 8) bits += "0";
+      const bytes = [ids.length];
+      for (let i = 0; i < bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+      let nameBytes = Array.from(new TextEncoder().encode(name || ""));
+      while (nameBytes.length && 1 + Math.ceil((bytes.length + nameBytes.length) * 4 / 3) > 64) nameBytes.pop();
+      let nm = new TextDecoder("utf-8", {fatal: false}).decode(new Uint8Array(nameBytes)).replace(/\uFFFD+$/, "");
+      return "d" + b64([...bytes, ...new TextEncoder().encode(nm)]);
+    }
+    function decode(code){
+      try {
+        const bytes = unb64(code.slice(1)), n = bytes[0];
+        let bits = "";
+        const need = Math.ceil(n * 14 / 8);
+        for (let i = 1; i <= need; i++) bits += bytes[i].toString(2).padStart(8, "0");
+        const ids = [], answers = [];
+        for (let i = 0; i < n; i++) { ids.push(parseInt(bits.slice(i * 14, i * 14 + 12), 2)); answers.push(parseInt(bits.slice(i * 14 + 12, i * 14 + 14), 2)); }
+        const name = new TextDecoder().decode(bytes.slice(1 + need));
+        return {ids, answers, name};
+      } catch (e) { return null; }
+    }
+    const byId = id => all.find(a => a.id === id);
+    const myName = () => (inTg && tgApp.initDataUnsafe.user && tgApp.initDataUnsafe.user.first_name) || "";
+    const cover = a => a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`;
+
+    // 15 альбомов: по одному-два из разных десятилетий, только с обложками
+    function pick(){
+      const pool = all.filter(a => a.has_cover && a.artist);
+      const byDec = {};
+      pool.forEach(a => (byDec[decadeOf(a) || "?"] = byDec[decadeOf(a) || "?"] || []).push(a));
+      Object.values(byDec).forEach(l => l.sort(() => Math.random() - .5));
+      const decs = Object.keys(byDec).sort(() => Math.random() - .5), out = [];
+      while (out.length < N && decs.some(d => byDec[d].length))
+        for (const d of decs) if (byDec[d].length && out.length < N) out.push(byDec[d].pop());
+      return out.sort(() => Math.random() - .5).map(a => a.id);
+    }
+
+    function show(html){ $("duel-in").innerHTML = html; $("duel").hidden = false; $("duel").scrollTop = 0; }
+    function hide(){ $("duel").hidden = true; }
+
+    function start(){ set = pick(); mine = []; theirs = null; theirName = ""; idx = 0; ask(); }
+    function accept(code){
+      const d = decode(code);
+      const ids = d && d.ids.filter(byId);
+      if (!d || !ids || ids.length < 5) { start(); return; }
+      set = d.ids; theirs = d.answers; theirName = d.name || "друг"; mine = []; idx = 0;
+      show(`<div class="duel-top"><span class="step">Сравнение вкусов</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
+        <p>Вызов от: <b style="color:var(--ink)">${esc(theirName)}</b></p>
+        <h3>${set.length} альбомов из архива</h3>
+        <p>Ответь на те же — увидишь процент совпадения. Если альбом не слышал, так и отметь.</p>
+        <button class="go" data-x="begin">Начать</button>`);
+    }
+    function ask(){
+      const a = byId(set[idx]);
+      if (!a) { mine[idx] = 0; return next(); }
+      show(`<div class="duel-top"><span class="step">${idx + 1} / ${set.length}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
+        <div class="duel-bar"><i style="width:${idx / set.length * 100}%"></i></div>
+        <div class="dcover">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : ""}</div>
+        <div class="dmeta"><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div>
+        <div class="answers">
+          <button data-a="1">Зашло</button><button data-a="2">Не зашло</button>
+          <button class="wide" data-a="0">Не слышал</button>
+        </div>`);
+    }
+    function next(){ idx++; idx < set.length ? ask() : finish(); }
+    function answer(v){
+      mine[idx] = v;
+      // ответы заодно идут в обычные оценки архива
+      if (v) { cur[String(set[idx])] = v === 1 ? 1 : -1; saveVotes(); paintSendbar(); }
+      if (tgApp && tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
+      next();
+    }
+
+    function match(a, b){
+      let both = 0, same = 0;
+      a.forEach((x, i) => { if (x && b[i]) { both++; if (x === b[i]) same++; } });
+      return {both, same, pct: both ? Math.round(same / both * 100) : null};
+    }
+    function recs(){
+      const liked = set.filter((id, i) => mine[i] === 1).map(byId).filter(Boolean);
+      const styles = {};
+      liked.forEach(a => (a.styles || []).forEach(s => styles[s] = (styles[s] || 0) + 1));
+      const seen = new Set(set);
+      return all.filter(a => !seen.has(a.id) && !cur[String(a.id)] && a.has_cover)
+        .map(a => ({a, s: (a.styles || []).reduce((n, s) => n + (styles[s] || 0), 0) + (a.author > 0 ? 1.5 : 0) + Math.random() * .5}))
+        .filter(x => x.s > 1).sort((x, y) => y.s - x.s).slice(0, 3).map(x => x.a);
+    }
+    function row(a, note){
+      return `<button class="row" data-open="${a.id}">${cover(a)}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${note ? " · " + note : ""}</span></div></button>`;
+    }
+
+    function finish(){
+      const myCode = encode(set, mine, myName());
+      let html = `<div class="duel-top"><span class="step">Готово</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>`;
+      let shareText = "";
+      if (theirs) {
+        const r = match(mine, theirs);
+        const nm = esc(theirName);
+        if (r.pct === null || r.both < 3) {
+          html += `<h3>Ты и ${nm} почти не пересеклись</h3><p>Оба слышали только ${r.both} из ${set.length}. По такому процент не посчитать.</p>`;
+        } else {
+          html += `<div class="big">${r.pct}%</div><h3>Совпадение: ты и ${nm}</h3><p>Оба слышали ${r.both} из ${set.length}, одинаково ответили на ${r.same}.</p>`;
+          shareText = `${r.pct}`;
+        }
+        const agree = set.map((id, i) => mine[i] === 1 && theirs[i] === 1 ? byId(id) : null).filter(Boolean);
+        const differ = set.map((id, i) => mine[i] && theirs[i] && mine[i] !== theirs[i] ? [byId(id), mine[i]] : null).filter(x => x && x[0]);
+        const onlyThem = set.map((id, i) => !mine[i] && theirs[i] === 1 ? byId(id) : null).filter(Boolean);
+        if (agree.length) html += `<div class="label">Обоим зашло</div><div class="rows">${agree.slice(0, 3).map(a => row(a)).join("")}</div>`;
+        if (differ.length) html += `<div class="label">Разошлись</div><div class="rows">${differ.slice(0, 3).map(([a, v]) => row(a, v === 1 ? `ты: да · ${nm}: нет` : `ты: нет · ${nm}: да`)).join("")}</div>`;
+        if (onlyThem.length) html += `<div class="label">${nm} советует, ты не слышал</div><div class="rows">${onlyThem.slice(0, 3).map(a => row(a)).join("")}</div>`;
+      } else {
+        const yes = mine.filter(v => v === 1).length, heard = mine.filter(v => v).length;
+        html += `<h3>Твои ответы готовы</h3><p>Слышал ${heard} из ${set.length}, зашло ${yes}. Отправь вызов — друг ответит на те же альбомы, и вы увидите процент совпадения.</p>`;
+      }
+      // сравнение с автором канала — если он оценил хотя бы 3 из этих альбомов
+      const author = set.map(id => { const a = byId(id); return a && a.author ? (a.author > 0 ? 1 : 2) : 0; });
+      const ra = match(mine, author);
+      if (ra.pct !== null && ra.both >= 3) html += `<p>С автором канала: <b style="color:var(--ink)">${ra.pct}%</b> (по ${ra.both} альбомам).</p>`;
+      const rc = recs();
+      if (rc.length) html += `<div class="label">Тебе может зайти</div><div class="rows">${rc.map(a => row(a, a.year || "")).join("")}</div>`;
+      html += theirs
+        ? `${shareText ? `<button class="go" data-x="result">Отправить результат в чат</button>` : ""}<button class="${shareText ? "alt" : "go"}" data-x="invite">Позвать ещё кого-то</button>`
+        : `<button class="go" data-x="invite">Отправить вызов</button>`;
+      html += `<button class="alt" data-x="close">Вернуться в архив</button>`;
+      show(html);
+      Duel._code = myCode; Duel._pct = shareText;
+    }
+
+    // Отправка в чат: через инлайн бота (красивое сообщение с кнопкой), иначе обычным «поделиться»
+    function shareInline(query, fallbackText){
+      const link = `https://t.me/volodyamusicbox_bot/archive?startapp=${Duel._code}`;
+      try {
+        if (inTg && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.7")) {
+          tgApp.switchInlineQuery(query, ["users", "groups", "channels"]);
+          return;
+        }
+      } catch (e) {}
+      const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(fallbackText)}`;
+      inTg ? tgApp.openTelegramLink(url) : window.open(url, "_blank");
+    }
+
+    $("duel").addEventListener("click", e => {
+      const a = e.target.closest("[data-a]"); if (a) return answer(+a.dataset.a);
+      const o = e.target.closest("[data-open]"); if (o) { hide(); return open(+o.dataset.open); }
+      const x = e.target.closest("[data-x]"); if (!x) return;
+      if (x.dataset.x === "close") hide();
+      if (x.dataset.x === "begin") ask();
+      if (x.dataset.x === "invite") shareInline(`вызов ${Duel._code}`, "Сравним музыкальные вкусы: 15 альбомов, минута.");
+      if (x.dataset.x === "result") shareInline(`итог ${Duel._pct} ${theirName.replace(/\s+/g, "_")} ${Duel._code}`, `Совпадение вкусов: ${Duel._pct}% (я и ${theirName}). Сравни со мной:`);
+    });
+    return {start, accept};
+  })();
+
   if (tgApp && tgApp.initData) {
     tgApp.ready(); tgApp.expand();
     document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
@@ -423,6 +625,7 @@ main{padding-block:16px 96px}
     close(); window.scrollTo({top: 0});
   });
   $("more").addEventListener("click", more);
+  $("duel-entry").addEventListener("click", () => Duel.start());
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   $("sendbar-btn").addEventListener("click", send);
   $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });

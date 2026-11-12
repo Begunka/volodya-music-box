@@ -129,13 +129,45 @@ function card(a, env, title) {
 
 async function inline(q, env) {
   const all = await archive(env);
-  const query = norm(q.query.trim());
+  const raw = q.query.trim();
+  const query = norm(raw);
   let results;
-  if (!query) {
+  const duel = raw.match(/^вызов (d[A-Za-z0-9_-]{10,63})$/);
+  const result = raw.match(/^итог (\d{1,3}) (\S+) (d[A-Za-z0-9_-]{10,63})$/);
+  const from = q.from && q.from.first_name ? q.from.first_name : "Кто-то";
+  if (duel) {
+    results = [{
+      type: "article", id: "duel-" + duel[1].slice(0, 40), title: "Отправить вызов",
+      description: "15 альбомов из архива. Друг отвечает — вы видите процент совпадения",
+      input_message_content: {
+        message_text: `${esc(from)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты.`,
+        parse_mode: "HTML",
+      },
+      reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${duel[1]}` }]] },
+    }];
+  } else if (result) {
+    const other = result[2].replace(/_/g, " ");
+    results = [{
+      type: "article", id: "res-" + result[3].slice(0, 40), title: `Отправить результат: ${result[1]}%`,
+      description: `Совпадение с ${other}. В сообщении будет кнопка сравниться с тобой`,
+      input_message_content: {
+        message_text: `Совпадение вкусов: <b>${result[1]}%</b> (${esc(from)} и ${esc(other)}).\nТвоя очередь: 15 альбомов, около минуты.`,
+        parse_mode: "HTML",
+      },
+      reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${result[3]}` }]] },
+    }];
+  } else if (!query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
     results = [
       card(rnd, env, "🎲 Посоветовать случайный альбом"),
+      {
+        type: "article", id: "duel-new", title: "⚔️ Сравнить вкусы",
+        description: "15 альбомов, потом процент совпадения с другом",
+        thumbnail_url: `${env.PAGES}covers/jpg/${fresh[1].id}.jpg`,
+        input_message_content: { message_text: "Сравнение музыкальных вкусов: ответь про 15 альбомов из архива @volodyamusicbox и отправь вызов кому хочешь.", parse_mode: "HTML" },
+        reply_markup: { inline_keyboard: [[{ text: "Начать", url: `${env.MINIAPP}?startapp=duel` }]] },
+      },
       {
         type: "article", id: "open", title: "🗄 Открыть архив",
         description: `${all.length} альбомов канала — с годами, стилями и обложками`,
@@ -163,7 +195,8 @@ async function inline(q, env) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       inline_query_id: q.id, results,
-      cache_time: query ? 120 : 5, is_personal: !query,   // случайный альбом — у каждого свой
+      // случайный альбом и вызовы — у каждого свои
+      cache_time: (query && !duel && !result) ? 120 : 5, is_personal: !query || !!duel || !!result,
     }),
   });
 }
