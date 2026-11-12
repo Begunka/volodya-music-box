@@ -151,6 +151,17 @@ function duelView(d, me) {
   };
 }
 
+// Подписан ли человек на канал. Если Telegram не ответил — пускаем (лучше пропустить, чем зря не пустить).
+async function isSub(env, uid) {
+  if (String(uid) === String(env.OWNER_ID || "")) return true;
+  try {
+    const r = await tgCall(env, "getChatMember", { chat_id: "@volodyamusicbox", user_id: uid });
+    if (!r.ok) return true;
+    const s = r.result.status;
+    return s === "creator" || s === "administrator" || s === "member" || (s === "restricted" && r.result.is_member);
+  } catch (e) { return true; }
+}
+
 let migrated = false;
 async function migrate(env) {
   if (migrated) return;
@@ -164,8 +175,11 @@ async function api(req, url, env, ctx) {
   if (!user) return json({ error: "Открой через Telegram" });
   await migrate(env);
 
+  if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id) });
+
   // создать дуэль: 15 альбомов и ответы автора
   if (url.pathname === "/api/duel/new" && req.method === "POST") {
+    if (!(await isSub(env, user.id))) return json({ error: "sub" });
     const ids = (body.ids || []).slice(0, 20).map(Number), ans = (body.answers || []).slice(0, 20).map(Number);
     if (ids.length < 5 || ids.length !== ans.length) return json({ error: "bad" });
     // не больше 10 вызовов в сутки с одного человека — чтобы никто не завалил базу
@@ -191,6 +205,7 @@ async function api(req, url, env, ctx) {
   if (!d) return json({ error: "not found" });
   if (!m[2] || user.id === d.a_id || d.b_ans) return json(duelView(d, user.id));
   const free = !d.b_id || d.b_id === user.id || !claimActive(d);
+  if (!(await isSub(env, user.id))) return json({ error: "sub" });   // принять и ответить — только подписчикам
 
   // принять вызов: закрепить за собой и показать это в чате
   if (m[2] === "/claim") {

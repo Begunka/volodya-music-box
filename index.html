@@ -119,6 +119,14 @@ main{padding-block:16px 96px}
 .sendbar span{flex:1;min-width:0;font-size:13px;line-height:1.3}
 .sendbar button{flex:none;height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
 .y .heart{color:var(--accent)}
+.gate{position:fixed;inset:0;z-index:40;background:var(--shade);display:flex;align-items:flex-end;justify-content:center;
+  padding:0 max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.gate-card{width:100%;max-width:440px;background:var(--surface);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.gate-card h3{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.2;margin:0;text-wrap:balance}
+.gate-card p{margin:0;color:var(--muted);font-size:14px}
+.gate-card button{height:46px;border-radius:12px;font-weight:600;width:100%}
+.gate-card .go{border:0;background:var(--accent);color:var(--accent-ink)}
+.gate-card .alt{border:1px solid var(--line);background:none;color:var(--ink);font-weight:500}
 .duel-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:14px 0 2px;padding:12px 14px;border-radius:12px;
   border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
 .duel-entry b{font-weight:600}
@@ -233,6 +241,17 @@ main{padding-block:16px 96px}
 </section>
 
 <section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
+
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <h3 id="gate-title">Оценки и дуэли — для подписчиков</h3>
+    <p>Подпишись на @volodyamusicbox и продолжишь с того же места. Смотреть архив можно и без подписки.</p>
+    <button class="go" id="gate-sub" type="button">Подписаться</button>
+    <button class="alt" id="gate-check" type="button">Я подписался</button>
+    <button class="alt" id="gate-close" type="button">Не сейчас</button>
+    <p id="gate-msg" hidden></p>
+  </div>
+</div>
 
 <div class="sendbar" id="sendbar" hidden>
   <span id="sendbar-text"></span>
@@ -421,7 +440,34 @@ main{padding-block:16px 96px}
     const id = String(a.id), was = sent[id] || 0, now = cur[id] || 0;
     return [(a.likes || 0) - (was === 1) + (now === 1), (a.dislikes || 0) - (was === -1) + (now === -1)];
   }
+  // ---------- подписка: лайки и дуэли — только подписчикам канала ----------
+  let subscribed = null, gateAction = null;
+  async function checkSub(){
+    if (!inTg) return true;   // вне Telegram оценки остаются только в этом браузере, проверять нечего
+    try {
+      const r = await fetch("/api/sub?initData=" + encodeURIComponent(tgApp.initData)).then(r => r.json());
+      subscribed = r.sub !== false;
+    } catch (e) { subscribed = true; }
+    return subscribed;
+  }
+  function needSub(action){
+    if (subscribed === true || !inTg) return action();
+    checkSub().then(ok => ok ? action() : openGate(action));
+  }
+  function openGate(action){
+    gateAction = action || null;
+    $("gate-msg").hidden = true;
+    $("gate").hidden = false;
+  }
+  function closeGate(){ $("gate").hidden = true; gateAction = null; }
+  async function gateRecheck(silent){
+    const ok = await checkSub();
+    if (ok) { const act = gateAction; closeGate(); if (act) act(); return; }
+    if (!silent) { $("gate-msg").textContent = "Пока не вижу подписки. Если только что подписался — подожди пару секунд и нажми ещё раз."; $("gate-msg").hidden = false; }
+  }
+
   function vote(id, v){
+    if (subscribed !== true && inTg) return needSub(() => vote(id, v));
     id = String(id);
     if (cur[id] === v) delete cur[id]; else cur[id] = v;
     saveVotes(); paintVote(); paintSendbar();
@@ -446,6 +492,7 @@ main{padding-block:16px 96px}
     $("sendbar-btn").textContent = canSend ? "Отправить" : "Открыть бота";
   }
   function send(){
+    if (subscribed !== true && inTg) return needSub(send);
     if (!canSend) { tgApp.openTelegramLink("https://t.me/volodyamusicbox_bot?start=rate"); return; }
     const diff = pending(), ids = Object.keys(diff).slice(0, 300);   // лимит сообщения — 4 КБ
     const batch = {}; ids.forEach(id => batch[id] = diff[id]);
@@ -509,7 +556,10 @@ main{padding-block:16px 96px}
     const recRow = a => `<button class="row" data-open="${a.id}">${cover(a)}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div></button>`;
 
     // ---- экраны ----
-    function fresh(){ d = null; set = pick(); mine = []; idx = 0; ask(); }
+    function fresh(){
+      if (inTg && subscribed !== true) return needSub(fresh);
+      d = null; set = pick(); mine = []; idx = 0; ask();
+    }
 
     async function start(){
       if (!inTg) return fail("Сравнение вкусов работает внутри Telegram");
@@ -613,8 +663,13 @@ main{padding-block:16px 96px}
       next();
     }
     async function claim(){
+      if (inTg && subscribed !== true) return needSub(claim);
       show(`${top("Сравнение вкусов")}<p>Принимаю вызов…</p>`);
-      try { d = await call(`/api/duel/${d.id}/claim`, {}); } catch (e) { return fail("Не получилось. Проверь интернет и попробуй ещё раз."); }
+      let r;
+      try { r = await call(`/api/duel/${d.id}/claim`, {}); } catch (e) { return fail("Не получилось. Проверь интернет и попробуй ещё раз."); }
+      if (r.error === "sub") { subscribed = false; view(); return openGate(claim); }
+      if (r.error) return fail("Вызов не найден");
+      d = r;
       if (d.role !== "opponent") return view();       // кто-то успел раньше
       mine = []; idx = 0; ask();
     }
@@ -623,11 +678,15 @@ main{padding-block:16px 96px}
       try {
         if (!d) {
           const r = await call("/api/duel/new", {ids: set, answers: mine});
+          if (r.error === "sub") { subscribed = false; show(`${top("Готово")}<p>Ответы не потерялись — подпишись, и вызов сохранится.</p>`); return openGate(done); }
           if (r.error === "limit") return fail("На сегодня вызовов хватит: не больше 10 в сутки. Завтра можно снова.");
           if (!r.id) throw 0;
           d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false, claimed: false};
         } else {
-          d = await call(`/api/duel/${d.id}/answer`, {answers: mine});
+          const r = await call(`/api/duel/${d.id}/answer`, {answers: mine});
+          if (r.error === "sub") { subscribed = false; show(`${top("Готово")}<p>Ответы не потерялись — подпишись, и они сохранятся.</p>`); return openGate(done); }
+          if (r.error) throw 0;
+          d = r;
         }
         view();
       } catch (e) { fail("Не получилось сохранить. Проверь интернет и попробуй ещё раз."); }
@@ -676,6 +735,12 @@ main{padding-block:16px 96px}
     close(); window.scrollTo({top: 0});
   });
   $("more").addEventListener("click", more);
+  $("gate-sub").addEventListener("click", () => tgApp.openTelegramLink("https://t.me/volodyamusicbox"));
+  $("gate-check").addEventListener("click", () => gateRecheck(false));
+  $("gate-close").addEventListener("click", closeGate);
+  // вернулся из канала — проверим сами, без нажатия «Я подписался»
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("gate").hidden) gateRecheck(true); });
+  if (tgApp && tgApp.onEvent) tgApp.onEvent("activated", () => { if (!$("gate").hidden) gateRecheck(true); });
   $("duel-entry").addEventListener("click", () => Duel.start());
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   $("sendbar-btn").addEventListener("click", send);
@@ -687,6 +752,7 @@ main{padding-block:16px 96px}
 
   fetch("data.json").then(r => r.json()).then(d => {
     all = d; buildGenres(); buildDecades();
+    if (inTg) checkSub();   // заранее, чтобы кнопки не ждали
     loadVotes().then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
   }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });
 })();

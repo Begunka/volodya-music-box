@@ -470,6 +470,16 @@ class Bot:
         self.adopt_orphan(a)
         react(*me, "🔥")
 
+    def is_subscriber(self, uid):
+        if uid == self.owner():
+            return True
+        try:
+            m = tg("getChatMember", chat_id="@" + CHANNEL, user_id=uid)
+            return m["status"] in ("creator", "administrator", "member") or (m["status"] == "restricted" and m.get("is_member"))
+        except Exception as e:
+            print("  не проверил подписку:", e)
+            return True   # Telegram не ответил — лучше пропустить
+
     # ---------- оценки из мини-приложения ----------
     def on_ratings(self, m):
         """Мини-приложение присылает пачку оценок: {"r": {"148": 1, "22": -1, "301": 0}}.
@@ -479,6 +489,10 @@ class Bot:
             votes = json.loads(m["web_app_data"]["data"]).get("r", {})
             assert isinstance(votes, dict)
         except Exception:
+            return
+        if not self.is_subscriber(uid):
+            say(uid, f"Оценки учитываются только у подписчиков @{CHANNEL}. Подпишись и отправь их ещё раз — они сохранились.",
+                reply_markup=archive_keyboard())
             return
         known = {str(a["id"]) for a in self.archive.albums}
         r = load_json(RATINGS, {"users": {}, "author": {}})
