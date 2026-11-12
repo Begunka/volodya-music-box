@@ -119,7 +119,7 @@ async function publicPlaylists(req, env, ctx) {
   const cache = caches.default, key = new Request(new URL("/api/pl", req.url).toString());
   const hit = await cache.match(key);
   if (hit) return hit;
-  const { results } = await env.DB.prepare("SELECT * FROM playlists WHERE hidden = 0 ORDER BY updated DESC").all();
+  const { results } = await env.DB.prepare("SELECT * FROM playlists WHERE hidden = 0 AND uid NOT IN (SELECT uid FROM bans) ORDER BY updated DESC").all();
   const now = Date.now();
   const official = results.filter(p => p.official).map(p => plView(p));
   const people = results.filter(p => !p.official && (now - p.updated < PL.stale || p.likes > 0))
@@ -140,7 +140,42 @@ async function playlistApi(req, url, env, user, body) {
     const liked = await env.DB.prepare("SELECT pid FROM playlist_likes WHERE uid = ?").bind(uid).all();
     return json({ owner, playlists: mine.results.map(p => plView(p)), liked: liked.results.map(r => r.pid) });
   }
+
+  // модерация — только админ: все плейлисты (и скрытые) + список забаненных
+  if (url.pathname === "/api/pl/admin") {
+    if (!owner) return json({ error: "bad" });
+    const all = await env.DB.prepare("SELECT p.*, (b.uid IS NOT NULL) AS banned FROM playlists p LEFT JOIN bans b ON b.uid = p.uid WHERE p.official = 0 ORDER BY p.updated DESC LIMIT 300").all();
+    const bans = await env.DB.prepare("SELECT uid, author, at FROM bans ORDER BY at DESC").all();
+    return json({ playlists: all.results.map(p => plView(p, { banned: !!p.banned, ref: p.uid })), bans: bans.results.map(b => ({ ref: b.uid, author: b.author, at: b.at })) });
+  }
   if (req.method !== "POST") return json({ error: "bad" });
+
+  // бан автора: по id плейлиста или по ref из списка забаненных
+  if (url.pathname === "/api/pl/ban") {
+    if (!owner) return json({ error: "bad" });
+    let target = body.ref, author = "";
+    if (body.id) {
+      const p = await env.DB.prepare("SELECT uid, author FROM playlists WHERE id = ?").bind(body.id).first();
+      if (!p) return json({ error: "bad" });
+      target = p.uid; author = p.author;
+    }
+    if (!target || target === uid) return json({ error: "bad" });
+    if (!body.on) {
+      await env.DB.prepare("DELETE FROM bans WHERE uid = ?").bind(target).run();
+      return json({ ok: true });
+    }
+    await env.DB.prepare("INSERT OR REPLACE INTO bans (uid, author, at) VALUES (?, ?, ?)").bind(target, author, Date.now()).run();
+    // убираем всё, что он успел налайкать
+    const votes = await env.DB.prepare("SELECT album, v FROM votes WHERE uid = ?").bind(target).all();
+    const pls = await env.DB.prepare("SELECT pid FROM playlist_likes WHERE uid = ?").bind(target).all();
+    const ops = votes.results.map(r => env.DB.prepare("UPDATE counts SET likes = MAX(likes - ?, 0), dislikes = MAX(dislikes - ?, 0) WHERE album = ?")
+      .bind(r.v === 1 ? 1 : 0, r.v === -1 ? 1 : 0, r.album));
+    pls.results.forEach(r => ops.push(env.DB.prepare("UPDATE playlists SET likes = MAX(likes - 1, 0) WHERE id = ?").bind(r.pid)));
+    ops.push(env.DB.prepare("DELETE FROM votes WHERE uid = ?").bind(target), env.DB.prepare("DELETE FROM playlist_likes WHERE uid = ?").bind(target));
+    await env.DB.batch(ops);
+    return json({ ok: true, removed: votes.results.length + pls.results.length });
+  }
+
   if (!(await isSub(env, user.id))) return json({ error: "sub" });
 
   // опубликовать или обновить
@@ -300,7 +335,11 @@ async function api(req, url, env, ctx) {
   if (!user) return json({ error: "Открой через Telegram" });
   await migrate(env);
 
-  if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id) });
+  const me = await hmacHex(env.BOT_TOKEN, String(user.id), 16);
+  const banned = !!(await env.DB.prepare("SELECT 1 FROM bans WHERE uid = ?").bind(me).first());
+  if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id), ban: banned });
+  // забаненный может смотреть, но не может ничего менять
+  if (banned && req.method === "POST") return json({ error: "ban" });
 
   if (url.pathname.startsWith("/api/pl/")) return playlistApi(req, url, env, user, body);
 

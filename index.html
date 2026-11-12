@@ -480,16 +480,19 @@ textarea.field{min-height:90px;resize:vertical}
     return [(a.likes || 0) - (was === 1) + (now === 1), (a.dislikes || 0) - (was === -1) + (now === -1)];
   }
   // ---------- подписка: лайки и дуэли — только подписчикам канала ----------
-  let subscribed = null, gateAction = null;
+  let subscribed = null, gateAction = null, banned = false;
+  const BAN_TEXT = "Администратор закрыл тебе оценки, сравнения и плейлисты";
+  function banNote(){ const t = $("toast"); t.textContent = BAN_TEXT; t.hidden = false; clearTimeout(banNote._t); banNote._t = setTimeout(() => t.hidden = true, 3500); }
   async function checkSub(){
     if (!inTg) return true;   // вне Telegram оценки остаются только в этом браузере, проверять нечего
     try {
       const r = await fetch("/api/sub?initData=" + encodeURIComponent(tgApp.initData)).then(r => r.json());
-      subscribed = r.sub !== false;
+      subscribed = r.sub !== false; banned = !!r.ban;
     } catch (e) { subscribed = true; }
     return subscribed;
   }
   function needSub(action){
+    if (banned) return banNote();
     if (subscribed === true || !inTg) return action();
     checkSub().then(ok => ok ? action() : openGate(action));
   }
@@ -506,6 +509,7 @@ textarea.field{min-height:90px;resize:vertical}
   }
 
   function vote(id, v){
+    if (banned) return banNote();
     if (subscribed !== true && inTg) return needSub(() => vote(id, v));
     id = String(id);
     if (cur[id] === v) delete cur[id]; else cur[id] = v;
@@ -526,12 +530,12 @@ textarea.field{min-height:90px;resize:vertical}
   function paintSendbar(){ if (!inTg) return; clearTimeout(flushTimer); flushTimer = setTimeout(flush, 1000); }
   // приложение закрывают — обычный запрос может не успеть, поэтому шлём «маяком», он доходит и после закрытия
   function flushOnClose(){
-    if (!inTg || subscribed === false) return;
+    if (!inTg || subscribed === false || banned) return;
     const diff = pending(); if (!Object.keys(diff).length) return;
     try { navigator.sendBeacon("/api/vote", new Blob([JSON.stringify({initData: tgApp.initData, r: diff})], {type: "text/plain"})); } catch (e) {}
   }
   async function flush(){
-    if (!inTg || flushing || subscribed === false) return;
+    if (!inTg || flushing || subscribed === false || banned) return;
     const diff = pending(), ids = Object.keys(diff).slice(0, 300);
     if (!ids.length) return;
     const batch = {}; ids.forEach(id => batch[id] = diff[id]);
@@ -539,6 +543,7 @@ textarea.field{min-height:90px;resize:vertical}
     try {
       const r = await fetch("/api/vote", {method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({initData: tgApp.initData, r: batch})}).then(r => r.json());
+      if (r.error === "ban") { banned = true; banNote(); }
       if (r.ok) {
         ids.forEach(id => { if (batch[id] === 0) delete sent[id]; else sent[id] = batch[id]; });
         Object.entries(r.counts || {}).forEach(([id, [l, d]]) => { const a = all.find(x => x.id === +id); if (a) { a.likes = l; a.dislikes = d; } });
@@ -613,6 +618,7 @@ textarea.field{min-height:90px;resize:vertical}
 
     // ---- экраны ----
     function fresh(){
+      if (banned) return banNote();
       if (inTg && subscribed !== true) return needSub(fresh);
       d = null; set = pick(); mine = []; idx = 0; ask();
     }
@@ -724,6 +730,7 @@ textarea.field{min-height:90px;resize:vertical}
       let r;
       try { r = await call(`/api/duel/${d.id}/claim`, {}); } catch (e) { return fail("Не получилось. Проверь интернет и попробуй ещё раз."); }
       if (r.error === "sub") { subscribed = false; view(); return openGate(claim); }
+      if (r.error === "ban") { banned = true; return fail(BAN_TEXT); }
       if (r.error) return fail("Вызов не найден");
       d = r;
       if (d.role !== "opponent") return view();       // кто-то успел раньше
@@ -735,12 +742,14 @@ textarea.field{min-height:90px;resize:vertical}
         if (!d) {
           const r = await call("/api/duel/new", {ids: set, answers: mine});
           if (r.error === "sub") { subscribed = false; show(`${top("Готово")}<p>Ответы не потерялись — подпишись, и вызов сохранится.</p>`); return openGate(done); }
+          if (r.error === "ban") { banned = true; return fail(BAN_TEXT); }
           if (r.error === "limit") return fail("На сегодня вызовов хватит: не больше 10 в сутки. Завтра можно снова.");
           if (!r.id) throw 0;
           d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false, claimed: false};
         } else {
           const r = await call(`/api/duel/${d.id}/answer`, {answers: mine});
           if (r.error === "sub") { subscribed = false; show(`${top("Готово")}<p>Ответы не потерялись — подпишись, и они сохранятся.</p>`); return openGate(done); }
+          if (r.error === "ban") { banned = true; return fail(BAN_TEXT); }
           if (r.error) throw 0;
           d = r;
         }
@@ -781,8 +790,10 @@ textarea.field{min-height:90px;resize:vertical}
       const init = inTg ? tgApp.initData : "";
       const r = body
         ? await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...body, initData: init})})
-        : await fetch(path + (path.includes("/mine") ? "?initData=" + encodeURIComponent(init) : ""));
-      return r.json();
+        : await fetch(path + (path.includes("/mine") || path.includes("/admin") ? "?initData=" + encodeURIComponent(init) : ""));
+      const j = await r.json();
+      if (j.error === "ban") { banned = true; banNote(); j.error = BAN_TEXT; }
+      return j;
     }
     async function loadLists(force){
       if (!lists || force || Date.now() - listsAt > 60000) { lists = await api("/api/pl"); listsAt = Date.now(); }
@@ -826,6 +837,7 @@ textarea.field{min-height:90px;resize:vertical}
       let html = top(kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей");
       html += `<h3>${kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей"}</h3>`;
       if (kind === "people" || m.owner) html += `<div class="pl-row"><button class="go" data-x="new">Новый плейлист</button>${kind === "people" ? `<button class="alt" data-x="mine">Мои плейлисты</button>` : ""}</div>`;
+      if (kind === "people" && m.owner) html += `<button class="alt" data-x="mod">Модерация</button>`;
       html += items.length ? `<div class="rows">${items.map(card).join("")}</div>`
         : `<p>${kind === "official" ? "Пока пусто — скоро здесь появятся подборки." : "Пока никто не собрал плейлист. Будь первым."}</p>`;
       show(html);
@@ -843,6 +855,24 @@ textarea.field{min-height:90px;resize:vertical}
       show(html);
     }
 
+    // ---- модерация (только админ) ----
+    async function mod(){
+      back = () => list("people");
+      show(`${top("Модерация", true)}<p>Загружаю…</p>`);
+      let r; try { r = await api("/api/pl/admin"); } catch (e) { return toast("Нет связи"); }
+      if (r.error) return show(`${top("Модерация", true)}<h3>Недоступно</h3>`);
+      Playlists._cache = r.playlists;
+      back = () => list("people");
+      const day = t => new Date(t).toLocaleDateString("ru-RU");
+      let html = top("Модерация") + `<button class="alt" data-x="people" style="margin-bottom:12px">← Плейлисты людей</button><h3>Модерация</h3><p>Скрытый плейлист пропадает из общего списка, но по ссылке открывается. Бан: автор больше не может публиковать, лайкать и сравнивать вкусы, его плейлисты и лайки пропадают.</p>`;
+      html += `<div class="label">Забаненные: ${r.bans.length}</div>`;
+      html += r.bans.length ? `<div class="rows">${r.bans.map(b => `<div class="addrow"><div><b>${esc(b.author || "без имени")}</b><span>с ${day(b.at)}</span></div><button type="button" class="alt" style="width:auto;padding:0 12px" data-x="unban" data-ref="${b.ref}">Разбанить</button></div>`).join("")}</div>` : `<p>Никого.</p>`;
+      html += `<div class="label">Плейлисты людей: ${r.playlists.length}</div>`;
+      html += r.playlists.length ? `<div class="rows">${r.playlists.map(pl => card(pl).replace("</b>", `${pl.banned ? " · бан" : pl.hidden ? " · скрыт" : ""}</b>`)).join("")}</div>` : `<p>Пока нет.</p>`;
+      show(html);
+      back = mod;   // из плейлиста «Назад» вернёт сюда
+    }
+
     // ---- один плейлист ----
     async function openById(id){
       show(`${top("Плейлист")}<p>Загружаю…</p>`);
@@ -858,7 +888,7 @@ textarea.field{min-height:90px;resize:vertical}
       if (pl.descr) html += `<p style="color:var(--ink);white-space:pre-line">${esc(pl.descr)}</p>`;
       html += `<div class="pl-row"><button class="${liked ? "go" : "alt"}" data-x="like" data-id="${pl.id}" data-on="${liked ? 0 : 1}">♥ ${pl.likes || 0}</button><button class="alt" data-x="share" data-id="${pl.id}">Отправить</button></div>`;
       if (own) html += `<div class="pl-row"><button class="alt" data-x="editpub" data-id="${pl.id}">Изменить</button><button class="alt" data-x="del" data-id="${pl.id}">Удалить</button></div>`;
-      else if (m.owner) html += `<button class="alt" data-x="hide" data-id="${pl.id}" data-on="${pl.hidden ? 0 : 1}">${pl.hidden ? "Вернуть в общий список" : "Скрыть из общего списка"}</button>`;
+      else if (m.owner) html += `<div class="pl-row"><button class="alt" data-x="hide" data-id="${pl.id}" data-on="${pl.hidden ? 0 : 1}">${pl.hidden ? "Вернуть в список" : "Скрыть"}</button><button class="alt" data-x="ban" data-id="${pl.id}">Забанить автора</button></div>`;
       html += `<div class="rows">${pl.albums.map(byId).filter(Boolean).map(a => `<button class="row" data-open="${a.id}">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div></button>`).join("")}</div>`;
       show(html);
     }
@@ -932,16 +962,26 @@ textarea.field{min-height:90px;resize:vertical}
       if (x.dataset.x === "close") hide();
       if (x.dataset.x === "back") (back || hide)();
       if (x.dataset.x === "mine") myList();
+      if (x.dataset.x === "mod") mod();
+      if (x.dataset.x === "people") list("people");
+      if (x.dataset.x === "ban") {
+        // второе нажатие подтверждает — чтобы не забанить случайно
+        if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = "Точно забанить?"; x.className = "go"; return; }
+        const r = await api("/api/pl/ban", {id, on: true});
+        if (r.ok) { lists = null; toast("Автор забанен"); mod(); } else toast("Не получилось");
+      }
+      if (x.dataset.x === "unban") { const r = await api("/api/pl/ban", {ref: x.dataset.ref, on: false}); if (r.ok) { lists = null; toast("Разбанен"); mod(); } }
       if (x.dataset.x === "edit") edit();
       if (x.dataset.x === "new") { const go = async () => { await loadDraft(); if (draft && draft.id) clearDraft(); if (!draft) { draft = emptyDraft(); saveDraft(); } edit(); }; return inTg && subscribed !== true ? needSub(go) : go(); }
       if (x.dataset.x === "publish") publish();
       if (x.dataset.x === "drop") { clearDraft(); toast("Черновик удалён"); myList(); }
       if (x.dataset.x === "editpub") { const pl = (mine.playlists || []).find(p => p.id === id); draft = {id: pl.id, title: pl.title, descr: pl.descr, tags: pl.tags, albums: pl.albums}; saveDraft(); edit(); }
       if (x.dataset.x === "del") { const r = await api("/api/pl/delete", {id}); if (r.ok) { mine = null; lists = null; toast("Плейлист удалён"); myList(); } }
-      if (x.dataset.x === "hide") { const r = await api("/api/pl/hide", {id, hidden: x.dataset.on === "1"}); if (r.ok) { lists = null; toast(x.dataset.on === "1" ? "Скрыт из общего списка" : "Возвращён"); hide(); } }
+      if (x.dataset.x === "hide") { const r = await api("/api/pl/hide", {id, hidden: x.dataset.on === "1"}); if (r.ok) { lists = null; toast(x.dataset.on === "1" ? "Скрыт из общего списка" : "Возвращён"); back ? back() : hide(); } }
       if (x.dataset.x === "like") {
         const go = async () => { const r = await api("/api/pl/like", {id, on: x.dataset.on === "1"});
           if (r.error === "sub") return openGate(go);
+          if (r.error) return toast(r.error);
           if (r.ok) { mine && (mine.liked = x.dataset.on === "1" ? [...mine.liked, id] : mine.liked.filter(p => p !== id));
             x.textContent = "♥ " + r.likes; x.className = x.dataset.on === "1" ? "go" : "alt"; x.dataset.on = x.dataset.on === "1" ? "0" : "1"; } };
         return inTg && subscribed !== true ? needSub(go) : go();

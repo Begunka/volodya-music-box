@@ -19,3 +19,5 @@ CREATE TABLE IF NOT EXISTS playlists (
   created INTEGER NOT NULL, updated INTEGER NOT NULL, likes INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS playlist_likes (pid TEXT NOT NULL, uid TEXT NOT NULL, PRIMARY KEY (pid, uid));
+-- забаненные: не могут публиковать плейлисты, лайкать и играть в дуэли
+CREATE TABLE IF NOT EXISTS bans (uid TEXT PRIMARY KEY, author TEXT, at INTEGER NOT NULL);
