@@ -326,6 +326,7 @@ let migrated = false;
 async function migrate(env) {
   if (migrated) return;
   await env.DB.prepare("ALTER TABLE duels ADD COLUMN claimed INTEGER").run().catch(() => {});
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS bans (uid TEXT PRIMARY KEY, author TEXT, at INTEGER NOT NULL)").run().catch(() => {});
   migrated = true;
 }
 
