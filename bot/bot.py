@@ -277,6 +277,7 @@ class Bot:
         self.state.setdefault("pending_comments", {})
         self.state.setdefault("pending_photo", None)
         self.state.setdefault("orphans", {})
+        self.state.setdefault("group_copies", {})
         self.archive = Archive()
         self.summary = self.empty_summary()
 
@@ -312,13 +313,25 @@ class Bot:
             self.state["orphans"][album_key(parsed.get("artist"), parsed.get("title"))] = {"post_id": post_id}
             self.summary["missing"].append(
                 f"{parsed.get('artist') or '?'} — {parsed.get('title')} ({post_url(post_id)})")
-        # комментарий напишем, когда копия поста появится в группе обсуждения
+        # комментарий пишется ответом на копию поста в группе обсуждения.
+        # Telegram может прислать эту копию и раньше, и позже самого поста — учитываем оба случая.
         self.state["pending_comments"][str(post_id)] = a["id"] if a else 0
+        copy = self.state["group_copies"].pop(str(post_id), None)
+        if copy:
+            self.comment(copy)
 
     def comment(self, m):
         origin = m.get("forward_origin") or {}
         post_id = str(origin.get("message_id") or m.get("forward_from_message_id") or "")
+        if not post_id:
+            return
         if post_id not in self.state["pending_comments"]:
+            # пост ещё не обработан (или это трек/мем) — запомним копию на всякий случай
+            copies = self.state["group_copies"]
+            copies[post_id] = {"chat": {"id": m["chat"]["id"]}, "message_id": m["message_id"],
+                               "forward_origin": {"message_id": int(post_id)}}
+            for k in sorted(copies, key=int)[:-100]:   # храним только последние 100
+                copies.pop(k)
             return
         album_id = self.state["pending_comments"].pop(post_id)
         sent = say(m["chat"]["id"], comment_text(len(self.archive.albums)),
@@ -354,6 +367,21 @@ class Bot:
         if uid != self.owner():
             return
         text = m.get("text") or ""
+        if text.startswith("/comment"):
+            # ручной запасной вариант: ответь «/comment» на пост в группе комментариев
+            copy = m.get("reply_to_message") or {}
+            pid = str((copy.get("forward_origin") or {}).get("message_id") or "")
+            if copy.get("is_automatic_forward") and pid:
+                if pid not in self.state["pending_comments"]:
+                    parsed = parse_post(copy.get("text") or copy.get("caption") or "")
+                    a = self.archive.find(parsed) if parsed else None
+                    self.state["pending_comments"][pid] = a["id"] if a else 0
+                self.comment(copy)
+            try:
+                tg("deleteMessage", chat_id=m["chat"]["id"], message_id=m["message_id"])
+            except Exception:
+                pass
+            return
         if text.startswith("/diary"):
             self.state["diary_chat_id"] = m["chat"]["id"]
             say(m["chat"]["id"], "Запомнил: этот чат — дневник. Всё, что сюда кидаешь, попадает в архив.")
@@ -506,12 +534,13 @@ class Bot:
     def poll(self, timeout):
         updates = tg("getUpdates", offset=self.state["offset"], timeout=timeout,
                      allowed_updates=["message", "channel_post"])
-        for u in updates:
+        # посты канала — первыми, потом всё остальное (копии постов в группе ссылаются на них)
+        for u in sorted(updates, key=lambda u: "channel_post" not in u):
             try:
                 self.handle(u)
             except Exception as e:
                 print("ошибка при обработке события:", e)
-            self.state["offset"] = u["update_id"] + 1
+            self.state["offset"] = max(self.state["offset"], u["update_id"] + 1)
         if updates:
             self.archive.save()
             save_json(STATE, self.state)
