@@ -38,9 +38,11 @@ jobs:
           secrets: |
             BOT_TOKEN
             GH_TOKEN
+            OWNER_ID
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          OWNER_ID: ${{ secrets.OWNER_ID }}
 
       - name: Записать адрес воркера для бота
         run: |

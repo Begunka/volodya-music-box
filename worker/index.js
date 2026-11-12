@@ -27,6 +27,7 @@ export default {
         ctx.waitUntil(inline(u.inline_query, env).catch(e => console.log("inline", e)));
         return new Response("ok");
       }
+      if (!worthQueuing(u, env)) return new Response("ok");   // треки, болтовня в комментариях — боту не нужны
       await env.DB.prepare("INSERT OR IGNORE INTO queue (update_id, body, received) VALUES (?, ?, ?)")
         .bind(u.update_id, JSON.stringify(u), Date.now()).run();
       ctx.waitUntil(wakeGithub(env));
@@ -48,6 +49,17 @@ export default {
     return new Response("Volodya Music Box", { status: 200 });
   },
 };
+
+// В очередь (и, значит, в запуск GitHub) попадает только то, с чем бот реально работает
+function worthQueuing(u, env) {
+  const isAudio = m => m && (m.audio || m.voice || (m.document && !m.caption));
+  if (u.channel_post) return !isAudio(u.channel_post);
+  const m = u.message;
+  if (!m) return false;
+  if (m.chat.type === "private") return true;                       // личка: /start, оценки, пересылки
+  if (m.is_automatic_forward) return !isAudio(m);                   // копия поста — для комментария
+  return String(m.from && m.from.id) === String(env.OWNER_ID || ""); // в группах — только твои сообщения (дневник, /comment)
+}
 
 function authed(req, secret) {
   return req.headers.get("Authorization") === `Bearer ${secret}`;
