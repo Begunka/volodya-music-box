@@ -137,7 +137,7 @@ async function tgCall(env, method, body) {
 function duelView(d, me) {
   const role = me === d.a_id ? "author" : (d.b_id ? (me === d.b_id ? "opponent" : "other") : "new");
   return {
-    id: d.id, role, ids: JSON.parse(d.ids), a_name: d.a_name, b_name: d.b_name,
+    id: d.id, role, created: d.created, ids: JSON.parse(d.ids), a_name: d.a_name, b_name: d.b_name,
     a_ans: JSON.parse(d.a_ans), b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans,
   };
 }
@@ -155,6 +155,13 @@ async function api(req, url, env, ctx) {
     await env.DB.prepare("INSERT INTO duels (id, created, a_id, a_name, ids, a_ans) VALUES (?, ?, ?, ?, ?, ?)")
       .bind(id, Date.now(), user.id, handle(user), JSON.stringify(ids), JSON.stringify(ans)).run();
     return json({ id });
+  }
+
+  // мои дуэли: последние, где я автор или соперник
+  if (url.pathname === "/api/duel/mine") {
+    const { results } = await env.DB.prepare(
+      "SELECT * FROM duels WHERE a_id = ? OR b_id = ? ORDER BY created DESC LIMIT 10").bind(user.id, user.id).all();
+    return json({ duels: results.map(d => duelView(d, user.id)) });
   }
 
   const m = url.pathname.match(/^\/api\/duel\/([a-f0-9]{10})(\/answer)?$/);

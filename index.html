@@ -468,9 +468,39 @@ main{padding-block:16px 96px}
       return out.sort(() => Math.random() - .5).map(a => a.id);
     }
 
-    function start(){
+    function fresh(){ d = null; set = pick(); mine = []; idx = 0; ask(); }
+
+    // «Сравнить вкусы»: сначала мои вызовы (ждущие ответа и последние итоги), потом — новый
+    async function start(){
       if (!inTg) return fail("Сравнение вкусов работает внутри Telegram");
-      d = null; set = pick(); mine = []; idx = 0; ask();
+      show(`${top("Сравнение вкусов")}<p>Загружаю…</p>`);
+      let list = [];
+      try { list = (await call("/api/duel/mine")).duels || []; } catch (e) {}
+      if (!list.length) return fresh();
+      Duel._list = list;
+      const waiting = list.filter(x => x.role === "author" && !x.done);
+      const finished = list.filter(x => x.done);
+      let html = top("Сравнение вкусов");
+      if (waiting.length) {
+        html += `<div class="label">Ждут ответа</div><div class="rows">${waiting.slice(0, 3).map(x =>
+          `<button class="row" data-duel="${x.id}"><div><b>Вызов от ${new Date(+x.created || Date.now()).toLocaleDateString("ru-RU", {day: "numeric", month: "long"})}</b><span>никто ещё не ответил · отправить или посмотреть</span></div></button>`).join("")}</div>`;
+      }
+      if (finished.length) {
+        html += `<div class="label">Итоги</div><div class="rows">${finished.slice(0, 5).map(x => {
+          const other = x.role === "author" ? x.b_name : x.a_name;
+          const r = match(x.a_ans, x.b_ans);
+          return `<button class="row" data-duel="${x.id}"><div><b>${esc(other)} — ${r.pct === null ? "мало общих" : r.pct + "%"}</b><span>${x.role === "author" ? "ответил на твой вызов" : "ты ответил на вызов"}</span></div></button>`;
+        }).join("")}</div>`;
+      }
+      html += `<button class="go" data-x="fresh">Новый вызов</button><button class="alt" data-x="close">Вернуться в архив</button>`;
+      show(html);
+    }
+
+    function openDuel(id){
+      d = (Duel._list || []).find(x => x.id === id); if (!d) return;
+      set = d.ids; mine = d.role === "author" ? d.a_ans : (d.b_ans || []);
+      if (d.done) return result();
+      invite(true);
     }
 
     async function accept(sp){
@@ -521,10 +551,10 @@ main{padding-block:16px 96px}
       } catch (e) { fail("Не получилось сохранить. Проверь интернет и попробуй ещё раз."); }
     }
 
-    function invite(){
+    function invite(again){
       const yes = mine.filter(v => v === 1).length, heard = mine.filter(v => v).length;
-      show(`${top("Готово")}<h3>Твои ответы сохранены</h3>
-        <p>Слышал ${heard} из ${set.length}, зашло ${yes}. Отправь вызов в чат: ответить сможет один человек — кто первым нажмёт. Когда он ответит, сообщение обновится.</p>
+      show(`${top(again ? "Твой вызов" : "Готово")}<h3>${again ? "Ждёт ответа" : "Твои ответы сохранены"}</h3>
+        <p>Слышал ${heard} из ${set.length}, зашло ${yes}. ${again ? "Если ещё не отправил — отправь" : "Отправь вызов"} в чат: ответить сможет один человек — кто первым нажмёт. Когда он ответит, сообщение обновится, а бот напишет тебе.</p>
         <button class="go" data-x="send">Отправить вызов</button>
         <button class="alt" data-x="close">Вернуться в архив</button>`);
     }
@@ -581,9 +611,11 @@ main{padding-block:16px 96px}
     $("duel").addEventListener("click", e => {
       const a = e.target.closest("[data-a]"); if (a) return answer(+a.dataset.a);
       const o = e.target.closest("[data-open]"); if (o) { hide(); return open(+o.dataset.open); }
+      const du = e.target.closest("[data-duel]"); if (du) return openDuel(du.dataset.duel);
       const x = e.target.closest("[data-x]"); if (!x) return;
       if (x.dataset.x === "close") hide();
       if (x.dataset.x === "new") start();
+      if (x.dataset.x === "fresh") fresh();
       if (x.dataset.x === "begin") ask();
       if (x.dataset.x === "send" && d) {
         try { tgApp.switchInlineQuery(`вызов ${d.id}`, ["users", "groups"]); }
