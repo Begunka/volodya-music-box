@@ -38,7 +38,10 @@ export default {
       return new Response("ok");
     }
 
-    // ----- мини-приложение: дуэли -----
+    // ----- мини-приложение: общий счёт лайков (публичный, кэш 30 секунд) -----
+    if (url.pathname === "/api/counts") return publicCounts(req, env, ctx);
+
+    // ----- мини-приложение: дуэли, оценки -----
     if (url.pathname.startsWith("/api/")) return api(req, url, env, ctx);
 
     // ----- бот на GitHub забирает очередь -----
@@ -70,6 +73,31 @@ function worthQueuing(u, env) {
   }
   if (m.is_automatic_forward) return !isAudio(m);                   // копия поста — для комментария
   return String(m.from && m.from.id) === String(env.OWNER_ID || ""); // в группах — только твои сообщения (дневник, /comment)
+}
+
+async function hmacHex(key, msg, len) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, "0")).join("").slice(0, len);
+}
+
+// {альбом: [лайки, дизлайки]} и оценки автора канала. Кэшируется на 30 секунд,
+// так что сколько бы людей ни открыло архив, база читается пару раз в минуту.
+async function publicCounts(req, env, ctx) {
+  const cache = caches.default, key = new Request(new URL("/api/counts", req.url).toString());
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const c = {}, a = {};
+  const { results } = await env.DB.prepare("SELECT album, likes, dislikes FROM counts WHERE likes > 0 OR dislikes > 0").all();
+  results.forEach(r => c[r.album] = [r.likes, r.dislikes]);
+  if (env.OWNER_ID) {
+    const owner = await hmacHex(env.BOT_TOKEN, String(env.OWNER_ID), 16);
+    const mine = await env.DB.prepare("SELECT album, v FROM votes WHERE uid = ?").bind(owner).all();
+    mine.results.forEach(r => a[r.album] = r.v);
+  }
+  const res = new Response(JSON.stringify({ c, a }), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=30" } });
+  ctx.waitUntil(cache.put(key, res.clone()));
+  return res;
 }
 
 function authed(req, secret) {
@@ -176,6 +204,35 @@ async function api(req, url, env, ctx) {
   await migrate(env);
 
   if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id) });
+
+  // оценки: пачка {альбом: 1 | -1 | 0}, 0 — снять оценку. Приходят прямо из мини-приложения.
+  if (url.pathname === "/api/vote" && req.method === "POST") {
+    if (!(await isSub(env, user.id))) return json({ error: "sub" });
+    const uid = await hmacHex(env.BOT_TOKEN, String(user.id), 16);
+    const entries = Object.entries(body.r || {}).slice(0, 300)
+      .map(([a, v]) => [Number(a), Number(v)]).filter(([a, v]) => a > 0 && [1, -1, 0].includes(v));
+    const touched = [];
+    for (const [album, v] of entries) {
+      const old = await env.DB.prepare("SELECT v FROM votes WHERE uid = ? AND album = ?").bind(uid, album).first();
+      const was = old ? old.v : 0;
+      if (was === v) continue;
+      const dl = (v === 1) - (was === 1), dd = (v === -1) - (was === -1);
+      await env.DB.batch([
+        v === 0
+          ? env.DB.prepare("DELETE FROM votes WHERE uid = ? AND album = ?").bind(uid, album)
+          : env.DB.prepare("INSERT INTO votes (uid, album, v) VALUES (?, ?, ?) ON CONFLICT(uid, album) DO UPDATE SET v = excluded.v").bind(uid, album, v),
+        env.DB.prepare("INSERT INTO counts (album, likes, dislikes) VALUES (?, ?, ?) ON CONFLICT(album) DO UPDATE SET likes = likes + ?, dislikes = dislikes + ?")
+          .bind(album, Math.max(dl, 0), Math.max(dd, 0), dl, dd),
+      ]);
+      touched.push(album);
+    }
+    const counts = {};
+    for (const album of touched) {
+      const c = await env.DB.prepare("SELECT likes, dislikes FROM counts WHERE album = ?").bind(album).first();
+      counts[album] = [c ? c.likes : 0, c ? c.dislikes : 0];
+    }
+    return json({ ok: true, counts });
+  }
 
   // создать дуэль: 15 альбомов и ответы автора
   if (url.pathname === "/api/duel/new" && req.method === "POST") {

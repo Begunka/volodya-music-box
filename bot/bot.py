@@ -531,9 +531,10 @@ class Bot:
                 say(uid, "Готово, ты записан как владелец архива.")
                 return
             album_id = arg.split("_", 1)[1] if arg.startswith("album_") else None
-            say(uid, "📀 Архив альбомов канала @volodyamusicbox.\n"
-                     "Открывай кнопкой «🗄 Архив» внизу — так твои 👍 и 👎 попадут в общий счёт.",
-                reply_markup=archive_keyboard(album_id))
+            # клавиатуру под полем ввода убираем (раньше через неё отправлялись оценки — больше не нужно)
+            say(uid, "📀 Архив альбомов канала @volodyamusicbox.", reply_markup={"remove_keyboard": True})
+            say(uid, "Обложки, годы, стили, лайки и дуэли — внутри.",
+                reply_markup={"inline_keyboard": [[{"text": "🗄 Открыть архив", "url": archive_link(album_id)}]]})
             return
         if uid != self.owner():
             return

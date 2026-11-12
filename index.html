@@ -57,7 +57,7 @@ select.btn{appearance:none;padding-right:14px}
 .chip{flex:none;height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--chip);color:var(--ink);font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 
-main{padding-block:16px 96px}
+main{padding-block:16px 40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 14px}
 @media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr);gap:16px 12px}}
 .tile{display:flex;flex-direction:column;gap:7px;background:none;border:0;padding:0;text-align:left;color:inherit;min-width:0}
@@ -114,10 +114,6 @@ main{padding-block:16px 96px}
 .vote button[aria-pressed="true"] b{color:var(--accent)}
 .author{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0 0 12px}
 .author b{color:var(--ink);font-weight:600}
-.sendbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--ink);color:var(--bg);display:flex;align-items:center;gap:12px;
-  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.sendbar span{flex:1;min-width:0;font-size:13px;line-height:1.3}
-.sendbar button{flex:none;height:36px;padding:0 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
 .y .heart{color:var(--accent)}
 .gate{position:fixed;inset:0;z-index:40;background:var(--shade);display:flex;align-items:flex-end;justify-content:center;
   padding:0 max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
@@ -253,10 +249,7 @@ main{padding-block:16px 96px}
   </div>
 </div>
 
-<div class="sendbar" id="sendbar" hidden>
-  <span id="sendbar-text"></span>
-  <button type="button" id="sendbar-btn"></button>
-</div>
+
 
 <script>
 (() => {
@@ -398,10 +391,9 @@ main{padding-block:16px 96px}
     else if (/^[dex][A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
   }
   // ---------- оценки ----------
-  // cur — мои оценки сейчас, sent — те, что уже ушли боту. Разница = «не отправлено».
-  // Хранятся в облаке Telegram (видны на всех устройствах) и в браузере на всякий случай.
+  // cur — мои оценки сейчас, sent — те, что сервер уже принял. Разница уходит на сервер сама,
+  // через пару секунд после нажатия: никаких кнопок «отправить» и походов в личку бота.
   const inTg = !!(tgApp && tgApp.initData);
-  const canSend = inTg && new URLSearchParams(location.search).get("from") === "kb";
   const cloud = inTg && tgApp.CloudStorage && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.9") ? tgApp.CloudStorage : null;
   let cur = {}, sent = {};
   function saveVotes(){
@@ -482,22 +474,33 @@ main{padding-block:16px 96px}
     $("s-likes").textContent = l; $("s-dislikes").textContent = d;
     $("s-vote").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.v === my));
   }
-  function paintSendbar(){
-    const n = Object.keys(pending()).length;
-    $("sendbar").hidden = !n || !inTg;
-    if (!n || !inTg) return;
-    $("sendbar-text").textContent = canSend
-      ? `Оценок не отправлено: ${n}. Отправь, чтобы их увидели все.`
-      : `Оценок: ${n}. Чтобы их увидели все, открой архив через бота.`;
-    $("sendbar-btn").textContent = canSend ? "Отправить" : "Открыть бота";
-  }
-  function send(){
-    if (subscribed !== true && inTg) return needSub(send);
-    if (!canSend) { tgApp.openTelegramLink("https://t.me/volodyamusicbox_bot?start=rate"); return; }
-    const diff = pending(), ids = Object.keys(diff).slice(0, 300);   // лимит сообщения — 4 КБ
+  // отправка оценок пачкой: ждём 2 секунды тишины после последнего нажатия
+  let flushTimer = null, flushing = false;
+  function paintSendbar(){ if (!inTg) return; clearTimeout(flushTimer); flushTimer = setTimeout(flush, 2000); }
+  async function flush(){
+    if (!inTg || flushing || subscribed === false) return;
+    const diff = pending(), ids = Object.keys(diff).slice(0, 300);
+    if (!ids.length) return;
     const batch = {}; ids.forEach(id => batch[id] = diff[id]);
-    ids.forEach(id => { if (batch[id] === 0) delete sent[id]; else sent[id] = batch[id]; });
-    saveVotes().then(() => tgApp.sendData(JSON.stringify({r: batch})));   // приложение после этого закроется
+    flushing = true;
+    try {
+      const r = await fetch("/api/vote", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({initData: tgApp.initData, r: batch})}).then(r => r.json());
+      if (r.ok) {
+        ids.forEach(id => { if (batch[id] === 0) delete sent[id]; else sent[id] = batch[id]; });
+        Object.entries(r.counts || {}).forEach(([id, [l, d]]) => { const a = all.find(x => x.id === +id); if (a) { a.likes = l; a.dislikes = d; } });
+        saveVotes(); paintVote();
+      }
+    } catch (e) {}
+    flushing = false;
+    if (Object.keys(pending()).length) paintSendbar();   // что-то нажали, пока отправляли
+  }
+  // общий счёт лайков и оценки автора — с сервера (кэш 30 секунд)
+  async function loadCounts(){
+    try {
+      const r = await fetch("/api/counts").then(r => r.json());
+      all.forEach(a => { const c = r.c[a.id]; a.likes = c ? c[0] : 0; a.dislikes = c ? c[1] : 0; a.author = r.a[a.id]; });
+    } catch (e) {}
   }
 
   // ---------- сравнение вкусов ----------
@@ -743,7 +746,8 @@ main{padding-block:16px 96px}
   if (tgApp && tgApp.onEvent) tgApp.onEvent("activated", () => { if (!$("gate").hidden) gateRecheck(true); });
   $("duel-entry").addEventListener("click", () => Duel.start());
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
-  $("sendbar-btn").addEventListener("click", send);
+  // закрывают приложение — дошлём оценки сразу
+  document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
   $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });
   $("scrim").addEventListener("click", close);
   $("close").addEventListener("click", close);
@@ -753,7 +757,7 @@ main{padding-block:16px 96px}
   fetch("data.json").then(r => r.json()).then(d => {
     all = d; buildGenres(); buildDecades();
     if (inTg) checkSub();   // заранее, чтобы кнопки не ждали
-    loadVotes().then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
+    Promise.all([loadVotes(), loadCounts()]).then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
   }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });
 })();
 </script>

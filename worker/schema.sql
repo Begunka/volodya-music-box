@@ -8,3 +8,7 @@ CREATE TABLE IF NOT EXISTS duels (
   a_id INTEGER NOT NULL, a_name TEXT, ids TEXT NOT NULL, a_ans TEXT NOT NULL,
   b_id INTEGER, b_name TEXT, b_ans TEXT, pct INTEGER, msg TEXT
 );
+-- оценки: кто (зашифрованный ID), какой альбом, 1 — зашло, -1 — не зашло
+CREATE TABLE IF NOT EXISTS votes (uid TEXT NOT NULL, album INTEGER NOT NULL, v INTEGER NOT NULL, PRIMARY KEY (uid, album));
+-- готовые счётчики, чтобы не пересчитывать все оценки при каждом открытии архива
+CREATE TABLE IF NOT EXISTS counts (album INTEGER PRIMARY KEY, likes INTEGER NOT NULL DEFAULT 0, dislikes INTEGER NOT NULL DEFAULT 0);
