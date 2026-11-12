@@ -40,6 +40,12 @@ export default {
 
     // ----- мини-приложение: общий счёт лайков (публичный, кэш 30 секунд) -----
     if (url.pathname === "/api/counts") return publicCounts(req, env, ctx);
+    if (url.pathname === "/api/pl" && req.method === "GET") return publicPlaylists(req, env, ctx);
+    const one = url.pathname.match(/^\/api\/pl\/([a-f0-9]{8})$/);
+    if (one && req.method === "GET") {
+      const p = await env.DB.prepare("SELECT * FROM playlists WHERE id = ?").bind(one[1]).first();
+      return json(p && !p.hidden ? plView(p) : { error: "not found" });
+    }
 
     // ----- мини-приложение: дуэли, оценки -----
     if (url.pathname.startsWith("/api/")) return api(req, url, env, ctx);
@@ -98,6 +104,97 @@ async function publicCounts(req, env, ctx) {
   const res = new Response(JSON.stringify({ c, a }), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=30" } });
   ctx.waitUntil(cache.put(key, res.clone()));
   return res;
+}
+
+// ---------------- плейлисты ----------------
+const PL = { min: 5, max: 50, title: 60, descr: 300, tags: 5, perUser: 5, every: 30 * 60 * 1000, stale: 60 * 86400000 };
+
+function plView(p, extra) {
+  return { id: p.id, author: p.author, official: !!p.official, title: p.title, descr: p.descr || "",
+    tags: JSON.parse(p.tags || "[]"), albums: JSON.parse(p.albums), likes: p.likes, updated: p.updated, hidden: !!p.hidden, ...(extra || {}) };
+}
+
+// общий список: от Володи — все, от людей — живые (обновлялись или лайкались за 2 месяца). Кэш на минуту.
+async function publicPlaylists(req, env, ctx) {
+  const cache = caches.default, key = new Request(new URL("/api/pl", req.url).toString());
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const { results } = await env.DB.prepare("SELECT * FROM playlists WHERE hidden = 0 ORDER BY updated DESC").all();
+  const now = Date.now();
+  const official = results.filter(p => p.official).map(p => plView(p));
+  const people = results.filter(p => !p.official && (now - p.updated < PL.stale || p.likes > 0))
+    .map(p => plView(p))
+    .sort((a, b) => (b.likes - a.likes) || (b.updated - a.updated));
+  const res = new Response(JSON.stringify({ official, people }), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" } });
+  ctx.waitUntil(cache.put(key, res.clone()));
+  return res;
+}
+
+async function playlistApi(req, url, env, user, body) {
+  const uid = await hmacHex(env.BOT_TOKEN, String(user.id), 16);
+  const owner = String(user.id) === String(env.OWNER_ID || "");
+
+  // мои плейлисты (включая скрытые и неактивные) и что я лайкнул
+  if (url.pathname === "/api/pl/mine") {
+    const mine = await env.DB.prepare("SELECT * FROM playlists WHERE uid = ? ORDER BY updated DESC").bind(uid).all();
+    const liked = await env.DB.prepare("SELECT pid FROM playlist_likes WHERE uid = ?").bind(uid).all();
+    return json({ owner, playlists: mine.results.map(p => plView(p)), liked: liked.results.map(r => r.pid) });
+  }
+  if (req.method !== "POST") return json({ error: "bad" });
+  if (!(await isSub(env, user.id))) return json({ error: "sub" });
+
+  // опубликовать или обновить
+  if (url.pathname === "/api/pl/save") {
+    const title = String(body.title || "").trim().slice(0, PL.title);
+    const descr = String(body.descr || "").trim().slice(0, PL.descr);
+    const tags = (Array.isArray(body.tags) ? body.tags : []).map(t => String(t).slice(0, 40)).slice(0, PL.tags);
+    const albums = [...new Set((Array.isArray(body.albums) ? body.albums : []).map(Number).filter(n => n > 0))].slice(0, PL.max);
+    if (title.length < 2) return json({ error: "Дай плейлисту название" });
+    if (albums.length < PL.min) return json({ error: `Нужно хотя бы ${PL.min} альбомов` });
+    const now = Date.now(), author = handle(user);
+    if (body.id) {
+      const p = await env.DB.prepare("SELECT uid, updated FROM playlists WHERE id = ?").bind(body.id).first();
+      if (!p || p.uid !== uid) return json({ error: "Это не твой плейлист" });
+      if (!owner && now - p.updated < PL.every) return json({ error: "wait", minutes: Math.ceil((PL.every - (now - p.updated)) / 60000) });
+      await env.DB.prepare("UPDATE playlists SET author = ?, title = ?, descr = ?, tags = ?, albums = ?, updated = ? WHERE id = ?")
+        .bind(author, title, descr, JSON.stringify(tags), JSON.stringify(albums), now, body.id).run();
+      return json({ ok: true, id: body.id });
+    }
+    const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM playlists WHERE uid = ?").bind(uid).first();
+    if (!owner && n.n >= PL.perUser) return json({ error: `Не больше ${PL.perUser} плейлистов. Удали или обнови старый.` });
+    const id = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+    await env.DB.prepare("INSERT INTO playlists (id, uid, author, official, title, descr, tags, albums, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(id, uid, author, owner ? 1 : 0, title, descr, JSON.stringify(tags), JSON.stringify(albums), now, now).run();
+    return json({ ok: true, id });
+  }
+
+  if (url.pathname === "/api/pl/delete") {
+    const p = await env.DB.prepare("SELECT uid FROM playlists WHERE id = ?").bind(body.id).first();
+    if (!p || (p.uid !== uid && !owner)) return json({ error: "bad" });
+    await env.DB.batch([env.DB.prepare("DELETE FROM playlists WHERE id = ?").bind(body.id),
+                        env.DB.prepare("DELETE FROM playlist_likes WHERE pid = ?").bind(body.id)]);
+    return json({ ok: true });
+  }
+
+  // скрыть чужой плейлист — только админ
+  if (url.pathname === "/api/pl/hide") {
+    if (!owner) return json({ error: "bad" });
+    await env.DB.prepare("UPDATE playlists SET hidden = ? WHERE id = ?").bind(body.hidden ? 1 : 0, body.id).run();
+    return json({ ok: true });
+  }
+
+  // ♥ плейлисту (повторно — снять)
+  if (url.pathname === "/api/pl/like") {
+    const had = await env.DB.prepare("SELECT 1 FROM playlist_likes WHERE pid = ? AND uid = ?").bind(body.id, uid).first();
+    const want = !!body.on;
+    if (want && !had) await env.DB.batch([env.DB.prepare("INSERT INTO playlist_likes (pid, uid) VALUES (?, ?)").bind(body.id, uid),
+                                          env.DB.prepare("UPDATE playlists SET likes = likes + 1 WHERE id = ?").bind(body.id)]);
+    if (!want && had) await env.DB.batch([env.DB.prepare("DELETE FROM playlist_likes WHERE pid = ? AND uid = ?").bind(body.id, uid),
+                                          env.DB.prepare("UPDATE playlists SET likes = MAX(likes - 1, 0) WHERE id = ?").bind(body.id)]);
+    const p = await env.DB.prepare("SELECT likes FROM playlists WHERE id = ?").bind(body.id).first();
+    return json({ ok: true, likes: p ? p.likes : 0 });
+  }
+  return json({ error: "not found" });
 }
 
 function authed(req, secret) {
@@ -204,6 +301,8 @@ async function api(req, url, env, ctx) {
   await migrate(env);
 
   if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id) });
+
+  if (url.pathname.startsWith("/api/pl/")) return playlistApi(req, url, env, user, body);
 
   // оценки: пачка {альбом: 1 | -1 | 0}, 0 — снять оценку. Приходят прямо из мини-приложения.
   if (url.pathname === "/api/vote" && req.method === "POST") {
@@ -316,6 +415,26 @@ async function chosen(c, env) {
 
 // ---------------- инлайн-режим ----------------
 
+// карточка плейлиста для чата
+function plArticle(p, all, env) {
+  const ids = JSON.parse(p.albums), first = all.find(a => a.id === ids[0]);
+  const cover = first && first.has_cover ? `${env.PAGES}covers/jpg/${first.id}.jpg` : null;
+  const tags = JSON.parse(p.tags || "[]").join(", ");
+  const res = {
+    type: "article", id: "pl-" + p.id, title: `📼 ${p.title}`,
+    description: `Твой плейлист · ${ids.length} альбомов${tags ? " · " + tags : ""}`,
+    input_message_content: {
+      message_text: `📼 <b>${esc(p.title)}</b> — плейлист ${esc(p.author)}, ${ids.length} альбомов`
+        + (tags ? `\n${esc(tags)}` : "") + (p.descr ? `\n\n${esc(p.descr.slice(0, 200))}${p.descr.length > 200 ? "…" : ""}` : ""),
+      parse_mode: "HTML",
+      link_preview_options: cover ? { url: cover, prefer_large_media: true, show_above_text: true } : { is_disabled: true },
+    },
+    reply_markup: { inline_keyboard: [[{ text: "Открыть плейлист", url: `${env.MINIAPP}?startapp=p${p.id}` }]] },
+  };
+  if (cover) res.thumbnail_url = cover;
+  return res;
+}
+
 // карточка «Отправить вызов» — по умолчанию вызов принимает тот, кто первым нажмёт
 function duelArticle(id, who, env) {
   return {
@@ -388,8 +507,11 @@ async function inline(q, env) {
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
     const pending = q.from ? await env.DB.prepare(
       "SELECT id FROM duels WHERE a_id = ? AND b_id IS NULL AND msg IS NULL ORDER BY created DESC LIMIT 1").bind(q.from.id).first() : null;
+    const myUid = q.from ? await hmacHex(env.BOT_TOKEN, String(q.from.id), 16) : "";
+    const myPl = q.from ? (await env.DB.prepare("SELECT * FROM playlists WHERE uid = ? ORDER BY updated DESC LIMIT 5").bind(myUid).all()).results : [];
     results = [
       ...(pending ? [duelArticle(pending.id, who, env)] : []),
+      ...myPl.map(p => plArticle(p, all, env)),
       card(rnd, env, "🎲 Посоветовать случайный альбом"),
       {
         type: "article", id: "duel-new", title: pending ? "⚔️ Новый вызов" : "⚔️ Сравнить вкусы",

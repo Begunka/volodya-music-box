@@ -120,6 +120,37 @@ main{padding-block:16px 40px}
 .author{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0 0 12px}
 .author b{color:var(--ink);font-weight:600}
 .y .heart{color:var(--accent)}
+.scrim.top{z-index:35}.sheet.top{z-index:36}
+.pl-entries{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 16px}
+.pl-entries button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;min-width:0}
+.pl-entries b{font-weight:600}
+.pl-entries span{color:var(--muted);font-size:12px}
+.mosaic{display:grid;grid-template-columns:1fr 1fr;width:64px;height:64px;border-radius:6px;overflow:hidden;flex:none;background:var(--chip)}
+.mosaic img{width:32px;height:32px;object-fit:cover;display:block}
+.mosaic.big{width:120px;height:120px}.mosaic.big img{width:60px;height:60px}
+.plc{display:flex;gap:12px;align-items:flex-start;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.plc>div:not(.mosaic){min-width:0;display:flex;flex-direction:column;gap:3px}
+.plc b{font-size:15px;line-height:1.25}
+.plc .by{font-size:12px;color:var(--muted)}
+.plc .ex{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.plc .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.plhead{display:flex;gap:14px;align-items:flex-start}
+.plhead>div:not(.mosaic){min-width:0;display:flex;flex-direction:column;gap:4px}
+.pl-row{display:flex;gap:8px;flex-wrap:wrap}
+.pl-row button{flex:1;min-width:120px}
+.field{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;padding:10px 12px}
+textarea.field{min-height:90px;resize:vertical}
+.chipset{display:flex;flex-wrap:wrap;gap:6px}
+.chipset button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font-size:12px}
+.chipset button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.addrow{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.addrow img,.addrow .ph{width:40px;height:40px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
+.addrow div{flex:1;min-width:0;font-size:13px;line-height:1.25}
+.addrow div b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.addrow div span{color:var(--muted)}
+.addrow button{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:13px;max-width:90%}
+.s-more{display:flex;gap:6px;margin:0 0 10px}
 .gate{position:fixed;inset:0;z-index:40;background:var(--shade);display:flex;align-items:flex-end;justify-content:center;
   padding:0 max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 .gate-card{width:100%;max-width:440px;background:var(--surface);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
@@ -216,6 +247,10 @@ main{padding-block:16px 40px}
       <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
       <span aria-hidden="true">→</span>
     </button>
+    <div class="pl-entries">
+      <button type="button" id="pl-official"><b>Плейлисты от Володи</b><span>подборки автора канала</span></button>
+      <button type="button" id="pl-people"><b>Плейлисты людей</b><span>собери свой и поделись</span></button>
+    </div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
     <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
@@ -238,10 +273,14 @@ main{padding-block:16px 40px}
     <button type="button" data-v="-1" aria-pressed="false">👎 Не зашло <b id="s-dislikes">0</b></button>
   </div>
   <p class="note" id="s-note" hidden></p>
+  <div class="s-more"><button class="tag" type="button" id="s-addpl">+ в плейлист</button></div>
   <div class="actions" id="s-actions"></div>
 </section>
 
 <section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
+
+<section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
+<div class="toast" id="toast" hidden></div>
 
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-title">
   <div class="gate-card">
@@ -373,6 +412,8 @@ main{padding-block:16px 40px}
       (a.listen_url ? `<a class="${a.post_url ? "alt" : "go"}" href="${esc(a.listen_url)}" target="_blank" rel="noopener">Слушать</a>` : "");
     $("s-actions").hidden = !a.listen_url && !a.post_url;
     $("s-actions").style.gridTemplateColumns = a.listen_url && a.post_url ? "1fr 1fr" : "1fr";
+    const over = !$("duel").hidden || !$("pl").hidden;
+    $("scrim").classList.toggle("top", over); $("sheet").classList.toggle("top", over);
     $("scrim").hidden = false; $("sheet").hidden = false;
     requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
     $("sheet").scrollTop = 0; $("close").focus({preventScroll:true});
@@ -393,6 +434,7 @@ main{padding-block:16px 40px}
     const m = sp.match(/^album_(\d+)$/);
     if (m) open(+m[1]);
     else if (sp === "duel") Duel.start();
+    else if (/^p[a-f0-9]{8}$/.test(sp)) Playlists.openById(sp.slice(1));
     else if (/^[dex][A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
   }
   // ---------- оценки ----------
@@ -724,6 +766,197 @@ main{padding-block:16px 40px}
     return {start, accept};
   })();
 
+  // ---------- плейлисты ----------
+  // Черновик собирается у человека (облако Telegram), на сервер уходит одним сохранением.
+  // Общий список кэшируется на минуту: смотреть плейлисты почти ничего не стоит.
+  const Playlists = (() => {
+    let lists = null, listsAt = 0, mine = null, draft = null, back = null;
+    const byId = id => all.find(a => a.id === id);
+    const top = (label, withBack) => `<div class="duel-top"><span class="step">${withBack ? `<button class="alt" style="width:auto;height:32px;padding:0 10px" data-x="back">← Назад</button>` : esc(label)}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>`;
+    function show(html){ $("pl-in").innerHTML = html; $("pl").hidden = false; $("pl").scrollTop = 0; }
+    function hide(){ $("pl").hidden = true; }
+    function toast(t){ $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => $("toast").hidden = true, 2600); }
+    const mosaic = (ids, big) => `<div class="mosaic${big ? " big" : ""}">${ids.slice(0, 4).map(byId).filter(Boolean).map(a => a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<i></i>`).join("")}</div>`;
+    async function api(path, body){
+      const init = inTg ? tgApp.initData : "";
+      const r = body
+        ? await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...body, initData: init})})
+        : await fetch(path + (path.includes("/mine") ? "?initData=" + encodeURIComponent(init) : ""));
+      return r.json();
+    }
+    async function loadLists(force){
+      if (!lists || force || Date.now() - listsAt > 60000) { lists = await api("/api/pl"); listsAt = Date.now(); }
+      return lists;
+    }
+    async function loadMine(){
+      if (!inTg) return {owner: false, playlists: [], liked: []};
+      if (!mine) mine = await api("/api/pl/mine");
+      return mine;
+    }
+
+    // ---- черновик ----
+    function saveDraft(){
+      const s = JSON.stringify(draft);
+      try { localStorage.setItem("pldraft", s); } catch (e) {}
+      if (cloud) cloud.setItem("pldraft", s.length < 4000 ? s : JSON.stringify({...draft, descr: draft.descr.slice(0, 200)}), () => {});
+    }
+    function loadDraft(){
+      return new Promise(res => {
+        try { const s = localStorage.getItem("pldraft"); if (s) draft = JSON.parse(s); } catch (e) {}
+        if (draft || !cloud) return res(draft);
+        cloud.getItem("pldraft", (err, v) => { try { if (v) draft = JSON.parse(v); } catch (e) {} res(draft); });
+      });
+    }
+    function clearDraft(){ draft = null; try { localStorage.removeItem("pldraft"); } catch (e) {} if (cloud) (cloud.removeItem ? cloud.removeItem("pldraft", () => {}) : cloud.setItem("pldraft", "", () => {})); }
+    const emptyDraft = () => ({id: null, title: "", descr: "", tags: [], albums: []});
+
+    // ---- списки ----
+    function card(pl){
+      const meta = `${pl.albums.length} альб.${pl.likes ? ` · ♥ ${pl.likes}` : ""}${pl.tags.length ? " · " + esc(pl.tags.slice(0, 3).join(", ")) : ""}`;
+      return `<button class="plc" data-pl="${pl.id}">${mosaic(pl.albums)}<div><b>${esc(pl.title)}</b><span class="by">${esc(pl.author)}</span>
+        ${pl.descr ? `<span class="ex">${esc(pl.descr)}</span>` : ""}<span class="meta">${meta}</span></div></button>`;
+    }
+    async function list(kind){
+      back = () => list(kind);
+      show(`${top(kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей")}<p>Загружаю…</p>`);
+      let l, m;
+      try { [l, m] = await Promise.all([loadLists(), loadMine()]); } catch (e) { return show(`${top("Плейлисты")}<h3>Не получилось загрузить. Проверь интернет.</h3>`); }
+      Playlists._cache = [...l.official, ...l.people, ...(m.playlists || [])];
+      const items = kind === "official" ? l.official : l.people;
+      let html = top(kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей");
+      html += `<h3>${kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей"}</h3>`;
+      if (kind === "people" || m.owner) html += `<div class="pl-row"><button class="go" data-x="new">Новый плейлист</button>${kind === "people" ? `<button class="alt" data-x="mine">Мои плейлисты</button>` : ""}</div>`;
+      html += items.length ? `<div class="rows">${items.map(card).join("")}</div>`
+        : `<p>${kind === "official" ? "Пока пусто — скоро здесь появятся подборки." : "Пока никто не собрал плейлист. Будь первым."}</p>`;
+      show(html);
+    }
+    async function myList(){
+      back = () => list("people");
+      show(`${top("Мои плейлисты", true)}<p>Загружаю…</p>`);
+      mine = null; const m = await loadMine(); await loadDraft();
+      Playlists._cache = [...(Playlists._cache || []), ...m.playlists];
+      let html = top("Мои плейлисты", true) + `<h3>Мои плейлисты</h3>`;
+      if (draft) html += `<div class="label">Черновик</div><button class="plc" data-x="edit">${mosaic(draft.albums)}<div><b>${esc(draft.title || "Без названия")}</b><span class="meta">${draft.albums.length} альб. · ${draft.id ? "изменения не опубликованы" : "не опубликован"}</span></div></button>`;
+      if (m.playlists.length) html += `<div class="label">Опубликованные</div><div class="rows">${m.playlists.map(pl => card(pl).replace("</b>", `${pl.hidden ? " · скрыт" : ""}</b>`)).join("")}</div>`;
+      if (!draft && !m.playlists.length) html += `<p>Пока ничего. Собери первый: название, пара строк предисловия и от 5 до 50 альбомов из архива.</p>`;
+      html += `<button class="go" data-x="new">Новый плейлист</button>`;
+      show(html);
+    }
+
+    // ---- один плейлист ----
+    async function openById(id){
+      show(`${top("Плейлист")}<p>Загружаю…</p>`);
+      try { const pl = await api("/api/pl/" + id); if (pl.error) throw 0; Playlists._cache = [pl]; back = null; view(pl); }
+      catch (e) { show(`${top("Плейлист")}<h3>Плейлист не найден</h3><p>Возможно, автор его удалил.</p><button class="alt" data-x="close">Вернуться в архив</button>`); }
+    }
+    async function view(pl){
+      const m = await loadMine().catch(() => ({owner: false, playlists: [], liked: []}));
+      const own = (m.playlists || []).some(x => x.id === pl.id), liked = (m.liked || []).includes(pl.id);
+      let html = top("Плейлист", !!back) + `<div class="plhead">${mosaic(pl.albums, true)}<div><h3>${esc(pl.title)}</h3><span class="by" style="color:var(--muted)">${pl.official ? "плейлист автора канала · " : ""}${esc(pl.author)}</span>
+        <span class="meta" style="font-family:var(--mono);font-size:11px;color:var(--muted)">${pl.albums.length} альбомов</span></div></div>`;
+      if (pl.tags.length) html += `<div class="tags">${pl.tags.map(t => `<span class="tag" style="display:inline-flex;align-items:center">${esc(t)}</span>`).join("")}</div>`;
+      if (pl.descr) html += `<p style="color:var(--ink);white-space:pre-line">${esc(pl.descr)}</p>`;
+      html += `<div class="pl-row"><button class="${liked ? "go" : "alt"}" data-x="like" data-id="${pl.id}" data-on="${liked ? 0 : 1}">♥ ${pl.likes || 0}</button><button class="alt" data-x="share" data-id="${pl.id}">Отправить</button></div>`;
+      if (own) html += `<div class="pl-row"><button class="alt" data-x="editpub" data-id="${pl.id}">Изменить</button><button class="alt" data-x="del" data-id="${pl.id}">Удалить</button></div>`;
+      else if (m.owner) html += `<button class="alt" data-x="hide" data-id="${pl.id}" data-on="${pl.hidden ? 0 : 1}">${pl.hidden ? "Вернуть в общий список" : "Скрыть из общего списка"}</button>`;
+      html += `<div class="rows">${pl.albums.map(byId).filter(Boolean).map(a => `<button class="row" data-open="${a.id}">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div></button>`).join("")}</div>`;
+      show(html);
+    }
+
+    // ---- редактор ----
+    const styleChoices = () => { const c = {}; all.forEach(a => (a.styles || []).forEach(s => c[s] = (c[s] || 0) + 1)); return Object.entries(c).sort((x, y) => y[1] - x[1]).slice(0, 30).map(x => x[0]); };
+    async function edit(){
+      await loadDraft(); if (!draft) draft = emptyDraft();
+      back = myList;
+      const sel = draft.albums.map(byId).filter(Boolean);
+      show(`${top("Плейлист", true)}<h3>${draft.id ? "Изменить плейлист" : "Новый плейлист"}</h3>
+        <input class="field" id="pl-title" maxlength="60" placeholder="Название — например, «Ночная трасса»" value="${esc(draft.title)}">
+        <textarea class="field" id="pl-descr" maxlength="300" placeholder="Предисловие: о чём подборка, когда её слушать. Его видно до того, как откроют плейлист.">${esc(draft.descr)}</textarea>
+        <div class="label">Жанры (до 5)</div>
+        <div class="chipset" id="pl-tags">${styleChoices().map(s => `<button type="button" data-tag="${esc(s)}" aria-pressed="${draft.tags.includes(s)}">${esc(s)}</button>`).join("")}</div>
+        <div class="label">Альбомы: ${sel.length} из 50 (нужно от 5)</div>
+        <div id="pl-sel">${sel.map(a => `<div class="addrow">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span></div><button type="button" data-rm="${a.id}" aria-label="Убрать">×</button></div>`).join("")}</div>
+        <input class="field" id="pl-q" placeholder="Найти альбом в архиве и добавить" autocomplete="off">
+        <div id="pl-found"></div>
+        <button class="go" data-x="publish">${draft.id ? "Опубликовать изменения" : "Опубликовать"}</button>
+        <button class="alt" data-x="drop">Удалить черновик</button>`);
+      const save = () => { draft.title = $("pl-title").value; draft.descr = $("pl-descr").value; saveDraft(); };
+      $("pl-title").addEventListener("input", save); $("pl-descr").addEventListener("input", save);
+      $("pl-q").addEventListener("input", () => {
+        const q = norm($("pl-q").value.trim());
+        if (q.length < 2) { $("pl-found").innerHTML = ""; return; }
+        $("pl-found").innerHTML = all.filter(a => !draft.albums.includes(a.id) && norm(a.title + " " + (a.artist || "")).includes(q)).slice(0, 8)
+          .map(a => `<div class="addrow">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div><button type="button" data-add="${a.id}" aria-label="Добавить">+</button></div>`).join("") || `<p>Ничего не нашлось</p>`;
+      });
+    }
+    function addToDraft(id){
+      if (draft.albums.includes(id)) return toast("Уже в плейлисте");
+      if (draft.albums.length >= 50) return toast("В плейлисте уже 50 альбомов");
+      draft.albums.push(id); saveDraft();
+    }
+    // «+ в плейлист» с карточки альбома
+    async function addFromAlbum(id){
+      if (inTg && subscribed !== true) return needSub(() => addFromAlbum(id));
+      await loadDraft();
+      if (!draft) draft = emptyDraft();
+      addToDraft(id);
+      toast(`Добавлено в «${draft.title || "новый плейлист"}» · ${draft.albums.length} альб. Опубликовать — в «Мои плейлисты»`);
+    }
+    async function publish(){
+      if (inTg && subscribed !== true) return needSub(publish);
+      draft.title = $("pl-title").value.trim(); draft.descr = $("pl-descr").value.trim(); saveDraft();
+      if (draft.title.length < 2) return toast("Дай плейлисту название");
+      if (draft.albums.length < 5) return toast("Нужно хотя бы 5 альбомов");
+      let r;
+      try { r = await api("/api/pl/save", draft); } catch (e) { return toast("Нет связи. Черновик сохранён, попробуй позже"); }
+      if (r.error === "sub") return openGate(publish);
+      if (r.error === "wait") return toast(`Обновлять можно раз в 30 минут — через ${r.minutes} мин. Черновик сохранён`);
+      if (r.error) return toast(r.error);
+      clearDraft(); mine = null; lists = null;
+      toast("Опубликовано");
+      openById(r.id);
+    }
+
+    $("pl").addEventListener("click", async e => {
+      const o = e.target.closest("[data-open]"); if (o) return open(+o.dataset.open);
+      const plb = e.target.closest("[data-pl]"); if (plb) { const pl = (Playlists._cache || []).find(x => x.id === plb.dataset.pl); if (pl) return view(pl); }
+      const tg = e.target.closest("[data-tag]");
+      if (tg) { const t = tg.dataset.tag, i = draft.tags.indexOf(t);
+        if (i >= 0) draft.tags.splice(i, 1); else if (draft.tags.length < 5) draft.tags.push(t); else return toast("Не больше 5 жанров");
+        tg.setAttribute("aria-pressed", draft.tags.includes(t)); return saveDraft(); }
+      const ad = e.target.closest("[data-add]");
+      if (ad) { const q = $("pl-q").value; addToDraft(+ad.dataset.add); await edit(); $("pl-q").value = q; $("pl-q").dispatchEvent(new Event("input")); return; }
+      const rm = e.target.closest("[data-rm]"); if (rm) { draft.albums = draft.albums.filter(x => x !== +rm.dataset.rm); saveDraft(); return edit(); }
+      const x = e.target.closest("[data-x]"); if (!x) return;
+      const id = x.dataset.id;
+      if (x.dataset.x === "close") hide();
+      if (x.dataset.x === "back") (back || hide)();
+      if (x.dataset.x === "mine") myList();
+      if (x.dataset.x === "edit") edit();
+      if (x.dataset.x === "new") { const go = async () => { await loadDraft(); if (draft && draft.id) clearDraft(); if (!draft) { draft = emptyDraft(); saveDraft(); } edit(); }; return inTg && subscribed !== true ? needSub(go) : go(); }
+      if (x.dataset.x === "publish") publish();
+      if (x.dataset.x === "drop") { clearDraft(); toast("Черновик удалён"); myList(); }
+      if (x.dataset.x === "editpub") { const pl = (mine.playlists || []).find(p => p.id === id); draft = {id: pl.id, title: pl.title, descr: pl.descr, tags: pl.tags, albums: pl.albums}; saveDraft(); edit(); }
+      if (x.dataset.x === "del") { const r = await api("/api/pl/delete", {id}); if (r.ok) { mine = null; lists = null; toast("Плейлист удалён"); myList(); } }
+      if (x.dataset.x === "hide") { const r = await api("/api/pl/hide", {id, hidden: x.dataset.on === "1"}); if (r.ok) { lists = null; toast(x.dataset.on === "1" ? "Скрыт из общего списка" : "Возвращён"); hide(); } }
+      if (x.dataset.x === "like") {
+        const go = async () => { const r = await api("/api/pl/like", {id, on: x.dataset.on === "1"});
+          if (r.error === "sub") return openGate(go);
+          if (r.ok) { mine && (mine.liked = x.dataset.on === "1" ? [...mine.liked, id] : mine.liked.filter(p => p !== id));
+            x.textContent = "♥ " + r.likes; x.className = x.dataset.on === "1" ? "go" : "alt"; x.dataset.on = x.dataset.on === "1" ? "0" : "1"; } };
+        return inTg && subscribed !== true ? needSub(go) : go();
+      }
+      if (x.dataset.x === "share") {
+        const pl = (Playlists._cache || []).find(p => p.id === id);
+        const link = `https://t.me/volodyamusicbox_bot/archive?startapp=p${id}`;
+        const text = pl ? `📼 ${pl.title} — плейлист ${pl.author}, ${pl.albums.length} альбомов` : "Плейлист из архива @volodyamusicbox";
+        const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+        inTg ? tgApp.openTelegramLink(url) : window.open(url, "_blank");
+      }
+    });
+    return {list, openById, addFromAlbum, myList};
+  })();
+
   if (tgApp && tgApp.initData) {
     tgApp.ready(); tgApp.expand();
     document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
@@ -756,6 +989,9 @@ main{padding-block:16px 40px}
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("gate").hidden) gateRecheck(true); });
   if (tgApp && tgApp.onEvent) tgApp.onEvent("activated", () => { if (!$("gate").hidden) gateRecheck(true); });
   $("duel-entry").addEventListener("click", () => Duel.start());
+  $("pl-official").addEventListener("click", () => Playlists.list("official"));
+  $("pl-people").addEventListener("click", () => Playlists.list("people"));
+  $("s-addpl").addEventListener("click", () => { if (openId) Playlists.addFromAlbum(openId); });
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   // закрывают приложение — дошлём оценки сразу
   document.addEventListener("visibilitychange", () => { if (document.hidden) flushOnClose(); });

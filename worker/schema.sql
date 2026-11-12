@@ -12,3 +12,10 @@ CREATE TABLE IF NOT EXISTS duels (
 CREATE TABLE IF NOT EXISTS votes (uid TEXT NOT NULL, album INTEGER NOT NULL, v INTEGER NOT NULL, PRIMARY KEY (uid, album));
 -- готовые счётчики, чтобы не пересчитывать все оценки при каждом открытии архива
 CREATE TABLE IF NOT EXISTS counts (album INTEGER PRIMARY KEY, likes INTEGER NOT NULL DEFAULT 0, dislikes INTEGER NOT NULL DEFAULT 0);
+-- плейлисты: автор хранится зашифрованным ID и @ником для подписи
+CREATE TABLE IF NOT EXISTS playlists (
+  id TEXT PRIMARY KEY, uid TEXT NOT NULL, author TEXT, official INTEGER NOT NULL DEFAULT 0,
+  title TEXT NOT NULL, descr TEXT, tags TEXT, albums TEXT NOT NULL,
+  created INTEGER NOT NULL, updated INTEGER NOT NULL, likes INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS playlist_likes (pid TEXT NOT NULL, uid TEXT NOT NULL, PRIMARY KEY (pid, uid));
