@@ -12544,5 +12544,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6271"
+ },
+ {
+  "title": "The Genius After Hours",
+  "artist": "Ray Charles",
+  "date": "2005-01-18",
+  "tracks": 8,
+  "year": "1961",
+  "id": 681,
+  "added": "2026-11-12T16:18:47",
+  "genres": [
+   "Jazz",
+   "Funk / Soul",
+   "Blues"
+  ],
+  "styles": [
+   "Rhythm & Blues",
+   "Soul"
+  ],
+  "reissue_year": "2005",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
