@@ -96,6 +96,17 @@ async function wakeGithub(env) {
 
 // ---------------- инлайн-режим ----------------
 
+// кто прислал вызов: в коде зашит его @ник (новые вызовы «e…») или имя (старые «d…»)
+function duelAuthor(code) {
+  try {
+    const s = code.slice(1).replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    let rest = bytes.slice(1 + Math.ceil(bytes[0] * 14 / 8));
+    if (code[0] === "e") { rest = rest.slice(3); return rest.length ? "@" + String.fromCharCode(...rest) : ""; }
+    return new TextDecoder().decode(rest);
+  } catch (e) { return ""; }
+}
+
 async function archive(env) {
   // архив лежит рядом, в статике воркера
   const r = await env.ASSETS.fetch(new Request(env.PAGES + "data.json"));
@@ -132,29 +143,36 @@ async function inline(q, env) {
   const raw = q.query.trim();
   const query = norm(raw);
   let results;
-  const duel = raw.match(/^вызов (d[A-Za-z0-9_-]{10,63})$/);
-  const result = raw.match(/^итог (\d{1,3}) (\S+) (d[A-Za-z0-9_-]{10,63})$/);
-  const from = q.from && q.from.first_name ? q.from.first_name : "Кто-то";
+  const C = "([de][A-Za-z0-9_-]{10,63})";
+  const duel = raw.match(new RegExp(`^вызов ${C}(?: (@\\w{3,32}))?$`));
+  const result = raw.match(new RegExp(`^итог (\\d{1,3}) ${C} ${C}(?: (@\\w{3,32}))?$`));
+  const who = q.from && q.from.username ? "@" + q.from.username : (q.from && q.from.first_name) || "Кто-то";
+  const btn = c => ({ inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${c}` }]] });
   if (duel) {
+    const to = duel[2];
     results = [{
-      type: "article", id: "duel-" + duel[1].slice(0, 40), title: "Отправить вызов",
-      description: "15 альбомов из архива. Друг отвечает — вы видите процент совпадения",
+      type: "article", id: "duel-" + duel[1].slice(-40), title: to ? `Отправить вызов ${to}` : "Отправить вызов",
+      description: to ? `Ответить сможет только ${to}` : "Ответить сможет любой, кто нажмёт кнопку",
       input_message_content: {
-        message_text: `${esc(from)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты.`,
+        message_text: (to ? `${esc(who)} вызывает ${esc(to)} сравнить музыкальные вкусы.`
+                          : `${esc(who)} предлагает сравнить музыкальные вкусы — ответить может любой.`)
+          + `\n15 альбомов из архива @volodyamusicbox, около минуты. В конце — процент совпадения.`,
         parse_mode: "HTML",
       },
-      reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${duel[1]}` }]] },
+      reply_markup: btn(duel[1]),
     }];
   } else if (result) {
-    const other = result[2].replace(/_/g, " ");
+    const other = duelAuthor(result[2]) || "собеседник", to = result[4];
     results = [{
-      type: "article", id: "res-" + result[3].slice(0, 40), title: `Отправить результат: ${result[1]}%`,
-      description: `Совпадение с ${other}. В сообщении будет кнопка сравниться с тобой`,
+      type: "article", id: "res-" + result[3].slice(-40), title: `Отправить результат: ${result[1]}%`,
+      description: to ? `И вызвать ${to} на тот же тест` : "С кнопкой, чтобы другие сравнились с тобой",
       input_message_content: {
-        message_text: `Совпадение вкусов: <b>${result[1]}%</b> (${esc(from)} и ${esc(other)}).\nТвоя очередь: 15 альбомов, около минуты.`,
+        message_text: `Сравнение вкусов: ${esc(who)} и ${esc(other)} — <b>${result[1]}%</b>\n`
+          + (to ? `${esc(who)} вызывает ${esc(to)} на тот же тест: 15 альбомов, около минуты.`
+                : `Сравнить свои вкусы с ${esc(who)}: 15 альбомов, около минуты.`),
         parse_mode: "HTML",
       },
-      reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=${result[3]}` }]] },
+      reply_markup: btn(result[3]),
     }];
   } else if (!query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
