@@ -1,1 +1,1 @@
-SELECT id, datetime(created/1000,'unixepoch') AS created, b_id IS NOT NULL AS has_opponent, b_ans IS NOT NULL AS answered, claimed IS NOT NULL AS claimed, msg IS NOT NULL AS has_msg, pct, a_id = b_id AS self_play FROM duels ORDER BY created DESC LIMIT 15;
+SELECT (SELECT COUNT(*) FROM votes) AS votes, (SELECT COUNT(DISTINCT uid) FROM votes) AS voters, (SELECT SUM(likes) FROM counts) AS likes, (SELECT SUM(dislikes) FROM counts) AS dislikes, (SELECT COUNT(*) FROM counts WHERE likes > 0) AS liked_albums;
