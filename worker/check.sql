@@ -1,0 +1,1 @@
+SELECT id, datetime(created/1000,'unixepoch') AS created, b_id IS NOT NULL AS has_opponent, b_ans IS NOT NULL AS answered, claimed IS NOT NULL AS claimed, msg IS NOT NULL AS has_msg, pct, a_id = b_id AS self_play FROM duels ORDER BY created DESC LIMIT 15;
