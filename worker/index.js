@@ -63,7 +63,11 @@ function worthQueuing(u, env) {
   if (u.channel_post) return !isAudio(u.channel_post);
   const m = u.message;
   if (!m) return false;
-  if (m.chat.type === "private") return true;                       // личка: /start, оценки, пересылки
+  if (m.chat.type === "private") {
+    // от тебя — всё (пересылки, команды); от остальных — только /start и отправка оценок, прочий текст выкидываем
+    if (String(m.from && m.from.id) === String(env.OWNER_ID || "")) return true;
+    return !!m.web_app_data || /^\/start\b/.test(m.text || "");
+  }
   if (m.is_automatic_forward) return !isAudio(m);                   // копия поста — для комментария
   return String(m.from && m.from.id) === String(env.OWNER_ID || ""); // в группах — только твои сообщения (дневник, /comment)
 }
@@ -164,6 +168,10 @@ async function api(req, url, env, ctx) {
   if (url.pathname === "/api/duel/new" && req.method === "POST") {
     const ids = (body.ids || []).slice(0, 20).map(Number), ans = (body.answers || []).slice(0, 20).map(Number);
     if (ids.length < 5 || ids.length !== ans.length) return json({ error: "bad" });
+    // не больше 20 вызовов в сутки с одного человека — чтобы никто не завалил базу
+    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM duels WHERE a_id = ? AND created > ?")
+      .bind(user.id, Date.now() - 86400000).first();
+    if (recent && recent.n >= 20) return json({ error: "Хватит на сегодня: 20 вызовов в сутки" });
     const id = crypto.randomUUID().replace(/-/g, "").slice(0, 10);
     await env.DB.prepare("INSERT INTO duels (id, created, a_id, a_name, ids, a_ans) VALUES (?, ?, ?, ?, ?, ?)")
       .bind(id, Date.now(), user.id, handle(user), JSON.stringify(ids), JSON.stringify(ans)).run();
