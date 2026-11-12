@@ -134,18 +134,31 @@ async function tgCall(env, method, body) {
   return r.json();
 }
 
+const CLAIM_TTL = 30 * 60 * 1000;   // принявший вызов держит его 30 минут; не ответил — вызов снова свободен
+const claimActive = d => d.b_id && !d.b_ans && d.claimed && Date.now() - d.claimed < CLAIM_TTL;
+
 function duelView(d, me) {
-  const role = me === d.a_id ? "author" : (d.b_id ? (me === d.b_id ? "opponent" : "other") : "new");
+  const busy = d.b_ans || claimActive(d);
+  const role = me === d.a_id ? "author" : (busy ? (me === d.b_id ? "opponent" : "other") : "new");
   return {
-    id: d.id, role, created: d.created, ids: JSON.parse(d.ids), a_name: d.a_name, b_name: d.b_name,
-    a_ans: JSON.parse(d.a_ans), b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans,
+    id: d.id, role, created: d.created, ids: JSON.parse(d.ids), a_name: d.a_name,
+    b_name: busy ? d.b_name : null, a_ans: JSON.parse(d.a_ans),
+    b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans, claimed: !!busy && !d.b_ans,
   };
+}
+
+let migrated = false;
+async function migrate(env) {
+  if (migrated) return;
+  await env.DB.prepare("ALTER TABLE duels ADD COLUMN claimed INTEGER").run().catch(() => {});
+  migrated = true;
 }
 
 async function api(req, url, env, ctx) {
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
   const user = await tgUser(body.initData || url.searchParams.get("initData"), env.BOT_TOKEN);
   if (!user) return json({ error: "Открой через Telegram" });
+  await migrate(env);
 
   // создать дуэль: 15 альбомов и ответы автора
   if (url.pathname === "/api/duel/new" && req.method === "POST") {
@@ -164,40 +177,58 @@ async function api(req, url, env, ctx) {
     return json({ duels: results.map(d => duelView(d, user.id)) });
   }
 
-  const m = url.pathname.match(/^\/api\/duel\/([a-f0-9]{10})(\/answer)?$/);
+  const m = url.pathname.match(/^\/api\/duel\/([a-f0-9]{10})(\/claim|\/answer)?$/);
   if (!m) return json({ error: "not found" });
   const d = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(m[1]).first();
   if (!d) return json({ error: "not found" });
+  if (!m[2] || user.id === d.a_id || d.b_ans) return json(duelView(d, user.id));
+  const free = !d.b_id || d.b_id === user.id || !claimActive(d);
 
-  if (!m[2]) return json(duelView(d, user.id));
+  // принять вызов: закрепить за собой и показать это в чате
+  if (m[2] === "/claim") {
+    if (!free) return json(duelView(d, user.id));
+    await env.DB.prepare("UPDATE duels SET b_id = ?, b_name = ?, claimed = ? WHERE id = ? AND b_ans IS NULL")
+      .bind(user.id, handle(user), Date.now(), d.id).run();
+    const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
+    if (d.b_id !== user.id) ctx.waitUntil(editDuelMessage(fresh, env).catch(e => console.log("edit", e)));
+    return json(duelView(fresh, user.id));
+  }
 
-  // ответ соперника — принимается один раз и только от первого ответившего
-  if (user.id === d.a_id) return json(duelView(d, user.id));
-  if (d.b_id && d.b_id !== user.id) return json(duelView(d, user.id));
-  if (d.b_ans) return json(duelView(d, user.id));
+  // ответы соперника — один раз
+  if (!free) return json(duelView(d, user.id));
   const ans = (body.answers || []).map(Number);
   const r = duelMatch(JSON.parse(d.a_ans), ans);
   const upd = await env.DB.prepare(
-    "UPDATE duels SET b_id = ?, b_name = ?, b_ans = ?, pct = ? WHERE id = ? AND b_id IS NULL")
+    "UPDATE duels SET b_id = ?, b_name = ?, b_ans = ?, pct = ? WHERE id = ? AND b_ans IS NULL")
     .bind(user.id, handle(user), JSON.stringify(ans), r.pct, d.id).run();
   const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
-  if (upd.meta && upd.meta.changes) ctx.waitUntil(announce(fresh, r, env).catch(e => console.log("announce", e)));
+  if (upd.meta && upd.meta.changes) ctx.waitUntil(editDuelMessage(fresh, env).catch(e => console.log("edit", e)));
   return json(duelView(fresh, user.id));
 }
 
-// соперник ответил: правим сообщение с вызовом и пишем автору
-async function announce(d, r, env) {
-  const line = r.pct === null
-    ? `${esc(d.a_name)} и ${esc(d.b_name)} почти не пересеклись: оба слышали только ${r.both} из 15.`
-    : `Сравнение вкусов: ${esc(d.a_name)} и ${esc(d.b_name)} — <b>${r.pct}%</b>\nОба слышали ${r.both} из 15, одинаково оценили ${r.same}.`;
-  const markup = { inline_keyboard: [[{ text: "Подробнее", url: `${env.MINIAPP}?startapp=x${d.id}` }]] };
-  if (d.msg) await tgCall(env, "editMessageText", { inline_message_id: d.msg, text: line, parse_mode: "HTML", reply_markup: markup });
-  await tgCall(env, "sendMessage", { chat_id: d.a_id, text: `${esc(d.b_name)} ответил на твой вызов.\n${line}`, parse_mode: "HTML", reply_markup: markup });
+// Сообщение с вызовом в чате живёт вместе с дуэлью: принят → итог. В личку ничего не шлём.
+function duelText(d) {
+  if (d.b_ans) {
+    const r = duelMatch(JSON.parse(d.a_ans), JSON.parse(d.b_ans));
+    return r.pct === null
+      ? `${esc(d.a_name)} и ${esc(d.b_name)} почти не пересеклись: оба слышали только ${r.both} из 15.`
+      : `Сравнение вкусов: ${esc(d.a_name)} и ${esc(d.b_name)} — <b>${r.pct}%</b>\nОба слышали ${r.both} из 15, одинаково оценили ${r.same}.`;
+  }
+  if (claimActive(d)) return `${esc(d.a_name)} предлагает сравнить музыкальные вкусы.\nВызов принял ${esc(d.b_name)} — отвечает.`;
+  return `${esc(d.a_name)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты. Ответить может один человек — кто первым нажмёт.`;
+}
+async function editDuelMessage(d, env) {
+  if (!d.msg) return;
+  await tgCall(env, "editMessageText", {
+    inline_message_id: d.msg, text: duelText(d), parse_mode: "HTML",
+    reply_markup: { inline_keyboard: [[{ text: d.b_ans ? "Посмотреть ответы" : "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${d.id}` }]] },
+  });
 }
 
 // Telegram сообщает, что вызов отправлен в чат — запоминаем сообщение, чтобы потом его обновить
 async function chosen(c, env) {
-  const m = (c.query || "").match(/^вызов ([a-f0-9]{10})$/);
+  // id дуэли зашит в id результата («duel-<id>»), так что неважно, писал человек «вызов» или «вызов <id>»
+  const m = (c.result_id || "").match(/^duel-([a-f0-9]{10})$/);
   if (!m || !c.inline_message_id) return;
   await env.DB.prepare("UPDATE duels SET msg = ? WHERE id = ? AND a_id = ? AND msg IS NULL")
     .bind(c.inline_message_id, m[1], c.from.id).run();
@@ -241,7 +272,11 @@ async function inline(q, env) {
   const raw = q.query.trim();
   const query = norm(raw);
   let results;
-  const duel = raw.match(/^вызов ([a-f0-9]{10})$/);
+  let duel = raw.match(/^вызов ([a-f0-9]{10})$/);
+  if (!duel && /^вызов$/.test(raw) && q.from) {   // просто «вызов» — берём твой последний неотвеченный
+    const last = await env.DB.prepare("SELECT id FROM duels WHERE a_id = ? AND b_ans IS NULL ORDER BY created DESC LIMIT 1").bind(q.from.id).first();
+    if (last) duel = [raw, last.id];
+  }
   const who = q.from && q.from.username ? "@" + q.from.username : (q.from && q.from.first_name) || "Кто-то";
   if (duel) {
     const d = await env.DB.prepare("SELECT a_id, b_id FROM duels WHERE id = ?").bind(duel[1]).first();
@@ -256,6 +291,13 @@ async function inline(q, env) {
         reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${duel[1]}` }]] },
       }];
     } else results = [];
+  } else if (/^вызов$/.test(raw)) {
+    results = [{
+      type: "article", id: "duel-none", title: "У тебя нет неотправленных вызовов",
+      description: "Пройди 15 альбомов в архиве — потом вызов появится здесь",
+      input_message_content: { message_text: "Сравнение музыкальных вкусов: 15 альбомов из архива @volodyamusicbox.", parse_mode: "HTML" },
+      reply_markup: { inline_keyboard: [[{ text: "Начать", url: `${env.MINIAPP}?startapp=duel` }]] },
+    }];
   } else if (!query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);

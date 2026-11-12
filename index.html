@@ -148,6 +148,22 @@ main{padding-block:16px 96px}
 .duel .row div span{color:var(--muted)}
 .duel .label{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 .duel .go{height:48px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;width:100%}
+.cmp{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.cmp .h,.cmp .r{display:grid;grid-template-columns:minmax(0,1fr) 76px 76px;align-items:center;gap:6px;padding:8px 10px}
+.cmp .h{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:none;border-bottom:1px solid var(--line)}
+.cmp .h span{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp .r{border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;color:var(--ink);text-align:left;width:100%;font:inherit}
+.cmp .r:first-of-type{border-top:0}
+.cmp .r.same{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.cmp .al{display:flex;gap:8px;align-items:center;min-width:0}
+.cmp .al img,.cmp .al .ph{width:36px;height:36px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
+.cmp .al div{min-width:0;font-size:12px;line-height:1.25}
+.cmp .al b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp .al span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.cmp .v{text-align:center;font-size:12px;font-weight:600}
+.cmp .v.y{color:var(--accent)}
+.cmp .v.n{color:var(--ink)}
+.cmp .v.o{color:var(--muted);font-weight:400}
 .duel .alt{height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500;width:100%}
 </style>
 </head>
@@ -439,7 +455,7 @@ main{padding-block:16px 96px}
 
   // ---------- сравнение вкусов ----------
   // Дуэль хранится на нашем сервере (Cloudflare): одна дуэль — одно сообщение — один соперник.
-  // Кто первым ответил, тот и соперник; повторный вход показывает результат, а не тест заново.
+  // Экран — две колонки: слева твои ответы, справа соперника (появятся, когда он ответит).
   const Duel = (() => {
     const N = 15;
     let set = [], mine = [], d = null, idx = 0;
@@ -449,7 +465,6 @@ main{padding-block:16px 96px}
     function show(html){ $("duel-in").innerHTML = html; $("duel").hidden = false; $("duel").scrollTop = 0; }
     function hide(){ $("duel").hidden = true; }
     function fail(msg){ show(`${top("Сравнение вкусов")}<h3>${esc(msg)}</h3><button class="alt" data-x="close">Вернуться в архив</button>`); }
-
     async function call(path, body){
       const init = inTg ? tgApp.initData : "";
       const r = body
@@ -457,7 +472,6 @@ main{padding-block:16px 96px}
         : await fetch(path + "?initData=" + encodeURIComponent(init));
       return r.json();
     }
-
     function pick(){
       const pool = all.filter(a => a.has_cover && a.artist), byDec = {};
       pool.forEach(a => (byDec[decadeOf(a) || "?"] = byDec[decadeOf(a) || "?"] || []).push(a));
@@ -467,10 +481,36 @@ main{padding-block:16px 96px}
         for (const k of decs) if (byDec[k].length && out.length < N) out.push(byDec[k].pop());
       return out.sort(() => Math.random() - .5).map(a => a.id);
     }
+    function match(a, b){
+      let both = 0, same = 0;
+      a.forEach((x, i) => { if (x && b && b[i]) { both++; if (x === b[i]) same++; } });
+      return {both, same, pct: both >= 3 ? Math.round(same / both * 100) : null};
+    }
 
+    // ---- две колонки ----
+    const mark = v => v === 1 ? `<span class="v y">зашло</span>` : v === 2 ? `<span class="v n">не зашло</span>` : `<span class="v o">не слышал</span>`;
+    function table(left, leftName, right, rightName, rightNote){
+      return `<div class="cmp"><div class="h"><span style="text-align:left">альбом</span><span>${esc(leftName)}</span><span>${esc(rightName || "соперник")}</span></div>
+        ${set.map((id, i) => {
+          const a = byId(id); if (!a) return "";
+          const same = right && left[i] && right[i] && left[i] === right[i];
+          return `<button class="r${same ? " same" : ""}" data-open="${a.id}"><div class="al">${cover(a)}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span></div></div>
+            ${mark(left[i])}${right ? mark(right[i]) : `<span class="v o">${rightNote || "ждём"}</span>`}</button>`;
+        }).join("")}</div>`;
+    }
+    function recs(ans){
+      const styles = {};
+      set.filter((id, i) => ans[i] === 1).map(byId).filter(Boolean).forEach(a => (a.styles || []).forEach(s => styles[s] = (styles[s] || 0) + 1));
+      const seen = new Set(set);
+      return all.filter(a => !seen.has(a.id) && !cur[String(a.id)] && a.has_cover)
+        .map(a => ({a, s: (a.styles || []).reduce((n, s) => n + (styles[s] || 0), 0) + (a.author > 0 ? 1.5 : 0) + Math.random() * .5}))
+        .filter(x => x.s > 1).sort((x, y) => y.s - x.s).slice(0, 3).map(x => x.a);
+    }
+    const recRow = a => `<button class="row" data-open="${a.id}">${cover(a)}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div></button>`;
+
+    // ---- экраны ----
     function fresh(){ d = null; set = pick(); mine = []; idx = 0; ask(); }
 
-    // «Сравнить вкусы»: сначала мои вызовы (ждущие ответа и последние итоги), потом — новый
     async function start(){
       if (!inTg) return fail("Сравнение вкусов работает внутри Telegram");
       show(`${top("Сравнение вкусов")}<p>Загружаю…</p>`);
@@ -478,29 +518,17 @@ main{padding-block:16px 96px}
       try { list = (await call("/api/duel/mine")).duels || []; } catch (e) {}
       if (!list.length) return fresh();
       Duel._list = list;
-      const waiting = list.filter(x => x.role === "author" && !x.done);
+      const open_ = list.filter(x => x.role === "author" && !x.done);
       const finished = list.filter(x => x.done);
       let html = top("Сравнение вкусов");
-      if (waiting.length) {
-        html += `<div class="label">Ждут ответа</div><div class="rows">${waiting.slice(0, 3).map(x =>
-          `<button class="row" data-duel="${x.id}"><div><b>Вызов от ${new Date(+x.created || Date.now()).toLocaleDateString("ru-RU", {day: "numeric", month: "long"})}</b><span>никто ещё не ответил · отправить или посмотреть</span></div></button>`).join("")}</div>`;
-      }
-      if (finished.length) {
-        html += `<div class="label">Итоги</div><div class="rows">${finished.slice(0, 5).map(x => {
-          const other = x.role === "author" ? x.b_name : x.a_name;
-          const r = match(x.a_ans, x.b_ans);
-          return `<button class="row" data-duel="${x.id}"><div><b>${esc(other)} — ${r.pct === null ? "мало общих" : r.pct + "%"}</b><span>${x.role === "author" ? "ответил на твой вызов" : "ты ответил на вызов"}</span></div></button>`;
-        }).join("")}</div>`;
-      }
+      if (open_.length) html += `<div class="label">Без ответа</div><div class="rows">${open_.slice(0, 3).map(x =>
+        `<button class="row" data-duel="${x.id}"><div><b>${x.claimed ? `Отвечает ${esc(x.b_name)}` : "Вызов ждёт соперника"}</b><span>от ${new Date(+x.created).toLocaleDateString("ru-RU", {day: "numeric", month: "long"})}</span></div></button>`).join("")}</div>`;
+      if (finished.length) html += `<div class="label">Итоги</div><div class="rows">${finished.slice(0, 5).map(x => {
+        const other = x.role === "author" ? x.b_name : x.a_name, r = match(x.a_ans, x.b_ans);
+        return `<button class="row" data-duel="${x.id}"><div><b>${esc(other)} — ${r.pct === null ? "мало общих" : r.pct + "%"}</b><span>${x.role === "author" ? "ответил на твой вызов" : "ты ответил на вызов"}</span></div></button>`;
+      }).join("")}</div>`;
       html += `<button class="go" data-x="fresh">Новый вызов</button><button class="alt" data-x="close">Вернуться в архив</button>`;
       show(html);
-    }
-
-    function openDuel(id){
-      d = (Duel._list || []).find(x => x.id === id); if (!d) return;
-      set = d.ids; mine = d.role === "author" ? d.a_ans : (d.b_ans || []);
-      if (d.done) return result();
-      invite(true);
     }
 
     async function accept(sp){
@@ -508,15 +536,62 @@ main{padding-block:16px 96px}
       show(`${top("Сравнение вкусов")}<p>Загружаю…</p>`);
       try { d = await call("/api/duel/" + sp.slice(1)); } catch (e) { return fail("Не получилось загрузить вызов. Проверь интернет и открой ещё раз."); }
       if (!d || d.error) return fail(d && d.error === "Открой через Telegram" ? d.error : "Вызов не найден");
-      set = d.ids; mine = []; idx = 0;
-      if (d.role === "author") return d.done ? result() : show(`${top("Твой вызов")}
-        <h3>Ждём ответа</h3><p>Пока никто не ответил. Как только кто-то пройдёт, сообщение в чате обновится, а бот напишет тебе в личку.</p>
-        <button class="alt" data-x="close">Вернуться в архив</button>`);
-      if (d.done) return result();       // соперник уже ответил — или ты и есть соперник, или вызов занят
+      view();
+    }
+
+    // что показать по текущему состоянию дуэли
+    function view(){
+      set = d.ids; idx = 0;
+      if (d.role === "author") { mine = d.a_ans; return board(); }
+      if (d.done && d.role === "opponent") { mine = d.b_ans; return board(); }
+      if (d.done || (d.role === "other")) return spectator();
+      // свободный вызов или принятый мной, но не законченный
+      mine = [];
       show(`${top("Сравнение вкусов")}<p>Вызов от: <b style="color:var(--ink)">${esc(d.a_name)}</b></p>
         <h3>${set.length} альбомов из архива</h3>
-        <p>Ответь на те же — увидишь процент совпадения. Если альбом не слышал, так и отметь. Ответить может только один человек.</p>
-        <button class="go" data-x="begin">Начать</button>`);
+        <p>Ответь на те же — увидишь, где ваши вкусы совпали. Если альбом не слышал, так и отметь. Ответить может один человек: как только примешь, вызов закрепится за тобой.</p>
+        <button class="go" data-x="claim">Принять вызов</button>`);
+    }
+
+    // мои ответы слева, соперника справа
+    function board(){
+      const isAuthor = d.role === "author", other = isAuthor ? d.b_name : d.a_name, right = isAuthor ? d.b_ans : d.a_ans;
+      let html = top("Сравнение вкусов");
+      if (right) {
+        const r = match(mine, right);
+        html += r.pct === null
+          ? `<h3>Ты и ${esc(other)} почти не пересеклись</h3><p>Оба слышали только ${r.both} из ${set.length}.</p>`
+          : `<div class="big">${r.pct}%</div><h3>Ты и ${esc(other)}</h3><p>Оба слышали ${r.both} из ${set.length}, одинаково оценили ${r.same}. Совпадения подсвечены.</p>`;
+      } else if (d.claimed) {
+        html += `<h3>Вызов принял ${esc(d.b_name)}</h3><p>Отвечает. Его колонка заполнится, когда закончит, — сообщение в чате тоже обновится.</p>`;
+      } else {
+        html += `<h3>Ждём соперника</h3><p>Ответить сможет один человек — кто первым нажмёт кнопку в сообщении.</p>`;
+      }
+      html += table(mine, "ты", right, right ? other : (d.claimed ? d.b_name : ""), d.claimed ? "отвечает" : "ждём");
+      if (isAuthor && !right && !d.claimed) html += `<button class="go" data-x="send">Отправить вызов в чат</button>`;
+      if (right) {
+        const ra = match(mine, set.map(id => { const a = byId(id); return a && a.author ? (a.author > 0 ? 1 : 2) : 0; }));
+        if (ra.pct !== null) html += `<p>С автором канала: <b style="color:var(--ink)">${ra.pct}%</b> (по ${ra.both} альбомам).</p>`;
+        const rc = recs(mine);
+        if (rc.length) html += `<div class="label">Тебе может зайти</div><div class="rows">${rc.map(recRow).join("")}</div>`;
+        html += `<button class="go" data-x="fresh">Новый вызов</button>`;
+      }
+      html += `<button class="alt" data-x="close">Вернуться в архив</button>`;
+      show(html);
+    }
+
+    // посторонний: вызов занят или уже сыгран
+    function spectator(){
+      let html = top("Сравнение вкусов");
+      if (d.done) {
+        const r = match(d.a_ans, d.b_ans);
+        html += `${r.pct === null ? "" : `<div class="big">${r.pct}%</div>`}<h3>${esc(d.a_name)} и ${esc(d.b_name)}</h3><p>Этот вызов уже сыгран. Хочешь сравниться сам — отправь свой.</p>`;
+        html += table(d.a_ans, d.a_name, d.b_ans, d.b_name);
+      } else {
+        html += `<h3>Вызов уже принял ${esc(d.b_name)}</h3><p>Ответить может только он. Можешь отправить свой вызов.</p>`;
+      }
+      html += `<button class="go" data-x="fresh">Свой вызов</button><button class="alt" data-x="close">Вернуться в архив</button>`;
+      show(html);
     }
 
     function ask(){
@@ -536,77 +611,26 @@ main{padding-block:16px 96px}
       if (tgApp && tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
       next();
     }
-
+    async function claim(){
+      show(`${top("Сравнение вкусов")}<p>Принимаю вызов…</p>`);
+      try { d = await call(`/api/duel/${d.id}/claim`, {}); } catch (e) { return fail("Не получилось. Проверь интернет и попробуй ещё раз."); }
+      if (d.role !== "opponent") return view();       // кто-то успел раньше
+      mine = []; idx = 0; ask();
+    }
     async function done(){
       show(`${top("Готово")}<p>Сохраняю…</p>`);
       try {
-        if (!d) {             // свой новый вызов
+        if (!d) {
           const r = await call("/api/duel/new", {ids: set, answers: mine});
           if (!r.id) throw 0;
-          d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false};
-          return invite();
+          d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false, claimed: false};
+        } else {
+          d = await call(`/api/duel/${d.id}/answer`, {answers: mine});
         }
-        d = await call(`/api/duel/${d.id}/answer`, {answers: mine});
-        result(d.role === "other" ? "Пока ты отвечал, на этот вызов уже ответил другой человек. Вот их результат — а свой вызов можно отправить ниже." : "");
+        view();
       } catch (e) { fail("Не получилось сохранить. Проверь интернет и попробуй ещё раз."); }
     }
-
-    function invite(again){
-      const yes = mine.filter(v => v === 1).length, heard = mine.filter(v => v).length;
-      show(`${top(again ? "Твой вызов" : "Готово")}<h3>${again ? "Ждёт ответа" : "Твои ответы сохранены"}</h3>
-        <p>Слышал ${heard} из ${set.length}, зашло ${yes}. ${again ? "Если ещё не отправил — отправь" : "Отправь вызов"} в чат: ответить сможет один человек — кто первым нажмёт. Когда он ответит, сообщение обновится, а бот напишет тебе.</p>
-        <button class="go" data-x="send">Отправить вызов</button>
-        <button class="alt" data-x="close">Вернуться в архив</button>`);
-    }
-
-    function match(a, b){
-      let both = 0, same = 0;
-      a.forEach((x, i) => { if (x && b[i]) { both++; if (x === b[i]) same++; } });
-      return {both, same, pct: both >= 3 ? Math.round(same / both * 100) : null};
-    }
-    const row = (a, note) => `<button class="row" data-open="${a.id}">${cover(a)}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${note ? " · " + note : ""}</span></div></button>`;
-    function recs(ans){
-      const styles = {};
-      set.filter((id, i) => ans[i] === 1).map(byId).filter(Boolean).forEach(a => (a.styles || []).forEach(s => styles[s] = (styles[s] || 0) + 1));
-      const seen = new Set(set);
-      return all.filter(a => !seen.has(a.id) && !cur[String(a.id)] && a.has_cover)
-        .map(a => ({a, s: (a.styles || []).reduce((n, s) => n + (styles[s] || 0), 0) + (a.author > 0 ? 1.5 : 0) + Math.random() * .5}))
-        .filter(x => x.s > 1).sort((x, y) => y.s - x.s).slice(0, 3).map(x => x.a);
-    }
-
-    // результат: с точки зрения участника, а посторонним — просто итог двоих
-    function result(note){
-      const me = d.role === "author" ? d.a_ans : d.role === "opponent" ? d.b_ans : null;
-      const them = d.role === "author" ? d.b_ans : d.a_ans;
-      const themName = esc(d.role === "author" ? d.b_name : d.a_name);
-      let html = top("Сравнение вкусов");
-      if (note) html += `<p>${esc(note)}</p>`;
-      if (!me) {
-        const r = match(d.a_ans, d.b_ans);
-        html += r.pct === null
-          ? `<h3>${esc(d.a_name)} и ${esc(d.b_name)} почти не пересеклись</h3>`
-          : `<div class="big">${r.pct}%</div><h3>${esc(d.a_name)} и ${esc(d.b_name)}</h3><p>Этот вызов уже принят. Хочешь сравниться сам — пройди свой.</p>`;
-        html += `<button class="go" data-x="new">Пройти свой</button><button class="alt" data-x="close">Вернуться в архив</button>`;
-        return show(html);
-      }
-      const r = match(me, them);
-      html += r.pct === null
-        ? `<h3>Ты и ${themName} почти не пересеклись</h3><p>Оба слышали только ${r.both} из ${set.length}. По такому процент не посчитать.</p>`
-        : `<div class="big">${r.pct}%</div><h3>Совпадение вкусов: ты и ${themName}</h3><p>Оба слышали ${r.both} из ${set.length} альбомов и одинаково оценили ${r.same}.</p>`;
-      const agree = set.map((id, i) => me[i] === 1 && them[i] === 1 ? byId(id) : null).filter(Boolean);
-      const differ = set.map((id, i) => me[i] && them[i] && me[i] !== them[i] ? [byId(id), me[i]] : null).filter(x => x && x[0]);
-      const onlyThem = set.map((id, i) => !me[i] && them[i] === 1 ? byId(id) : null).filter(Boolean);
-      if (agree.length) html += `<div class="label">Обоим зашло</div><div class="rows">${agree.slice(0, 3).map(a => row(a)).join("")}</div>`;
-      if (differ.length) html += `<div class="label">Разошлись</div><div class="rows">${differ.slice(0, 3).map(([a, v]) => row(a, v === 1 ? `ты: да · ${themName}: нет` : `ты: нет · ${themName}: да`)).join("")}</div>`;
-      if (onlyThem.length) html += `<div class="label">${themName} советует, ты не слышал</div><div class="rows">${onlyThem.slice(0, 3).map(a => row(a)).join("")}</div>`;
-      const author = set.map(id => { const a = byId(id); return a && a.author ? (a.author > 0 ? 1 : 2) : 0; });
-      const ra = match(me, author);
-      if (ra.pct !== null) html += `<p>С автором канала: <b style="color:var(--ink)">${ra.pct}%</b> (по ${ra.both} альбомам).</p>`;
-      const rc = recs(me);
-      if (rc.length) html += `<div class="label">Тебе может зайти</div><div class="rows">${rc.map(a => row(a, a.year || "")).join("")}</div>`;
-      html += `<button class="go" data-x="new">Новый вызов</button><button class="alt" data-x="close">Вернуться в архив</button>`;
-      show(html);
-    }
+    function openDuel(id){ d = (Duel._list || []).find(x => x.id === id); if (d) view(); }
 
     $("duel").addEventListener("click", e => {
       const a = e.target.closest("[data-a]"); if (a) return answer(+a.dataset.a);
@@ -614,9 +638,8 @@ main{padding-block:16px 96px}
       const du = e.target.closest("[data-duel]"); if (du) return openDuel(du.dataset.duel);
       const x = e.target.closest("[data-x]"); if (!x) return;
       if (x.dataset.x === "close") hide();
-      if (x.dataset.x === "new") start();
       if (x.dataset.x === "fresh") fresh();
-      if (x.dataset.x === "begin") ask();
+      if (x.dataset.x === "claim") claim();
       if (x.dataset.x === "send" && d) {
         try { tgApp.switchInlineQuery(`вызов ${d.id}`, ["users", "groups"]); }
         catch (err) { fail("Обнови Telegram: эта версия не умеет отправлять вызовы из мини-приложения."); }
