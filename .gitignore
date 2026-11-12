@@ -6,3 +6,4 @@ diary_chat_id.txt
 *.session
 __pycache__/
 *.tmp
+worker/public/

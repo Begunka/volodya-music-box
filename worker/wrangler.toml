@@ -3,9 +3,16 @@ main = "index.js"
 compatibility_date = "2025-06-01"
 workers_dev = true
 
+# Мини-приложение (index.html, data.json, обложки) раздаётся отсюда как статика:
+# такие запросы у Cloudflare бесплатные и безлимитные и не тратят лимит воркера.
+# Папку public собирает GitHub перед развёртыванием.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
 [vars]
 REPO = "Begunka/volodya-music-box"
-PAGES = "https://begunka.github.io/volodya-music-box/"
+PAGES = "https://volodya-archive.zaharmakaka.workers.dev/"
 MINIAPP = "https://t.me/volodyamusicbox_bot/archive"
 
 [[d1_databases]]

@@ -45,7 +45,8 @@ RATINGS = ROOT / "ratings.json"       # лайки/дизлайки подпис
 STATE = ROOT / "bot_state.json"       # номер последнего обработанного события, владелец
 
 CHANNEL = "volodyamusicbox"
-PAGES_URL = "https://begunka.github.io/volodya-music-box/"
+# мини-приложение раздаёт Cloudflare (безлимитный трафик); GitHub Pages — запасная копия
+PAGES_URL = "https://volodya-archive.zaharmakaka.workers.dev/"
 # Ссылка на мини-приложение. Появится после /newapp в BotFather; пока пусто — в комментарии
 # будет ссылка на бота.
 MINIAPP = os.environ.get("MINIAPP_LINK", "https://t.me/volodyamusicbox_bot/archive")

@@ -97,8 +97,8 @@ async function wakeGithub(env) {
 // ---------------- инлайн-режим ----------------
 
 async function archive(env) {
-  // архив берём с сайта; Cloudflare кэширует его на 5 минут, чтобы не дёргать GitHub зря
-  const r = await fetch(env.PAGES + "data.json", { cf: { cacheTtl: 300, cacheEverything: true } });
+  // архив лежит рядом, в статике воркера
+  const r = await env.ASSETS.fetch(new Request(env.PAGES + "data.json"));
   return r.json();
 }
 

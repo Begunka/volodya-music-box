@@ -38,6 +38,7 @@ jobs:
         run: python bot/bot.py
 
       - name: Сохранить архив
+        id: save
         run: |
           git config user.name "volodyamusicbox-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -48,4 +49,23 @@ jobs:
             git commit -m "Архив: обновление от бота"
             git pull --rebase
             git push
+            echo "changed=yes" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Собрать мини-приложение
+        if: steps.save.outputs.changed == 'yes'
+        run: |
+          mkdir -p worker/public
+          cp index.html data.json worker/public/
+          cp -r covers worker/public/covers
+
+      - name: Обновить мини-приложение на Cloudflare
+        if: steps.save.outputs.changed == 'yes'
+        continue-on-error: true      # если Cloudflare недоступен — сайт на GitHub Pages всё равно обновится
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          wranglerVersion: "4"
+          command: deploy

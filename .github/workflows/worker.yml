@@ -3,7 +3,7 @@ name: Развернуть Cloudflare-воркер
 on:
   push:
     branches: [main]
-    paths: ["worker/**", ".github/workflows/worker.yml"]
+    paths: ["worker/**", ".github/workflows/worker.yml", "index.html"]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +16,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Собрать мини-приложение для раздачи
+        run: |
+          mkdir -p worker/public
+          cp index.html data.json worker/public/
+          cp -r covers worker/public/covers
 
       - name: Таблицы очереди (если ещё нет)
         uses: cloudflare/wrangler-action@v3
