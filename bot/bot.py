@@ -253,6 +253,20 @@ def iso(ts):
     return datetime.fromtimestamp(ts, tz=timezone.utc).astimezone().replace(tzinfo=None).isoformat(timespec="seconds")
 
 
+# Текст комментария под постом в канале. {total} — сколько альбомов в архиве.
+COMMENT_TEXT = "🎧 <b>В архиве больше музыки</b>\nУже {total} альбомов канала — с годами, стилями и обложками."
+COMMENT_BUTTON = "🗄 Открыть архив"
+
+
+def comment_text(total):
+    return COMMENT_TEXT.format(total=total)
+
+
+def comment_button(album_id=None):
+    """Кнопка сразу открывает мини-приложение — на карточке альбома, если он уже в архиве."""
+    return {"inline_keyboard": [[{"text": COMMENT_BUTTON, "url": archive_link(album_id)}]]}
+
+
 PHOTO_WAIT = 15 * 60   # сколько ждать подпись к картинке, присланной без текста
 
 
@@ -262,6 +276,7 @@ class Bot:
         self.state.setdefault("offset", 0)
         self.state.setdefault("pending_comments", {})
         self.state.setdefault("pending_photo", None)
+        self.state.setdefault("orphans", {})
         self.archive = Archive()
         self.summary = self.empty_summary()
 
@@ -286,16 +301,19 @@ class Bot:
         parsed = parse_post(text, links_of(m))
         if not parsed:
             return
+        post_id = m["message_id"]
         a = self.archive.find(parsed)
         if a:
-            if a.get("post_url") != post_url(m["message_id"]):
-                a["post_url"] = post_url(m["message_id"])
+            if a.get("post_url") != post_url(post_id):
+                a["post_url"] = post_url(post_id)
                 self.archive.changed = True
         else:
+            # пост вышел раньше, чем альбом попал в дневник — запомним и привяжем потом
+            self.state["orphans"][album_key(parsed.get("artist"), parsed.get("title"))] = {"post_id": post_id}
             self.summary["missing"].append(
-                f"{parsed.get('artist') or '?'} — {parsed.get('title')} ({post_url(m['message_id'])})")
+                f"{parsed.get('artist') or '?'} — {parsed.get('title')} ({post_url(post_id)})")
         # комментарий напишем, когда копия поста появится в группе обсуждения
-        self.state["pending_comments"][str(m["message_id"])] = a["id"] if a else 0
+        self.state["pending_comments"][str(post_id)] = a["id"] if a else 0
 
     def comment(self, m):
         origin = m.get("forward_origin") or {}
@@ -303,19 +321,29 @@ class Bot:
         if post_id not in self.state["pending_comments"]:
             return
         album_id = self.state["pending_comments"].pop(post_id)
-        a = next((x for x in self.archive.albums if x["id"] == album_id), None) if album_id else None
-        total = len(self.archive.albums)
-        if a:
-            bits = [b for b in (a.get("year"), ", ".join((a.get("styles") or [])[:2])) if b]
-            text = (f"📀 <b>Пластинка №{a['id']} сдана в архив.</b>\n"
-                    + (" · ".join(bits) + " · " if bits else "")
-                    + f"ещё {total - 1} на полках")
-            button = archive_link(a["id"])
-        else:
-            text = f"📀 <b>В архиве канала уже {total} пластинок.</b>\nВсе обложки, годы и стили — на полках."
-            button = archive_link()
-        say(m["chat"]["id"], text, reply_parameters={"message_id": m["message_id"]},
-            reply_markup={"inline_keyboard": [[{"text": "🗄 Открыть архив", "url": button}]]})
+        sent = say(m["chat"]["id"], comment_text(len(self.archive.albums)),
+                   reply_parameters={"message_id": m["message_id"]},
+                   reply_markup=comment_button(album_id or None))
+        if not album_id and sent:
+            # запомним, где комментарий: когда альбом появится в архиве, кнопка станет вести прямо на него
+            for o in self.state["orphans"].values():
+                if str(o.get("post_id")) == post_id:
+                    o.update(chat_id=sent["chat"]["id"], comment_id=sent["message_id"])
+
+    def adopt_orphan(self, a):
+        """Альбом только что попал в архив — а пост про него в канале уже был?"""
+        o = self.state["orphans"].pop(album_key(a.get("artist"), a.get("title")), None)
+        if not o:
+            return
+        a["post_url"] = post_url(o["post_id"])
+        self.archive.changed = True
+        self.summary["linked"] += 1
+        if o.get("comment_id"):
+            try:
+                tg("editMessageReplyMarkup", chat_id=o["chat_id"], message_id=o["comment_id"],
+                   reply_markup=comment_button(a["id"]))
+            except Exception as e:
+                print("  кнопку в комментарии не обновил:", e)
 
     # ---------- группы ----------
     def on_group_message(self, m):
@@ -370,6 +398,7 @@ class Bot:
             return
         a = self.archive.add(parsed, iso(m["date"]), photo)
         self.summary["added"].append(a)
+        self.adopt_orphan(a)
         react(*me, "🔥")
 
     # ---------- личка ----------
@@ -464,7 +493,7 @@ class Bot:
         if s["skipped"]:
             lines.append(f"🤷 Не альбомы: {s['skipped']}")
         if s["missing"]:
-            lines.append("📭 В канале вышло, а в архиве нет — закинь в дневник:")
+            lines.append("📭 В канале вышло, а в архиве пока нет — закинь в дневник, и я сам привяжу пост:")
             lines += [f"  • {html.escape(x)}" for x in s["missing"][:10]]
         if s["foreign"]:
             lines.append(f"🤔 Переслано не из канала: {s['foreign']}")
