@@ -6233,7 +6233,8 @@
   "id": 335,
   "added": "2026-05-04T11:45:30",
   "post_url": "https://t.me/volodyamusicbox/4914",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794552505
  },
  {
   "title": "Old Boot Wine",
@@ -6264,7 +6265,16 @@
   "id": 337,
   "added": "2026-05-04T11:45:30",
   "post_url": "https://t.me/volodyamusicbox/3408",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Fusion",
+   "Jazz-Rock"
+  ],
+  "year_checked": true
  },
  {
   "title": "Cloud Nine",
