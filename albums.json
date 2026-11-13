@@ -8530,7 +8530,8 @@
   "free_form": true,
   "id": 460,
   "added": "2026-07-09T03:18:18",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551062
  },
  {
   "title": "On the Shore",
@@ -8750,7 +8751,8 @@
   "year": "2012",
   "id": 471,
   "added": "2026-07-15T23:36:19",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551062
  },
  {
   "title": "The Wild Man",
