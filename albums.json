@@ -1175,11 +1175,19 @@
   "date": "2010-01-26",
   "tracks": 11,
   "listen_url": "https://open.spotify.com/album/3qFxhHlPBzcpLdcxyMqqwX",
-  "year": "2010",
+  "year": "2009",
   "id": 63,
   "added": "2026-04-18T19:37:10",
   "post_url": "https://t.me/volodyamusicbox/1861",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "reissue_year": "2010",
+  "year_checked": true
  },
  {
   "title": "The Crazy World Of Arthur Brown",
@@ -1246,7 +1254,15 @@
   "year": "1967",
   "id": 67,
   "added": "2026-04-18T19:37:10",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Rock Opera"
+  ],
+  "year_checked": true
  },
  {
   "title": "Atom Heart Mother",
