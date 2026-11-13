@@ -12608,5 +12608,24 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6297"
+ },
+ {
+  "title": "L",
+  "artist": "Steve Hillage",
+  "date": "2003-03-01",
+  "tracks": 6,
+  "year": "1976",
+  "id": 684,
+  "added": "2026-11-13T03:23:00",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Prog Rock"
+  ],
+  "reissue_year": "2003",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
