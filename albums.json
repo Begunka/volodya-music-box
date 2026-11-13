@@ -9335,10 +9335,18 @@
   "artist": "Bulat Okudzhava",
   "date": "1976-01-01",
   "tracks": 17,
-  "year": "1976",
+  "year": "1973",
   "id": 502,
   "added": "2026-08-12T19:48:22",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Chanson"
+  ],
+  "reissue_year": "1976",
+  "year_checked": true
  },
  {
   "title": "Cottonwoodhill",
@@ -9417,7 +9425,19 @@
   "id": 506,
   "added": "2026-08-16T11:34:28",
   "title_full": "The Nightmare of J.B. Stanislas (Bonus Version) 🅴",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Pop",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Psychedelic",
+   "Folk",
+   "Symphonic Rock"
+  ],
+  "year_checked": true
  },
  {
   "title": "Let's Pretend",
