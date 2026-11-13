@@ -265,7 +265,8 @@
   "year": "2021",
   "id": 15,
   "added": "2026-04-18T19:37:09",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794555453
  },
  {
   "title": "The Money Store",
@@ -300,7 +301,16 @@
   "id": 17,
   "added": "2026-04-18T19:37:09",
   "post_url": "https://t.me/volodyamusicbox/269",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Lo-Fi",
+   "Dream Pop",
+   "Shoegaze"
+  ],
+  "year_checked": true
  },
  {
   "title": "Octopus",
