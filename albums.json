@@ -9510,7 +9510,14 @@
   "id": 511,
   "added": "2026-08-21T20:39:03",
   "title_full": "Plastic Ono Band 🅴",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Pop Rock"
+  ],
+  "year_checked": true
  },
  {
   "title": "Marvin, Welch & Farrar",
@@ -9869,7 +9876,8 @@
   "id": 530,
   "added": "2026-09-02T14:17:47",
   "post_url": "https://t.me/volodyamusicbox/5250",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794550521
  },
  {
   "title": "God Save the Clientele",
