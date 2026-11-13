@@ -12565,5 +12565,24 @@
   "reissue_year": "2005",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Mr. Blue",
+  "artist": "The Fleetwoods",
+  "date": "2025-02-14",
+  "tracks": 15,
+  "year": "1959",
+  "title_full": "Mr. Blue (Expanded Edition)",
+  "id": 682,
+  "added": "2026-11-13T01:22:35",
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Vocal"
+  ],
+  "reissue_year": "2025",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
