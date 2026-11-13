@@ -6295,7 +6295,17 @@
   "year": "1974",
   "id": 339,
   "added": "2026-05-05T10:30:19",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Funk / Soul",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Prog Rock"
+  ],
+  "year_checked": true
  },
  {
   "title": "Hustlers Convention",
@@ -6762,7 +6772,8 @@
   "id": 365,
   "added": "2026-05-22T21:17:48",
   "post_url": "https://t.me/volodyamusicbox/3661",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794552321
  },
  {
   "title": "Cryptic Crunch",
