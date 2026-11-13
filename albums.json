@@ -3845,7 +3845,8 @@
   "year": "1962",
   "id": 206,
   "added": "2026-04-18T19:37:41",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794554294
  },
  {
   "title": "Lord of the Rings",
@@ -4475,7 +4476,8 @@
   "id": 238,
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/3742",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794554294
  },
  {
   "title": "The Shadows",
