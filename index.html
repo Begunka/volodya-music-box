@@ -117,6 +117,16 @@ main{padding-block:16px 40px}
 .vote button b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .vote button[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);color:var(--accent)}
 .vote button[aria-pressed="true"] b{color:var(--accent)}
+.info{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.info h4{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0}
+.info .txt{font-size:14px;line-height:1.5;margin:0;white-space:pre-line}
+.info .txt.clamp{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.info .lnk{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-size:13px;text-align:left;text-decoration:none;align-self:flex-start}
+.info .src{font-size:12px;color:var(--muted)}
+.info .src a{color:var(--muted)}
+.crew{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;line-height:1.35;margin:0}
+.crew dt{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.crew dd{margin:0;color:var(--muted)}
 .author{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0 0 12px}
 .author b{color:var(--ink);font-weight:600}
 .y .heart{color:var(--accent)}
@@ -285,6 +295,7 @@ textarea.field{min-height:90px;resize:vertical}
   <p class="note" id="s-note" hidden></p>
   <div class="s-more"><button class="tag" type="button" id="s-addpl">+ в плейлист</button></div>
   <div class="actions" id="s-actions"></div>
+  <div class="info" id="s-info" hidden></div>
 </section>
 
 <section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
@@ -497,7 +508,37 @@ textarea.field{min-height:90px;resize:vertical}
     requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
     $("sheet").scrollTop = 0; $("close").focus({preventScroll:true});
     if (location.hash !== "#album-" + id) history.replaceState(null, "", "#album-" + id);
+    showInfo(a.id);
   }
+
+  // справка: Википедия + состав из Discogs, по 50 альбомов в файле, грузится при открытии
+  const infoPacks = {};
+  function showInfo(id){
+    const box = $("s-info"); box.hidden = true; box.innerHTML = "";
+    const k = Math.floor(id / 50);
+    infoPacks[k] = infoPacks[k] || fetch(`wiki/pack-${k}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+    infoPacks[k].then(p => {
+      const w = p[id]; if (!w || openId !== id) return;
+      let html = "";
+      if (w.text) {
+        html += `<h4>Об альбоме${w.lang === "en" ? " · по-английски" : ""}</h4><p class="txt clamp" id="s-txt">${esc(w.text)}</p>
+          <div class="src"><button class="lnk" type="button" id="s-txtmore" hidden>Читать дальше</button><span id="s-txtsep" hidden> · </span><a href="${esc(w.url)}" target="_blank" rel="noopener">Википедия</a>, CC BY-SA</div>`;
+      }
+      if (w.crew && w.crew.length) {
+        const lim = 8, row = ([n, r]) => `<dt>${esc(n)}</dt><dd>${esc(r)}</dd>`;
+        html += `<h4>Состав и запись</h4><dl class="crew" id="s-crew">${w.crew.slice(0, lim).map(row).join("")}</dl>
+          <div class="src">${w.crew.length > lim ? `<span id="s-crewwrap"><button class="lnk" type="button" id="s-crewmore">Все ${w.crew.length}</button> · </span>` : ""}<a href="${esc(w.src)}" target="_blank" rel="noopener">Discogs</a></div>`;
+        box._crew = w.crew.map(row).join("");
+      }
+      box.innerHTML = html; box.hidden = false;
+      const t = $("s-txt");
+      if (t && t.scrollHeight > t.clientHeight + 2) { $("s-txtmore").hidden = false; $("s-txtsep").hidden = false; }
+    });
+  }
+  $("s-info").addEventListener("click", e => {
+    if (e.target.id === "s-txtmore") { $("s-txt").classList.remove("clamp"); e.target.hidden = true; $("s-txtsep").hidden = true; }
+    if (e.target.id === "s-crewmore") { $("s-crew").innerHTML = $("s-info")._crew; $("s-crewwrap").remove(); }
+  });
   function close(){
     openId = null;
     $("scrim").classList.remove("on"); $("sheet").classList.remove("on");

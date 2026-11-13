@@ -24,6 +24,7 @@ jobs:
           mkdir -p worker/public
           cp index.html data.json _headers worker/public/
           cp -r covers worker/public/covers
+          if [ -d wiki ]; then cp -r wiki worker/public/wiki; rm -f worker/public/wiki/state.json; fi
 
       - name: Таблицы базы (если ещё нет)
         working-directory: worker

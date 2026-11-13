@@ -1,0 +1,66 @@
+name: Справка к альбомам
+
+on:
+  schedule:
+    - cron: "41 20 * * *"       # раз в сутки: новые альбомы и перепроверка ненайденных
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Сколько минут работать"
+        default: "50"
+      only:
+        description: "Только эти номера альбомов (через запятую), пусто — все без справки"
+        default: ""
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Собрать справку
+        env:
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+          MINUTES: ${{ inputs.minutes || '50' }}
+          ONLY: ${{ inputs.only }}
+        run: python bot/wiki.py --minutes "$MINUTES" ${ONLY:+--only "$ONLY"}
+      - name: Сохранить
+        id: save
+        run: |
+          git config user.name "volodyamusicbox-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add wiki
+          if git diff --cached --quiet; then echo "Ничего нового"; else
+            git commit -m "Справка к альбомам [skip ci]"
+            for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done
+            echo "changed=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Собрать мини-приложение
+        if: steps.save.outputs.changed == 'yes'
+        run: |
+          mkdir -p worker/public
+          cp index.html data.json _headers worker/public/
+          cp -r covers worker/public/covers
+          cp -r wiki worker/public/wiki
+          rm -f worker/public/wiki/state.json
+      - name: Обновить мини-приложение на Cloudflare
+        if: steps.save.outputs.changed == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          wranglerVersion: "4"
+          command: deploy
