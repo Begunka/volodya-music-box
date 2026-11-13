@@ -15,7 +15,7 @@ import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from enrich import get_json, norm, similar, first_artist  # noqa: E402
+from enrich import get_json, norm, similar, first_artist, artist_variants, first_found  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 WIKI = ROOT / "wiki"
@@ -130,13 +130,13 @@ def shorten(text):
 
 
 def wiki_for(artist, title):
-    pages = via_musicbrainz(artist, title) or {}
+    pages = first_found(via_musicbrainz, artist, title) or {}
     if not pages:
-        t = via_search("ru", artist, title)
+        t = first_found(lambda a, t: via_search("ru", a, t), artist, title)
         if t:
             pages["ru"] = t
         else:
-            t = via_search("en", artist, title)
+            t = first_found(lambda a, t: via_search("en", a, t), artist, title)
             if t:
                 pages["en"] = t
     if "en" in pages and "ru" not in pages:
@@ -224,7 +224,7 @@ def discogs_release(artist, title):
 def credits_for(artist, title):
     if not DISCOGS_TOKEN:
         return None
-    rid = discogs_release(artist, title)
+    rid = first_found(discogs_release, artist, title)
     if not rid:
         return None
     rel = dg(f"releases/{rid}")

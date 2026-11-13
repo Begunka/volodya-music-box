@@ -97,6 +97,52 @@ def spotify_title(url):
 
 
 
+_variants = {}
+
+
+def artist_variants(artist):
+    """Другие написания исполнителя по MusicBrainz: Aquarium → Аквариум, Kino → Кино и т.п.
+    Базы часто знают группу только под родным именем, поэтому, если поиск
+    по имени из поста ничего не дал, пробуем эти варианты."""
+    key = norm(artist)
+    if key in _variants:
+        return _variants[key]
+    out = []
+    try:
+        name = first_artist(artist).replace('"', "")
+        time.sleep(1.1)
+        data = get_json("https://musicbrainz.org/ws/2/artist/?fmt=json&limit=3&query=" +
+                        urllib.parse.quote(f'artist:"{name}" OR alias:"{name}"'))
+        for ar in data.get("artists", []):
+            if ar.get("score", 0) < 90:
+                continue
+            names = [ar.get("name", ""), ar.get("sort-name", "")] + [x.get("name", "") for x in ar.get("aliases", [])]
+            if not any(similar(n, name) >= 0.9 for n in names):
+                continue
+            for n in names:
+                if n and norm(n) != key and norm(n) not in map(norm, out) and "," not in n:
+                    out.append(n)
+    except Exception as e:
+        print("  MusicBrainz (имена):", e)
+    # кириллица вперёд: если в посте латиница, то не нашлось именно из-за неё
+    out.sort(key=lambda n: not re.search("[а-яё]", n, re.I))
+    _variants[key] = out[:3]
+    return _variants[key]
+
+
+def first_found(fn, artist, title):
+    """fn(artist, title) по имени из поста, потом по другим написаниям."""
+    r = fn(artist, title)
+    if r:
+        return r
+    for v in artist_variants(artist):
+        r = fn(v, title)
+        if r:
+            print(f"  нашлось как «{v}»")
+            return r
+    return None
+
+
 def enrich(album, discogs_token=None):
     """Дополняет album: год первого выхода, reissue_year, genres, styles.
     Возвращает True, если год подтверждён хотя бы одной базой."""
@@ -108,11 +154,11 @@ def enrich(album, discogs_token=None):
     dg = mb = None
     if discogs_token:
         try:
-            dg = lookup_discogs(artist, title)
+            dg = first_found(lookup_discogs, artist, title)
         except Exception as e:
             print("  Discogs:", e)
     try:
-        mb = lookup_year(artist, title)
+        mb = first_found(lookup_year, artist, title)
     except Exception as e:
         print("  MusicBrainz:", e)
     if dg and dg[3]:

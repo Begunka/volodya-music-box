@@ -264,6 +264,23 @@ class Archive:
         self.changed = True
         return a
 
+    def recheck(self, limit=2):
+        """Альбомы, год которых не нашёлся, понемногу проверяем заново (раз в месяц каждый):
+        базы пополняются, а поиск учится другим написаниям исполнителя."""
+        now = int(time.time())
+        todo = [a for a in self.albums if not a.get("year_checked") and a.get("artist")
+                and not a["title"].startswith("http") and now - a.get("year_tried", 0) > 30 * 86400]
+        todo.sort(key=lambda a: -a["id"])   # сначала свежие
+        for a in todo[:limit]:
+            before = (a.get("year"), a.get("genres"))
+            enrich(a, DISCOGS)
+            a.pop("_cover_candidates", None)
+            a["year_tried"] = now
+            if a.get("year_checked"):
+                a.pop("year_tried", None)
+                print(f"Год найден: {a['artist']} — {a['title']}: {before[0]} → {a['year']}")
+            self.changed = True
+
     def save(self):
         if self.changed:
             save_json(ARCHIVE, self.albums)
@@ -732,6 +749,11 @@ class Bot:
                 total += n
                 if n == 0:
                     break
+        try:
+            self.archive.recheck()
+            self.archive.save()
+        except Exception as e:
+            print("Перепроверка годов:", e)
         self.report()
         save_json(STATE, self.state)
         print(f"Режим: {mode}. Обработано событий: {total}")
