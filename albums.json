@@ -12146,7 +12146,8 @@
   "added": "2026-03-24T23:10:51",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2399",
-  "title_full": "Spacemen, The 1966 - (ザ・スペイスメン) - Cherry Viewing A Go Go (桜音頭a Gogo!) (0000) () [Vinyl 0-44]"
+  "title_full": "Spacemen, The 1966 - (ザ・スペイスメン) - Cherry Viewing A Go Go (桜音頭a Gogo!) (0000) () [Vinyl 0-44]",
+  "year_tried": 1794548536
  },
  {
   "title": "Iijanaika",
@@ -12158,7 +12159,17 @@
   "added": "2026-03-25T01:36:33",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2412",
-  "title_full": "Iijanaika [FLAC]"
+  "title_full": "Iijanaika [FLAC]",
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Acid Rock",
+   "Hard Rock",
+   "Psychedelic Rock"
+  ],
+  "year_checked": true
  },
  {
   "title": "Ready for the House",
