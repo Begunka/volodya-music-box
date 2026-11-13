@@ -8259,7 +8259,15 @@
   "id": 444,
   "added": "2026-07-02T01:51:24",
   "post_url": "https://t.me/volodyamusicbox/4071",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Latin"
+  ],
+  "styles": [
+   "MPB",
+   "Samba"
+  ],
+  "year_checked": true
  },
  {
   "title": "GLASS CHIME",
@@ -8269,7 +8277,8 @@
   "year": "2020",
   "id": 445,
   "added": "2026-07-02T01:52:11",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551235
  },
  {
   "title": "Peasant",
