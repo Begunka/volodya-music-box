@@ -157,9 +157,17 @@ def wiki_for(artist, title):
 SKIP_ROLES = re.compile(r"lacquer|master|design|photo|artwork|art direction|liner|layout|lettering|copyright|phonograph|"
                         r"management|coordinat|executive|a&r|legal|booklet|cover|illustrat|typograph|graphic|transfer|"
                         r"remaster|restor|licens|manufactur|distribut|publish|translat|notes|compiled|pressed|edited by|"
-                        r"other|sleeve|painting|logo|concept|tape op", re.I)
+                        r"other|sleeve|painting|logo|concept|tape op|supervis|contractor|written|composed|lyrics|music by|songwriter|"
+                        r"words by|adapted|libretto|text by", re.I)
 PROD_ROLES = re.compile(r"produc|engineer|recorded|mixed|mixing|arranged|conduct|orchestrat", re.I)
-RU_ROLE = [("Lead Vocals", "вокал"), ("Backing Vocals", "бэк-вокал"), ("Vocals", "вокал"), ("Voice", "голос"),
+RU_ROLE = [("Slide Guitar", "слайд-гитара"), ("Steel Guitar", "стил-гитара"), ("12-String", "12-струнная гитара"),
+           ("Drum Machine", "драм-машина"), ("Drum Programming", "программирование ударных"), ("Brass", "духовые"),
+           ("Horns", "духовые"), ("Woodwind", "деревянные духовые"), ("Reeds", "язычковые"), ("Gong", "гонг"),
+           ("Celesta", "челеста"), ("Timpani", "литавры"), ("Bells", "колокола"), ("Handclaps", "хлопки"),
+           ("Ukulele", "укулеле"), ("Theremin", "терменвокс"), ("Moog", "муг"), ("Clavinet", "клавинет"),
+           ("Turntables", "вертушки"), ("Scratches", "скретчи"), ("Rap", "рэп"), ("Concertmaster", "концертмейстер"),
+           ("Leader", "руководитель"), ("Directed By", "руководитель"), ("Sound Effects", "эффекты"), ("Mellophone", "меллофон"),
+           ("Lead Vocals", "вокал"), ("Backing Vocals", "бэк-вокал"), ("Vocals", "вокал"), ("Voice", "голос"),
            ("Electric Guitar", "электрогитара"), ("Acoustic Guitar", "акустическая гитара"), ("Bass Guitar", "бас-гитара"),
            ("Double Bass", "контрабас"), ("Bass", "бас"), ("Lead Guitar", "соло-гитара"), ("Rhythm Guitar", "ритм-гитара"),
            ("Guitar", "гитара"), ("Drums", "ударные"), ("Percussion", "перкуссия"), ("Keyboards", "клавишные"),
@@ -226,20 +234,23 @@ def credits_for(artist, title):
         entries += t.get("extraartists", [])
     for c in entries:
         name, role = clean_name(c), c.get("role") or ""
-        if not name or SKIP_ROLES.search(role):
+        parts = [x for x in re.split(r",(?![^\[]*\])", role) if x.strip() and not SKIP_ROLES.search(x)]
+        if not name or not parts:
             continue
         roles = people.setdefault(name, [])
-        for part in role.split(","):
-            r = ru_role(part)
+        for part in parts:
+            r = "бэк-вокал" if re.search(r"vocals?\s*\[backing", part, re.I) else ru_role(part)
             if r and r not in roles:
                 roles.append(r)
     if not people:
         return None
-    # сначала музыканты, потом продюсеры и звукорежиссёры
-    def prod(item):
-        return all(PROD_ROLES.search(r) or r in ("продюсер", "сопродюсер", "запись", "звукорежиссёр", "сведение", "аранжировка", "дирижёр")
-                   for r in item[1])
-    items = sorted(people.items(), key=prod)
+    # сначала музыканты (у кого больше инструментов — выше), потом продюсеры и звукорежиссёры
+    prod_ru = ("продюсер", "сопродюсер", "запись", "звукорежиссёр", "сведение", "аранжировка", "дирижёр")
+
+    def key(item):
+        play = [r for r in item[1] if r not in prod_ru and not PROD_ROLES.search(r)]
+        return (not play, -len(play))
+    items = sorted(people.items(), key=key)
     return {"crew": [[n, ", ".join(r[:4])] for n, r in items[:30]], "src": f"https://www.discogs.com/release/{rid}"}
 
 
