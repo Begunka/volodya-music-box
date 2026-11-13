@@ -7196,12 +7196,22 @@
   "artist": "Ago",
   "date": "2009-11-29",
   "tracks": 7,
-  "year": "2009",
+  "year": "1982",
   "id": 389,
   "added": "2026-06-03T18:33:10",
   "title_full": "For You (LP)",
   "post_url": "https://t.me/volodyamusicbox/3890",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Funk / Soul"
+  ],
+  "styles": [
+   "Boogie",
+   "Italo-Disco"
+  ],
+  "reissue_year": "2009",
+  "year_checked": true
  },
  {
   "title": "E2-E4",
@@ -7231,7 +7241,8 @@
   "year": "2026",
   "id": 391,
   "added": "2026-06-07T02:45:40",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551776
  },
  {
   "title": "Camoufleur",
