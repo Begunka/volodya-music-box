@@ -5340,7 +5340,8 @@
   "listen_url": "https://www.deezer.com/album/65387042",
   "id": 288,
   "added": "2026-04-18T19:39:30",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794553228
  },
  {
   "title": "Tamboo!",
@@ -5355,7 +5356,8 @@
   "id": 289,
   "added": "2026-04-18T19:39:30",
   "post_url": "https://t.me/volodyamusicbox/2472",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794553228
  },
  {
   "title": "The In Sound From Way Out",
