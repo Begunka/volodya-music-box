@@ -12866,5 +12866,29 @@
   ],
   "reissue_year": "2014",
   "year_checked": true
+ },
+ {
+  "title": "Awaawaa",
+  "artist": "WOO",
+  "date": "2016-01-29",
+  "tracks": 16,
+  "year": "2016",
+  "id": 686,
+  "added": "2026-11-13T11:17:49",
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Ambient",
+   "Experimental",
+   "Leftfield",
+   "Abstract",
+   "Folk",
+   "Future Jazz"
+  ],
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
