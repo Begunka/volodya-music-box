@@ -6834,7 +6834,16 @@
   "id": 369,
   "added": "2026-05-25T12:06:14",
   "post_url": "https://t.me/volodyamusicbox/3697",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Krautrock",
+   "Ambient"
+  ],
+  "year_checked": true
  },
  {
   "title": "Swaddling Songs",
@@ -6887,7 +6896,8 @@
   "id": 372,
   "added": "2026-05-25T12:06:54",
   "post_url": "https://t.me/volodyamusicbox/3717",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794552134
  },
  {
   "title": "Malesch",
