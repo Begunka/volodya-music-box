@@ -328,7 +328,8 @@
   "year": "2009",
   "id": 19,
   "added": "2026-04-18T19:37:09",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794555375
  },
  {
   "title": "Wish You Were Here",
@@ -358,7 +359,15 @@
   "year": "2023",
   "id": 21,
   "added": "2026-04-18T19:37:09",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Jungle",
+   "Drum n Bass"
+  ],
+  "year_checked": true
  },
  {
   "title": "The Power and the Glory",
