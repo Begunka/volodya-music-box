@@ -12396,7 +12396,8 @@
   "id": 672,
   "added": "2026-01-16T17:20:13",
   "cover_ext": "webp",
-  "post_url": "https://t.me/volodyamusicbox/929"
+  "post_url": "https://t.me/volodyamusicbox/929",
+  "year_tried": 1794548175
  },
  {
   "title": "The Story of Moondog",
@@ -12634,10 +12635,19 @@
   "artist": "Aquarium",
   "date": "2014-10-08",
   "tracks": 10,
-  "year": "2014",
+  "year": "1988",
   "id": 685,
   "added": "2026-11-13T04:25:08",
   "cover_ext": "webp",
-  "post_url": "https://t.me/volodyamusicbox/6317"
+  "post_url": "https://t.me/volodyamusicbox/6317",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Acoustic"
+  ],
+  "reissue_year": "2014",
+  "year_checked": true
  }
 ]
