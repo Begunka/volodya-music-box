@@ -5531,7 +5531,8 @@
   "listen_url": "https://www.deezer.com/album/529061902",
   "id": 297,
   "added": "2026-04-18T19:39:30",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794553038
  },
  {
   "title": "Begin",
@@ -5704,7 +5705,8 @@
   "id": 306,
   "added": "2026-04-22T10:28:22",
   "post_url": "https://t.me/volodyamusicbox/2735",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794553038
  },
  {
   "title": "Вокально-инструментальный ансамбль \"Иверия\"",
