@@ -7261,7 +7261,20 @@
   "id": 393,
   "added": "2026-06-07T22:03:34",
   "title_full": "TELESCOPE (Remastered 2017)",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz",
+   "Rock",
+   "Latin",
+   "Funk / Soul",
+   "Pop"
+  ],
+  "styles": [
+   "Soul",
+   "Pop Rock",
+   "Funk"
+  ],
+  "year_checked": true
  },
  {
   "title": "Loosen Up Naturally",
@@ -7319,7 +7332,8 @@
   "id": 397,
   "added": "2026-06-10T23:25:20",
   "post_url": "https://t.me/volodyamusicbox/3955",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551592
  },
  {
   "title": "ADUNA",
