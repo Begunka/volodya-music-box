@@ -2844,7 +2844,8 @@
   "year": "1989",
   "id": 152,
   "added": "2026-04-18T19:37:16",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794554732
  },
  {
   "title": "Heavy Weather",
@@ -3019,12 +3020,21 @@
   "artist": "12 Rods",
   "date": "1997-10-28",
   "tracks": 6,
-  "year": "1997",
+  "year": "1996",
   "id": 162,
   "added": "2026-04-18T19:37:16",
   "title_full": "Gay (Ep)",
   "post_url": "https://t.me/volodyamusicbox/1440",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Alternative Rock"
+  ],
+  "reissue_year": "1997",
+  "year_checked": true
  },
  {
   "title": "Lost Time",
