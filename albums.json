@@ -6972,7 +6972,8 @@
   "id": 377,
   "added": "2026-05-27T16:33:02",
   "post_url": "https://t.me/volodyamusicbox/3821",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794551956
  },
  {
   "title": "Mganga! The Primitive Sounds of Tak Shindo",
@@ -7166,7 +7167,8 @@
   "id": 387,
   "added": "2026-06-03T18:33:10",
   "title_full": "Mignonne (Mastered by Bernie Grundman)",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_checked": true
  },
  {
   "title": "DEMENTOS",
