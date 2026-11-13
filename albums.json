@@ -1055,7 +1055,8 @@
   "added": "2026-04-18T19:37:10",
   "title_full": "Stravinsky: Pétrouchka (2022 Remastered Version)",
   "post_url": "https://t.me/volodyamusicbox/446",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794555193
  },
  {
   "title": "Adventures In Utopia",
@@ -1128,7 +1129,14 @@
   "id": 60,
   "added": "2026-04-18T19:37:10",
   "post_url": "https://t.me/volodyamusicbox/487",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Experimental"
+  ],
+  "year_checked": true
  },
  {
   "title": "Tarkus",
