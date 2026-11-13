@@ -12585,5 +12585,27 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6283"
+ },
+ {
+  "title": "Santo and Johnny",
+  "artist": "Santo And Johnny",
+  "date": "2018-01-06",
+  "tracks": 12,
+  "year": "1959",
+  "id": 683,
+  "added": "2026-11-13T02:23:22",
+  "genres": [
+   "Jazz",
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Surf",
+   "Rock & Roll",
+   "Easy Listening"
+  ],
+  "reissue_year": "2018",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
