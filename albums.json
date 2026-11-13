@@ -3750,7 +3750,8 @@
   "id": 200,
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/1831",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794554473
  },
  {
   "title": "The Complete Recordings",
@@ -3760,7 +3761,8 @@
   "year": "1960",
   "id": 201,
   "added": "2026-04-18T19:37:41",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "year_tried": 1794554473
  },
  {
   "title": "Pieces of a Man",
