@@ -142,6 +142,16 @@ main{padding-block:16px 40px}
 textarea.field{min-height:90px;resize:vertical}
 .chipset{display:flex;flex-wrap:wrap;gap:6px}
 .chipset button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);font-size:12px}
+.gsearch{position:sticky;top:calc(-14px - env(safe-area-inset-top,0px));z-index:1;background:var(--bg);padding:6px 0 8px;margin:-6px 0 -8px}
+.gsec{display:flex;flex-direction:column;gap:8px;padding-top:4px}
+.ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%;border:0;background:none;color:var(--ink);text-align:left;padding:0}
+.ghead b{font-family:var(--display);font-size:18px;font-weight:700}
+.ghead small{color:var(--muted);font-size:12px;margin-left:6px}
+.ghead span{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ghead[aria-pressed="true"] b{color:var(--accent)}
+.chipset button i{font-style:normal;color:var(--muted);font-family:var(--mono);font-size:11px;margin-left:5px}
+.chipset button[aria-pressed="true"] i{color:inherit;opacity:.7}
+.chipset button.more{border-style:dashed;color:var(--muted)}
 .chipset button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .addrow{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .addrow img,.addrow .ph{width:40px;height:40px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
@@ -231,7 +241,7 @@ textarea.field{min-height:90px;resize:vertical}
       <div class="chips" id="decades" role="group" aria-label="Десятилетие"></div>
     </div>
     <div class="row">
-      <select class="btn small" id="genre" aria-label="Жанр"><option value="">Все жанры</option></select>
+      <button class="btn small" id="genre" type="button" aria-haspopup="dialog">Все жанры</button>
       <select class="btn small" id="sort" aria-label="Сортировка">
         <option value="new">Сначала новые</option>
         <option value="old">Сначала старые</option>
@@ -279,6 +289,7 @@ textarea.field{min-height:90px;resize:vertical}
 
 <section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
 
+<section class="duel" id="gp" hidden><div class="duel-in" id="gp-in"></div></section>
 <section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
 <div class="toast" id="toast" hidden></div>
 
@@ -321,17 +332,85 @@ textarea.field{min-height:90px;resize:vertical}
   };
   const decadeOf = a => a.year ? a.year.slice(0,3) + "0" : null;
 
+  // ---------- жанры и стили ----------
+  // Всё считается из самого архива при загрузке: новый стиль у нового альбома сразу появляется в списке.
+  const GENRE_RU = {"Rock": "Рок", "Electronic": "Электроника", "Pop": "Поп", "Jazz": "Джаз", "Folk, World, & Country": "Фолк, этника, кантри",
+    "Funk / Soul": "Фанк и соул", "Hip Hop": "Хип-хоп", "Classical": "Классика", "Latin": "Латина", "Blues": "Блюз", "Reggae": "Регги",
+    "Stage & Screen": "Кино и сцена", "Non-Music": "Не музыка", "Brass & Military": "Духовые", "Children's": "Детское"};
+  // русские слова в поиске → как стиль называется в Discogs
+  const RU_WORDS = [["психодел", "psychedelic"], ["прогрессив", "prog"], ["прог", "prog"], ["эмбиент", "ambient"], ["эмбиэнт", "ambient"], ["электрон", "electronic"],
+    ["экспери", "experimental"], ["авангард", "avantgarde"], ["альтернатив", "alternative"], ["инди", "indie"], ["синти", "synth"], ["синт", "synth"],
+    ["краут", "krautrock"], ["шугейз", "shoegaze"], ["нойз", "noise"], ["шум", "noise"], ["индастриал", "industrial"], ["даунтемпо", "downtempo"],
+    ["хип-хоп", "hip hop"], ["хип хоп", "hip hop"], ["рэп", "hip hop"], ["соул", "soul"], ["фанк", "funk"], ["фьюжн", "fusion"], ["блюз", "blues"],
+    ["джаз", "jazz"], ["классик", "classical"], ["фолк", "folk"], ["кантри", "country"], ["регги", "reggae"], ["латин", "latin"], ["босса", "bossa"],
+    ["самба", "samba"], ["саундтрек", "soundtrack"], ["барокко", "baroque"], ["серф", "surf"], ["сёрф", "surf"], ["гараж", "garage"],
+    ["нью вейв", "new wave"], ["нью-вейв", "new wave"], ["панк", "punk"], ["метал", "metal"], ["гранж", "grunge"], ["хардкор", "hardcore"],
+    ["техно", "techno"], ["хаус", "house"], ["диско", "disco"], ["лоуфай", "lo-fi"], ["дрим", "dream"], ["спейс", "space"], ["космич", "space"],
+    ["свинг", "swing"], ["бибоп", "bop"], ["фри", "free"], ["кул", "cool"], ["поп", "pop"], ["рок", "rock"], ["бит", "beat"], ["пост", "post"],
+    ["минимал", "minimal"], ["абстракт", "abstract"], ["акустик", "acoustic"], ["вокал", "vocal"], ["хард", "hard"], ["арт", "art"], ["этник", "world"]];
+  let genre = "", tax = null, gpOpen = {};
   function buildGenres(){
-    const c = {};
-    all.forEach(a => (a.genres || []).forEach(g => c[g] = (c[g] || 0) + 1));
-    $("genre").insertAdjacentHTML("beforeend", Object.entries(c).sort((x, y) => y[1] - x[1])
-      .map(([g, n]) => `<option value="${esc(g)}">${esc(g)} · ${n}</option>`).join(""));
+    const g = {}, st = {}, co = {};
+    all.forEach(a => {
+      (a.genres || []).forEach(x => g[x] = (g[x] || 0) + 1);
+      (a.styles || []).forEach(s => { st[s] = (st[s] || 0) + 1; co[s] = co[s] || {}; (a.genres || []).forEach(x => co[s][x] = (co[s][x] || 0) + 1); });
+    });
+    // стиль живёт под тем жанром, с которым чаще встречается
+    const parent = {};
+    Object.keys(st).forEach(s => parent[s] = Object.entries(co[s]).sort((x, y) => y[1] - x[1])[0]?.[0] || "");
+    tax = {genres: Object.keys(g), styles: Object.keys(st), parent};
+    paintGenreBtn();
   }
-  function setStyle(s){
-    style = s || "";
-    $("stylepill").hidden = !style;
-    $("stylepill").innerHTML = style ? `${esc(style)} <span aria-hidden="true">×</span>` : "";
-    apply();
+  function paintGenreBtn(){
+    $("genre").textContent = genre ? (GENRE_RU[genre] || genre) : style ? "Жанры" : "Все жанры";
+    $("genre").classList.toggle("primary", !!genre);
+    const cur = style || "";
+    $("stylepill").hidden = !cur;
+    $("stylepill").innerHTML = cur ? `${esc(cur)} <span aria-hidden="true">×</span>` : "";
+  }
+  function setGenre(gn){ genre = gn || ""; style = ""; paintGenreBtn(); apply(); }
+  function setStyle(s){ style = s || ""; genre = ""; paintGenreBtn(); apply(); }
+  function genreQuery(q){
+    q = q.toLowerCase().replace(/ё/g, "е").trim();
+    RU_WORDS.forEach(([ru, en]) => { q = q.split(ru.replace(/ё/g, "е")).join(" " + en + " "); });
+    return norm(q);
+  }
+  function genrePanel(){
+    // счёт с учётом выбранного десятилетия: «что Володя слушал в 70-е»
+    const pool = all.filter(a => decade === "all" || decadeOf(a) === decade);
+    const gc = {}, sc = {};
+    pool.forEach(a => { (a.genres || []).forEach(x => gc[x] = (gc[x] || 0) + 1); (a.styles || []).forEach(x => sc[x] = (sc[x] || 0) + 1); });
+    const q = $("gp-q") ? $("gp-q").value : "";
+    const chip = s => `<button type="button" data-st="${esc(s)}" aria-pressed="${style === s}">${esc(s)}<i>${sc[s]}</i></button>`;
+    let html = "";
+    if (q.trim()) {
+      const nq = genreQuery(q), words = nq.split(" ").filter(Boolean);
+      const hit = name => { const n = norm(name + " " + (GENRE_RU[name] || "")); return words.every(w => n.includes(w)) || n.includes(norm(q)); };
+      const gs = tax.genres.filter(x => gc[x] && hit(x)).sort((x, y) => gc[y] - gc[x]);
+      const ss = tax.styles.filter(x => sc[x] && hit(x)).sort((x, y) => sc[y] - sc[x]);
+      if (gs.length) html += `<div class="chipset">${gs.map(x => `<button type="button" data-g="${esc(x)}" aria-pressed="${genre === x}"><b>${esc(GENRE_RU[x] || x)}</b><i>${gc[x]}</i></button>`).join("")}</div>`;
+      html += ss.length ? `<div class="chipset">${ss.map(chip).join("")}</div>` : gs.length ? "" : `<p>Такого стиля в архиве нет${decade !== "all" ? " в этом десятилетии" : ""}.</p>`;
+    } else {
+      const gs = tax.genres.filter(x => gc[x]).sort((x, y) => gc[y] - gc[x]);
+      html += gs.map(x => {
+        const ss = tax.styles.filter(s => tax.parent[s] === x && sc[s]).sort((p, r) => sc[r] - sc[p]);
+        const lim = gpOpen[x] ? ss.length : 12;
+        return `<div class="gsec"><button type="button" class="ghead" data-g="${esc(x)}" aria-pressed="${genre === x}"><div><b>${esc(GENRE_RU[x] || x)}</b>${GENRE_RU[x] ? `<small>${esc(x)}</small>` : ""}</div><span>${gc[x]}</span></button>
+          ${ss.length ? `<div class="chipset">${ss.slice(0, lim).map(chip).join("")}${ss.length > lim ? `<button type="button" class="more" data-more="${esc(x)}">ещё ${ss.length - lim}</button>` : ""}</div>` : ""}</div>`;
+      }).join("");
+      const none = pool.filter(a => !(a.genres || []).length).length;
+      if (none) html += `<p style="font-size:12px">Без жанра: ${none} — их не нашли ни в Discogs, ни в MusicBrainz.</p>`;
+    }
+    $("gp-list").innerHTML = html;
+  }
+  function openGenres(){
+    $("gp-in").innerHTML = `<div class="duel-top"><span class="step">${decade === "all" ? "Жанры и стили" : `Жанры · ${decade.slice(2)}-е`}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
+      <div class="gsearch"><input class="field" id="gp-q" type="search" placeholder="Найти стиль: краут, шугейз, bossa…" autocomplete="off"></div>
+      ${genre || style ? `<button class="alt" data-x="reset">Сбросить: ${esc(style || GENRE_RU[genre] || genre)}</button>` : ""}
+      <div id="gp-list" style="display:flex;flex-direction:column;gap:18px"></div>`;
+    genrePanel();
+    $("gp").hidden = false; $("gp").scrollTop = 0;
+    $("gp-q").addEventListener("input", () => { $("gp").scrollTop = 0; genrePanel(); });
   }
   function buildDecades(){
     const counts = {};
@@ -343,7 +422,7 @@ textarea.field{min-height:90px;resize:vertical}
 
   function apply(){
     const q = norm($("q").value.trim());
-    const g = $("genre").value;
+    const g = genre;
     view = all.filter(a => (decade === "all" || decadeOf(a) === decade) &&
       (!g || (a.genres || []).includes(g)) &&
       (!style || (a.styles || []).includes(style)) &&
@@ -1013,11 +1092,20 @@ textarea.field{min-height:90px;resize:vertical}
   });
   let t; $("q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(apply, 120); });
   $("sort").addEventListener("change", apply);
-  $("genre").addEventListener("change", apply);
+  $("genre").addEventListener("click", openGenres);
+  $("gp").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const done = () => { $("gp").hidden = true; window.scrollTo({top: 0}); };
+    if (b.dataset.x === "close") $("gp").hidden = true;
+    else if (b.dataset.x === "reset") { setGenre(""); done(); }
+    else if (b.dataset.more) { gpOpen[b.dataset.more] = true; genrePanel(); }
+    else if (b.dataset.g !== undefined) { genre === b.dataset.g ? setGenre("") : setGenre(b.dataset.g); done(); }
+    else if (b.dataset.st !== undefined) { style === b.dataset.st ? setStyle("") : setStyle(b.dataset.st); done(); }
+  });
   $("stylepill").addEventListener("click", () => setStyle(""));
   $("s-tags").addEventListener("click", e => {
     const b = e.target.closest(".tag"); if (!b) return;
-    if (b.dataset.genre) { $("genre").value = b.dataset.genre; style = ""; $("stylepill").hidden = true; apply(); }
+    if (b.dataset.genre) setGenre(b.dataset.genre);
     else setStyle(b.dataset.style);
     close(); window.scrollTo({top: 0});
   });
