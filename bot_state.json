@@ -53,5 +53,6 @@
   }
  },
  "fast_job_id": 8850719,
- "mode": "worker"
+ "mode": "worker",
+ "fast_off_at": 1794680120
 }
