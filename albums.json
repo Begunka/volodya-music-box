@@ -12890,5 +12890,24 @@
   ],
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Ardour",
+  "artist": "Ethos",
+  "date": "2024-02-06",
+  "tracks": 6,
+  "year": "1976",
+  "id": 687,
+  "added": "2026-11-14T04:28:08",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock",
+   "Symphonic Rock"
+  ],
+  "reissue_year": "2024",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
