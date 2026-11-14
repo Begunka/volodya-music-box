@@ -58,7 +58,7 @@ jobs:
           mkdir -p worker/public
           cp index.html data.json _headers worker/public/
           cp -r covers worker/public/covers
-          if [ -d wiki ]; then cp -r wiki worker/public/wiki; rm -f worker/public/wiki/state.json; fi
+          if [ -d wiki ]; then cp -r wiki worker/public/wiki; rm -f worker/public/wiki/state.json worker/public/wiki/tr.json; fi
 
       - name: Обновить мини-приложение на Cloudflare
         if: steps.save.outputs.changed == 'yes'

@@ -521,8 +521,10 @@ textarea.field{min-height:90px;resize:vertical}
       const w = p[id]; if (!w || openId !== id) return;
       let html = "";
       if (w.text) {
-        html += `<h4>Об альбоме${w.lang === "en" ? " · по-английски" : ""}</h4><p class="txt clamp" id="s-txt">${esc(w.text)}</p>
-          <div class="src"><button class="lnk" type="button" id="s-txtmore" hidden>Читать дальше</button><span id="s-txtsep" hidden> · </span><a href="${esc(w.url)}" target="_blank" rel="noopener">Википедия</a>, CC BY-SA</div>`;
+        const ru = w.ru || (w.lang === "ru" ? w.text : "");
+        const note = w.ru ? (w.auto ? " · автоперевод" : " · перевод") : ru ? "" : " · по-английски";
+        html += `<h4>Об альбоме${note}</h4><p class="txt clamp" id="s-txt">${esc(ru || w.text)}</p>
+          <div class="src"><button class="lnk" type="button" id="s-txtmore" hidden>Читать дальше</button><span id="s-txtsep" hidden> · </span><a href="${esc(w.url)}" target="_blank" rel="noopener">${w.ru ? "Оригинал в Википедии" : "Википедия"}</a>, CC BY-SA</div>`;
       }
       if (w.crew && w.crew.length) {
         const lim = 8, row = ([n, r]) => `<dt>${esc(n)}</dt><dd>${esc(r)}</dd>`;

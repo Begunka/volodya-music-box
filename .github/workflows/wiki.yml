@@ -54,7 +54,7 @@ jobs:
           cp index.html data.json _headers worker/public/
           cp -r covers worker/public/covers
           cp -r wiki worker/public/wiki
-          rm -f worker/public/wiki/state.json
+          rm -f worker/public/wiki/state.json worker/public/wiki/tr.json
       - name: Обновить мини-приложение на Cloudflare
         if: steps.save.outputs.changed == 'yes'
         uses: cloudflare/wrangler-action@v3
