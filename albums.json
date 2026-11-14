@@ -12930,5 +12930,23 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6349"
+ },
+ {
+  "title": "Starcastle",
+  "artist": "Starcastle",
+  "date": "1992-06-16",
+  "tracks": 7,
+  "year": "1976",
+  "id": 689,
+  "added": "2026-11-14T08:12:48",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock"
+  ],
+  "reissue_year": "1992",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
