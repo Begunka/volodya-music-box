@@ -116,6 +116,8 @@ def intro(lang, page):
 
 def shorten(text):
     text = re.sub(r"\s*\([^()]*(?:англ|произносится|listen|pronounced)[^()]*\)", "", text)
+    text = re.sub(r"\s*\[[^\]]*[ˈˌː][^\]]*\]", "", text)   # транскрипции МФА
+    text = re.sub(r"\(\s*[;,]\s*", "(", text).replace("()", "")
     out = ""
     for para in [p.strip() for p in text.split("\n") if p.strip()]:
         if len(out) + len(para) <= TEXT_MAX:
