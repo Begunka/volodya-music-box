@@ -1,0 +1,24 @@
+name: Проверка будильников cron-job.org
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Список заданий (без ключей и адресов целиком)
+        env:
+          CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+        shell: python
+        run: |
+          import json, os, urllib.request, urllib.parse
+          req = urllib.request.Request("https://api.cron-job.org/jobs",
+                                       headers={"Authorization": "Bearer " + os.environ["CRONJOB_API_KEY"]})
+          jobs = json.load(urllib.request.urlopen(req, timeout=20)).get("jobs", [])
+          for j in jobs:
+              s = j.get("schedule") or {}
+              u = urllib.parse.urlsplit(j.get("url") or "")
+              tail = u.path.rsplit("/", 2)[-2:] if u.path else []
+              print(f"id={j.get('jobId')} enabled={j.get('enabled')} title={j.get('title')!r} "
+                    f"minutes={s.get('minutes')} hours={s.get('hours')} host={u.hostname} path=…/{'/'.join(tail)}")
