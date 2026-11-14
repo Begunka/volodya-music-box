@@ -1,4 +1,4 @@
-name: Проверка будильников cron-job.org
+name: Проверка будильников cron-job.org и Telegram
 
 on:
   workflow_dispatch:
@@ -22,3 +22,21 @@ jobs:
               tail = u.path.rsplit("/", 2)[-2:] if u.path else []
               print(f"id={j.get('jobId')} enabled={j.get('enabled')} title={j.get('title')!r} "
                     f"minutes={s.get('minutes')} hours={s.get('hours')} host={u.hostname} path=…/{'/'.join(tail)}")
+
+      - name: Отвечает ли Telegram (только статусы)
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        shell: python
+        run: |
+          import json, os, urllib.request, urllib.error
+          for m in ("getMe", "getWebhookInfo"):
+              try:
+                  r = json.load(urllib.request.urlopen(f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/{m}", timeout=30))
+              except urllib.error.HTTPError as e:
+                  try: r = json.load(e)
+                  except Exception: r = {"ok": False, "error_code": e.code}
+              except Exception as e:
+                  r = {"ok": False, "description": type(e).__name__}
+              res = r.get("result") or {}
+              extra = {k: res.get(k) for k in ("pending_update_count", "last_error_message", "last_error_date")} if m == "getWebhookInfo" else {}
+              print(m, r.get("ok"), r.get("error_code"), r.get("description"), extra)
