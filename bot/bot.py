@@ -84,20 +84,40 @@ class TgError(RuntimeError):
         self.retry_after = (res.get("parameters") or {}).get("retry_after")
 
 
+class TgDown(RuntimeError):
+    """Telegram временно недоступен (5xx, обрыв связи) — запуск лучше пропустить, а не падать."""
+
+
 def tg(method, **params):
     data = json.dumps(params).encode("utf-8")
-    req = urllib.request.Request(API + method, data=data, headers={"Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            res = json.loads(r.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:   # 400/403/429 — Telegram присылает объяснение в теле ответа
+    # 5xx Telegram не обрабатывает — такой запрос можно повторить. Обрыв/таймаут повторяем
+    # только для чтения (get*), иначе можно, например, отправить сообщение дважды.
+    tries = 3
+    for attempt in range(tries):
+        req = urllib.request.Request(API + method, data=data, headers={"Content-Type": "application/json"})
         try:
-            res = json.loads(e.read().decode("utf-8"))
-        except Exception:
-            raise e
-    if not res.get("ok"):
+            with urllib.request.urlopen(req, timeout=60) as r:
+                res = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:   # 400/403/429 — Telegram присылает объяснение в теле ответа
+            try:
+                res = json.loads(e.read().decode("utf-8"))
+            except Exception:
+                res = {"ok": False, "error_code": e.code, "description": f"HTTP {e.code}"}
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if not method.startswith("get"):
+                raise
+            if attempt == tries - 1:
+                raise TgDown(f"{method}: {e}") from e
+            time.sleep(3 * (attempt + 1))
+            continue
+        if res.get("ok"):
+            return res["result"]
+        if (res.get("error_code") or 0) >= 500:
+            if attempt == tries - 1:
+                raise TgDown(f"{method}: {res.get('description')}")
+            time.sleep(3 * (attempt + 1))
+            continue
         raise TgError(method, res)
-    return res["result"]
 
 
 def say(chat_id, text, **kw):
@@ -683,9 +703,10 @@ class Bot:
             return False
 
     def fast_alarm(self, on):
-        """Включить/выключить быстрый будильник cron-job.org («… быстрый», раз в 3 минуты)."""
+        """Включить/выключить быстрый будильник cron-job.org («… быстрый», раз в 3 минуты).
+        Возвращает True, если cron-job.org подтвердил."""
         if not CRONJOB_KEY:
-            return
+            return False
         def api(method, path, body=None):
             req = urllib.request.Request("https://api.cron-job.org" + path, method=method,
                                          data=json.dumps(body).encode() if body else None,
@@ -701,8 +722,10 @@ class Bot:
                 self.state["fast_job_id"] = job
             if job:
                 api("PATCH", f"/jobs/{job}", {"job": {"enabled": on}})
+                return True
         except Exception as e:
             print("cron-job.org:", e)
+        return False
 
     def ensure_mode(self):
         """Решает, кто сейчас принимает сообщения от Telegram, и переключает при необходимости.
@@ -715,8 +738,13 @@ class Bot:
             if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
                 tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
                    max_connections=10)
+            # Быстрый будильник выключаем не только при переключении: если в тот раз cron-job.org
+            # не ответил, он так и тикал бы каждые 3 минуты. Поэтому раз в час подтверждаем «выкл».
+            now = int(time.time())
+            if mode != "worker" or now - self.state.get("fast_off_at", 0) > 3600:
+                if self.fast_alarm(False):
+                    self.state["fast_off_at"] = now
             if mode != "worker":
-                self.fast_alarm(False)
                 if mode == "polling" and self.owner():
                     say(self.owner(), "☁️ Cloudflare снова в строю — вернул основной режим, инлайн работает.")
             self.state["mode"] = "worker"
@@ -911,4 +939,9 @@ if __name__ == "__main__":
     elif "--watch" in sys.argv:
         bot.watch()
     else:
-        bot.run_once()
+        try:
+            bot.run_once()
+        except TgDown as e:
+            # сбой на стороне Telegram — не роняем запуск (и не шлём письмо о падении),
+            # очередь в воркере дождётся следующего запуска
+            print("Telegram временно недоступен, пропускаю запуск:", e)
