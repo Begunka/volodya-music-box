@@ -12911,5 +12911,23 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6341"
+ },
+ {
+  "title": "Stained Glass Stories",
+  "artist": "Cathedral",
+  "date": "1978-01-01",
+  "tracks": 5,
+  "year": "1978",
+  "id": 688,
+  "added": "2026-11-14T06:34:05",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock",
+   "Symphonic Rock"
+  ],
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
