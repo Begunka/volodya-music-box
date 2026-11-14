@@ -28,10 +28,13 @@
   - `isSub` — getChatMember по каналу, fail-open; владелец всегда «подписан».
 - **D1** база archive-queue, схема `worker/schema.sql` (queue, meta, duels, votes, counts, playlists, playlist_likes, bans). Миграции также в `migrate()` в index.js. Проверка без персданных: workflow d1-check.yml + `worker/check.sql`.
 - **GitHub Actions** — тяжёлая работа:
-  - `bot.yml` — запуск `bot/bot.py`: забирает очередь из воркера, обрабатывает посты, добавляет альбомы, комментарии под постами, коммитит albums.json/data.json/covers/bot_state.json, деплоит воркер при изменениях. Будится воркером, cron-job.org (основной будильник, ~10 мин) и запасным cron.
+  - `bot.yml` — запуск `bot/bot.py`: забирает очередь из воркера, обрабатывает посты, добавляет альбомы, комментарии под постами, коммитит albums.json/data.json/covers/bot_state.json, деплоит воркер при изменениях. Будится воркером, cron-job.org (основной будильник «Бот архива», сейчас стоит каждые 3 мин) и запасным cron.
   - `worker.yml` — на push в worker/**, index.html, _headers: собирает public (index.html, data.json, _headers, covers, wiki без state.json/tr.json), применяет schema.sql (`npx --yes wrangler@4`), деплоит.
   - `wiki.yml` — раз в сутки и вручную (inputs minutes, only=номера через запятую): `bot/wiki.py` собирает справку, коммитит wiki/, деплоит.
 - **Запасной режим**: если воркер недоступен, бот снимает вебхук, переходит на getUpdates и включает «быстрый» job на cron-job.org (каждые 3 мин) через API; когда воркер оживает — возвращает всё назад. Код: `ensure_mode` в bot.py.
+  - В основном режиме бот раз в час подтверждает, что «быстрый» job выключен (`fast_off_at` в bot_state.json) — раньше он залипал включённым.
+  - Сбои Telegram: `tg()` повторяет 5xx (и обрыв связи для get*-методов) до 3 раз; если Telegram недоступен, запуск завершается без ошибки (`TgDown`), очередь ждёт в D1. Так GitHub не шлёт владельцу письма о падениях.
+  - `cron-check.yml` — ручная проверка: список заданий cron-job.org (без ключей) и отвечает ли Telegram раннерам.
 - GitHub Pages — старая копия, только редиректит на воркер.
 
 ## Файлы
