@@ -731,19 +731,21 @@ class Bot:
         """Решает, кто сейчас принимает сообщения от Telegram, и переключает при необходимости.
         Возвращает "worker" или "polling"."""
         alive = self.worker_alive()
-        info = tg("getWebhookInfo")
-        hook = WORKER_URL.rstrip("/") + "/tg" if WORKER_URL else ""
         mode = self.state.get("mode")
         if alive:
-            if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
-                tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
-                   max_connections=10)
             # Быстрый будильник выключаем не только при переключении: если в тот раз cron-job.org
             # не ответил, он так и тикал бы каждые 3 минуты. Поэтому раз в час подтверждаем «выкл».
+            # Делаем это до запросов к Telegram — чтобы сработало, даже когда лежит Telegram.
             now = int(time.time())
             if mode != "worker" or now - self.state.get("fast_off_at", 0) > 3600:
                 if self.fast_alarm(False):
                     self.state["fast_off_at"] = now
+        info = tg("getWebhookInfo")
+        hook = WORKER_URL.rstrip("/") + "/tg" if WORKER_URL else ""
+        if alive:
+            if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
+                tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
+                   max_connections=10)
             if mode != "worker":
                 if mode == "polling" and self.owner():
                     say(self.owner(), "☁️ Cloudflare снова в строю — вернул основной режим, инлайн работает.")
@@ -945,3 +947,4 @@ if __name__ == "__main__":
             # сбой на стороне Telegram — не роняем запуск (и не шлём письмо о падении),
             # очередь в воркере дождётся следующего запуска
             print("Telegram временно недоступен, пропускаю запуск:", e)
+            save_json(STATE, bot.state)   # отметку о выключенном будильнике сохраняем
