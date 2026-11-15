@@ -13372,10 +13372,15 @@
   "genres": [
    "Rock"
   ],
-  "styles": [],
+  "styles": [
+   "Alternative Rock",
+   "Pop Rock"
+  ],
   "year_checked": true,
   "cover_ext": "webp",
-  "post_url": "https://t.me/volodyamusicbox/1346"
+  "post_url": "https://t.me/volodyamusicbox/1346",
+  "genre_src": "discogs",
+  "genre_tried": 1794765436
  },
  {
   "title": "Baby Hotline / Tea Errors",
@@ -13492,7 +13497,16 @@
   "added": "2026-01-16T17:20:13",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/929",
-  "year_tried": 1794548175
+  "year_tried": 1794548175,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Russian Pop"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794765436
  },
  {
   "title": "The Story of Moondog",
