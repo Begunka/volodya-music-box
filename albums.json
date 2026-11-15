@@ -12406,7 +12406,8 @@
    "Art Rock",
    "Psychedelic Rock"
   ],
-  "genre_src": "artist"
+  "genre_src": "artist",
+  "genre_tried": 1794765975
  },
  {
   "title": "Бременские музыканты",
@@ -13034,7 +13035,8 @@
   "styles": [
    "Psychedelic"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794765975
  },
  {
   "title": "The Man In The Bowler Hat",
