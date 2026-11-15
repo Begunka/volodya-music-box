@@ -5843,10 +5843,15 @@
    "Rock",
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Beat",
+   "Rock & Roll",
+   "Surf"
+  ],
   "reissue_year": "2020",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Shakers For You",
@@ -5883,7 +5888,14 @@
   "id": 288,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794553228
+  "year_tried": 1794553228,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Vocal"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Tamboo!",
@@ -5899,7 +5911,15 @@
   "added": "2026-04-18T19:39:30",
   "post_url": "https://t.me/volodyamusicbox/2472",
   "cover_ext": "webp",
-  "year_tried": 1794553228
+  "year_tried": 1794553228,
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Easy Listening",
+   "Lounge"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "The In Sound From Way Out",
@@ -6076,7 +6096,16 @@
   "id": 297,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794553038
+  "year_tried": 1794553038,
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Vocal",
+   "Schlager",
+   "Beat"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Begin",
@@ -6250,7 +6279,8 @@
   "added": "2026-04-22T10:28:22",
   "post_url": "https://t.me/volodyamusicbox/2735",
   "cover_ext": "webp",
-  "year_tried": 1794553038
+  "year_tried": 1794553038,
+  "genre_tried": 1794764659
  },
  {
   "title": "Вокально-инструментальный ансамбль \"Иверия\"",
@@ -6266,10 +6296,15 @@
    "Pop",
    "Folk, World, & Country"
   ],
-  "styles": [],
+  "styles": [
+   "Folk Rock",
+   "Classic Rock",
+   "Beat"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3109",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "artist"
  },
  {
   "title": "Rubber Soul",
@@ -6302,7 +6337,15 @@
   "added": "2026-04-25T10:26:29",
   "post_url": "https://t.me/volodyamusicbox/3166",
   "cover_ext": "webp",
-  "year_tried": 1794552853
+  "year_tried": 1794552853,
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Folk"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Лирика",
@@ -6374,7 +6417,14 @@
   "id": 313,
   "added": "2026-04-25T19:21:22",
   "cover_ext": "webp",
-  "year_tried": 1794552853
+  "year_tried": 1794552853,
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Contemporary"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "For How Much Longer Do We Tolerate Mass Murder?",
@@ -6429,10 +6479,14 @@
    "Rock",
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Soft Rock",
+   "Pop Rock"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3346",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Dreams",
@@ -6646,7 +6700,14 @@
   "id": 327,
   "added": "2026-04-29T18:43:44",
   "cover_ext": "webp",
-  "year_tried": 1794552675
+  "year_tried": 1794552675,
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Renaissance"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "6 6 6",
@@ -6659,7 +6720,15 @@
   "reissue_year": "1991",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3319",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Prog Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Kakashi",
@@ -6694,11 +6763,15 @@
    "Jazz",
    "Folk, World, & Country"
   ],
-  "styles": [],
+  "styles": [
+   "Folk",
+   "Jazz-Funk"
+  ],
   "reissue_year": "2019",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3360",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "LOVE WILL MAKE A BETTER YOU",
@@ -6710,7 +6783,16 @@
   "added": "2026-05-02T14:39:50",
   "post_url": "https://t.me/volodyamusicbox/3370",
   "cover_ext": "webp",
-  "year_tried": 1794552675
+  "year_tried": 1794552675,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Blues Rock",
+   "Psychedelic Rock",
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Saravah!",
@@ -6784,7 +6866,15 @@
   "added": "2026-05-04T11:45:30",
   "post_url": "https://t.me/volodyamusicbox/4914",
   "cover_ext": "webp",
-  "year_tried": 1794552505
+  "year_tried": 1794552505,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Modern Classical",
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Old Boot Wine",
@@ -6877,7 +6967,18 @@
   "added": "2026-05-05T10:30:19",
   "reissue_year": "1984",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Hip Hop",
+   "Jazz",
+   "Pop"
+  ],
+  "styles": [
+   "Poetry",
+   "Conscious",
+   "Spoken Word"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "April is the cruellest month",
@@ -6889,7 +6990,15 @@
   "added": "2026-05-05T10:30:19",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3447",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Free Improvisation",
+   "Free Jazz"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "IV",
@@ -6920,7 +7029,20 @@
   "added": "2026-05-07T19:31:02",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3451",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Jazz-Rock",
+   "Jazz-Funk",
+   "Experimental",
+   "Prog Rock",
+   "Fusion"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Flying Fish Ambience",
@@ -6951,7 +7073,14 @@
   "added": "2026-05-08T03:03:12",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3481",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Ambient"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Holland",
@@ -7210,7 +7339,14 @@
   "added": "2026-05-19T10:29:44",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3611",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Psy-Trance"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Vicious Delicious",
@@ -7281,7 +7417,14 @@
   "added": "2026-05-21T00:06:17",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3640",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Psy-Trance"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Inner Dialogue",
@@ -7333,7 +7476,16 @@
   "added": "2026-05-22T21:17:48",
   "post_url": "https://t.me/volodyamusicbox/3661",
   "cover_ext": "webp",
-  "year_tried": 1794552321
+  "year_tried": 1794552321,
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "Art Rock",
+   "Acoustic"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Cryptic Crunch",
@@ -7468,7 +7620,16 @@
   "added": "2026-05-25T12:06:54",
   "post_url": "https://t.me/volodyamusicbox/3717",
   "cover_ext": "webp",
-  "year_tried": 1794552134
+  "year_tried": 1794552134,
+  "genres": [
+   "Electronic",
+   "Latin"
+  ],
+  "styles": [
+   "Synth-pop",
+   "J-pop"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Malesch",
@@ -7481,7 +7642,15 @@
   "reissue_year": "2008",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3755",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Krautrock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Colored Music",
@@ -7554,7 +7723,17 @@
   "added": "2026-05-27T16:33:02",
   "post_url": "https://t.me/volodyamusicbox/3821",
   "cover_ext": "webp",
-  "year_tried": 1794551956
+  "year_tried": 1794551956,
+  "genres": [
+   "Jazz",
+   "Funk / Soul"
+  ],
+  "styles": [
+   "Easy Listening",
+   "Latin Jazz",
+   "Jazz-Funk"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Mganga! The Primitive Sounds of Tak Shindo",
@@ -7750,7 +7929,15 @@
   "added": "2026-06-03T18:33:10",
   "title_full": "Mignonne (Mastered by Bernie Grundman)",
   "cover_ext": "webp",
-  "year_checked": true
+  "year_checked": true,
+  "genres": [
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "City Pop",
+   "J-pop"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "DEMENTOS",
@@ -7826,7 +8013,18 @@
   "id": 391,
   "added": "2026-06-07T02:45:40",
   "cover_ext": "webp",
-  "year_tried": 1794551776
+  "year_tried": 1794551776,
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "African",
+   "Fusion",
+   "Ambient"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Camoufleur",
@@ -7903,7 +8101,14 @@
   "added": "2026-06-10T23:25:20",
   "reissue_year": "2015",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "330,003 Crossdressers from Beyond the Rig Veda",
@@ -7916,7 +8121,15 @@
   "added": "2026-06-10T23:25:20",
   "reissue_year": "2012",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Cool Music",
@@ -7928,7 +8141,19 @@
   "added": "2026-06-10T23:25:20",
   "post_url": "https://t.me/volodyamusicbox/3955",
   "cover_ext": "webp",
-  "year_tried": 1794551592
+  "year_tried": 1794551592,
+  "genres": [
+   "Electronic",
+   "Rock",
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Electro",
+   "New Wave",
+   "New Age",
+   "Modern Classical"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "ADUNA",
@@ -7958,7 +8183,16 @@
   "added": "2026-06-10T23:25:20",
   "post_url": "https://t.me/volodyamusicbox/3980",
   "cover_ext": "webp",
-  "year_tried": 1794551424
+  "year_tried": 1794551424,
+  "genres": [
+   "Electronic",
+   "Jazz"
+  ],
+  "styles": [
+   "Fusion",
+   "Synth-pop"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "An Electric Storm",
@@ -8074,10 +8308,13 @@
   "genres": [
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Chanson"
+  ],
   "reissue_year": "2016",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Oui",
@@ -8575,7 +8812,16 @@
   "added": "2026-06-25T02:10:09",
   "post_url": "https://t.me/volodyamusicbox/4357",
   "cover_ext": "webp",
-  "year_tried": 1794551424
+  "year_tried": 1794551424,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Abstract",
+   "Experimental",
+   "Musique Concrète"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Secrets Of The Beehive",
@@ -8889,7 +9135,15 @@
   "id": 445,
   "added": "2026-07-02T01:52:11",
   "cover_ext": "webp",
-  "year_tried": 1794551235
+  "year_tried": 1794551235,
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "Ambient",
+   "Experimental"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Peasant",
@@ -9099,7 +9353,16 @@
   "added": "2026-07-08T12:02:03",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/4655",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Latin"
+  ],
+  "styles": [
+   "Bossa Nova",
+   "Nu-Disco"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "The Lemon of Pink",
@@ -9151,7 +9414,8 @@
   "id": 460,
   "added": "2026-07-09T03:18:18",
   "cover_ext": "webp",
-  "year_tried": 1794551062
+  "year_tried": 1794551062,
+  "genre_tried": 1794764659
  },
  {
   "title": "On the Shore",
@@ -9372,7 +9636,15 @@
   "id": 471,
   "added": "2026-07-15T23:36:19",
   "cover_ext": "webp",
-  "year_tried": 1794551062
+  "year_tried": 1794551062,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "J Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Wild Man",
@@ -9483,7 +9755,14 @@
   "title_full": "log.3.cyber-rassismus (gold-edition)",
   "post_url": "https://t.me/volodyamusicbox/4846",
   "cover_ext": "webp",
-  "year_tried": 1794550873
+  "year_tried": 1794550873,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Alternative Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Evensong",
@@ -9563,7 +9842,17 @@
   "title_full": "Dreaming With Alice (Master Tape Transfer)",
   "reissue_year": "2020",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Acoustic",
+   "Psychedelic Rock",
+   "Folk"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Just A Poke",
@@ -9715,10 +10004,16 @@
   "genres": [
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Indie Pop",
+   "Chanson",
+   "Lounge",
+   "Soft Rock"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/4941",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Soundtrack",
@@ -9811,7 +10106,15 @@
   "added": "2026-08-09T15:33:35",
   "post_url": "https://t.me/volodyamusicbox/4980",
   "cover_ext": "webp",
-  "year_tried": 1794550873
+  "year_tried": 1794550873,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Art Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "The Stars Are So Big The Earth Is So Small... Stay As You Are",
@@ -10196,10 +10499,13 @@
   "genres": [
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Vocal"
+  ],
   "reissue_year": "1989",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Hey, Love",
@@ -10269,7 +10575,15 @@
   "added": "2026-08-26T14:54:57",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5180",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Downtempo",
+   "Synth-pop"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Four Freshmen And 5 Trombones",
@@ -10343,7 +10657,14 @@
   "added": "2026-08-27T16:05:26",
   "reissue_year": "2010",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Parachute",
@@ -10521,7 +10842,15 @@
   "added": "2026-09-02T14:17:47",
   "post_url": "https://t.me/volodyamusicbox/5250",
   "cover_ext": "webp",
-  "year_tried": 1794550521
+  "year_tried": 1794550521,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Experimental",
+   "Electroacoustic"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "God Save the Clientele",
@@ -10654,7 +10983,12 @@
   "added": "2026-09-07T11:15:09",
   "reissue_year": "2018",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Hip Hop"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794764659
  },
  {
   "title": "The Poison Boyfriend",
@@ -10763,7 +11097,17 @@
   "title_full": "Fugu, Vol. 1 (Remastered Edition)",
   "post_url": "https://t.me/volodyamusicbox/5370",
   "cover_ext": "webp",
-  "year_tried": 1794550338
+  "year_tried": 1794550338,
+  "genres": [
+   "Electronic",
+   "Jazz"
+  ],
+  "styles": [
+   "Experimental",
+   "Avantgarde",
+   "Free Improvisation"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Health",
@@ -10776,11 +11120,15 @@
   "genres": [
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Indie Rock",
+   "Pop Rock"
+  ],
   "reissue_year": "2018",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5389",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "artist"
  },
  {
   "title": "The Piper at the Gates of Dawn",
@@ -10980,7 +11328,19 @@
   "reissue_year": "2011",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5520",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Lounge",
+   "Bossa Nova",
+   "Lo-Fi",
+   "Avantgarde"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Carl & The Passions - So Tough",
@@ -11015,7 +11375,19 @@
   "reissue_year": "2005",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5553",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Lounge",
+   "Bossa Nova",
+   "Lo-Fi",
+   "Avantgarde"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "The Best Of Little Walter",
@@ -11051,7 +11423,8 @@
   "added": "2026-09-25T23:32:17",
   "post_url": "https://t.me/volodyamusicbox/5569",
   "cover_ext": "webp",
-  "year_tried": 1794550338
+  "year_tried": 1794550338,
+  "genre_tried": 1794764659
  },
  {
   "title": "The Albemarle Sound",
@@ -11238,7 +11611,14 @@
   "added": "2026-10-02T23:24:37",
   "reissue_year": "2005",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Elastic Rock",
@@ -11316,7 +11696,14 @@
   "id": 572,
   "added": "2026-10-04T17:15:00",
   "cover_ext": "webp",
-  "year_tried": 1794550153
+  "year_tried": 1794550153,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Techno"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Wagner: Overtures and Preludes from the Operas",
@@ -11328,7 +11715,12 @@
   "added": "2026-10-04T23:45:58",
   "post_url": "https://t.me/volodyamusicbox/5750",
   "cover_ext": "webp",
-  "year_tried": 1794550153
+  "year_tried": 1794550153,
+  "genres": [
+   "Classical"
+  ],
+  "genre_src": "itunes",
+  "genre_tried": 1794764659
  },
  {
   "title": "Revolutionary Pekinese Opera",
@@ -11401,7 +11793,16 @@
   "title_full": "Angry Birds (Original Game Soundtrack) [Extended Edition]",
   "post_url": "https://t.me/volodyamusicbox/5795",
   "cover_ext": "webp",
-  "year_tried": 1794549974
+  "year_tried": 1794549974,
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack",
+   "Score",
+   "Video Game Music"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Angry Birds Seasons (Original Game Soundtrack)",
@@ -11413,7 +11814,16 @@
   "added": "2026-10-08T12:04:34",
   "post_url": "https://t.me/volodyamusicbox/5799",
   "cover_ext": "webp",
-  "year_tried": 1794549974
+  "year_tried": 1794549974,
+  "genres": [
+   "Rock",
+   "Electronic"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "Synth-pop"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Bad Piggies (Original Game Soundtrack)",
