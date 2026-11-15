@@ -9151,7 +9151,8 @@
    "Ambient",
    "Experimental"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794766872
  },
  {
   "title": "Peasant",
@@ -9363,14 +9364,14 @@
   "post_url": "https://t.me/volodyamusicbox/4655",
   "cover_ext": "webp",
   "genres": [
-   "Electronic",
-   "Latin"
+   "Electronic"
   ],
   "styles": [
    "Bossa Nova",
    "Nu-Disco"
   ],
-  "genre_src": "artist"
+  "genre_src": "artist",
+  "genre_tried": 1794766872
  },
  {
   "title": "The Lemon of Pink",
