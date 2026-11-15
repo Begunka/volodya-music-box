@@ -6280,7 +6280,15 @@
   "post_url": "https://t.me/volodyamusicbox/2735",
   "cover_ext": "webp",
   "year_tried": 1794553038,
-  "genre_tried": 1794764659
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Surf",
+   "Beat"
+  ],
+  "genre_src": "manual"
  },
  {
   "title": "Вокально-инструментальный ансамбль \"Иверия\"",
@@ -11424,7 +11432,13 @@
   "post_url": "https://t.me/volodyamusicbox/5569",
   "cover_ext": "webp",
   "year_tried": 1794550338,
-  "genre_tried": 1794764659
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Big Band"
+  ],
+  "genre_src": "manual"
  },
  {
   "title": "The Albemarle Sound",
@@ -11719,8 +11733,10 @@
   "genres": [
    "Classical"
   ],
-  "genre_src": "itunes",
-  "genre_tried": 1794764659
+  "genre_src": "manual",
+  "styles": [
+   "Romantic"
+  ]
  },
  {
   "title": "Revolutionary Pekinese Opera",
@@ -12582,7 +12598,15 @@
   "post_url": "https://t.me/volodyamusicbox/6203",
   "cover_ext": "webp",
   "year_tried": 1794549254,
-  "genre_tried": 1794765485
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Jazz-Rock",
+   "Fusion"
+  ],
+  "genre_src": "manual"
  },
  {
   "title": "Tales of the Inexpressible",
@@ -12897,7 +12921,15 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6163",
   "year_tried": 1794549073,
-  "genre_tried": 1794765485
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Art Rock",
+   "Pop Rock"
+  ],
+  "genre_src": "manual"
  },
  {
   "title": "Flamingo Serenade",
@@ -13340,7 +13372,15 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2350",
   "year_tried": 1794548719,
-  "genre_tried": 1794765485
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Surf",
+   "Beat"
+  ],
+  "genre_src": "manual"
  },
  {
   "title": "Cherry Viewing A Go Go (桜音頭a Gogo!)",
