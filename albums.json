@@ -12949,5 +12949,16 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6355"
+ },
+ {
+  "title": "Tilt",
+  "artist": "Arti + Mestieri",
+  "date": "1974-06-24",
+  "tracks": 8,
+  "year": "1974",
+  "id": 690,
+  "added": "2026-11-15T09:38:27",
+  "cover_ext": "webp",
+  "year_tried": 1794735533
  }
 ]
