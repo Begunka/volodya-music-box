@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from parser import parse_post, is_track_post, looks_almost_like_album, album_key, clean_title  # noqa: E402
 from enrich import enrich  # noqa: E402
+from genres import fill_genres, needs_genres, WEAK  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE = ROOT / "albums.json"        # полный архив
@@ -68,7 +69,9 @@ WORKER_URL = (os.environ.get("WORKER_URL") or
               ((ROOT / "worker_url.txt").read_text(encoding="utf-8").strip() if (ROOT / "worker_url.txt").exists() else ""))
 # секрет между Telegram/GitHub и воркером — выводится из токена бота, отдельно хранить не нужно
 HOOK_SECRET = hmac.new((TOKEN or "").encode(), b"webhook", hashlib.sha256).hexdigest()[:32]
-UPDATE_TYPES = ["message", "channel_post", "inline_query", "chosen_inline_result"]
+# кнопки под сообщениями бота, оплата звёздами и «бота добавили в чат» — их разбирает воркер
+UPDATE_TYPES = ["message", "channel_post", "inline_query", "chosen_inline_result",
+                "callback_query", "pre_checkout_query", "my_chat_member"]
 BOT_USERNAME = f"{CHANNEL}_bot"
 DISCOGS = secret("DISCOGS_TOKEN", "discogs_token.txt")
 API = f"https://api.telegram.org/bot{TOKEN}/"
@@ -231,6 +234,11 @@ def export_site_data(albums):
             d["has_cover"] = True
         if not a.get("year_checked"):
             d["unverified"] = True
+        # «вышел в этот день»: только когда дата в посте полная и её год — год первого выхода
+        # (1 января обычно значит «известен только год»)
+        date = a.get("date") or ""
+        if len(date) == 10 and date[:4] == str(a.get("year")) and date[5:] != "01-01":
+            d["day"] = date[5:]
         out.append(d)
     save_json(SITE_DATA, out, compact=True)
 
@@ -270,7 +278,7 @@ class Archive:
             a["title_full"] = full
         a["id"] = max((x["id"] for x in self.albums), default=0) + 1
         a["added"] = date
-        enrich(a, DISCOGS)
+        enrich(a, DISCOGS, self.albums)
         ext = get_cover(photo, a, a["id"])
         a.pop("_cover_candidates", None)
         if ext:
@@ -285,20 +293,38 @@ class Archive:
         return a
 
     def recheck(self, limit=2):
-        """Альбомы, год которых не нашёлся, понемногу проверяем заново (раз в месяц каждый):
-        базы пополняются, а поиск учится другим написаниям исполнителя."""
+        """Понемногу перепроверяем (раз в месяц каждый альбом): базы пополняются,
+        а поиск учится другим написаниям исполнителя.
+          • год, который не нашёлся;
+          • жанры: пустые, неполные или взятые из грубого источника (по исполнителю и т.п.)."""
         now = int(time.time())
         todo = [a for a in self.albums if not a.get("year_checked") and a.get("artist")
                 and not a["title"].startswith("http") and now - a.get("year_tried", 0) > 30 * 86400]
         todo.sort(key=lambda a: -a["id"])   # сначала свежие
         for a in todo[:limit]:
             before = (a.get("year"), a.get("genres"))
-            enrich(a, DISCOGS)
+            enrich(a, DISCOGS, self.albums)
             a.pop("_cover_candidates", None)
             a["year_tried"] = now
             if a.get("year_checked"):
                 a.pop("year_tried", None)
                 print(f"Год найден: {a['artist']} — {a['title']}: {before[0]} → {a['year']}")
+            self.changed = True
+        if todo:
+            return   # жанры — в следующий запуск, чтобы не затягивать этот
+        weak = [a for a in self.albums if a.get("artist") and not a["title"].startswith("http")
+                and (needs_genres(a) or a.get("genre_src") in WEAK)
+                and now - a.get("genre_tried", 0) > 30 * 86400]
+        weak.sort(key=lambda a: (not needs_genres(a), -a["id"]))   # сначала пустые
+        for a in weak[:limit]:
+            before = (a.get("genres"), a.get("styles"), a.get("genre_src"))
+            keep = {k: a.pop(k) for k in ("genres", "styles", "genre_src") if a.get("genre_src") in WEAK and k in a}
+            src = fill_genres(a, self.albums, DISCOGS)
+            if not src or (src in WEAK and keep.get("styles") and not a.get("styles")):
+                a.update(keep)   # лучше не стало — оставляем, что было
+            a["genre_tried"] = now
+            if (a.get("genres"), a.get("styles"), a.get("genre_src")) != before:
+                print(f"Жанры: {a['artist']} — {a['title']}: {a.get('genre_src')} · {a.get('styles')}")
             self.changed = True
 
     def save(self):
@@ -641,6 +667,8 @@ class Bot:
                 mark = "" if a.get("year_checked") else " — год не нашёл, оставил твой"
                 if a.get("no_cover"):
                     mark += ", обложку не нашёл"
+                if not a.get("genres"):
+                    mark += ", жанр не нашёл"
                 lines.append(f"  • {html.escape(a.get('artist') or '?')} — {html.escape(a['title'])} "
                              f"({a.get('year') or '?'}){mark}")
         if s["linked"]:

@@ -1,0 +1,68 @@
+name: Жанры и стили
+
+on:
+  schedule:
+    - cron: "23 3 * * 1"        # раз в неделю: добрать, если что-то осталось без жанра
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Сколько минут работать (не больше 12 — на это время бот ждёт)"
+        default: "12"
+      only:
+        description: "Только эти номера альбомов (через запятую), пусто — все без жанра или стиля"
+        default: ""
+
+# та же очередь, что у бота: оба правят albums.json и data.json, вместе им нельзя
+concurrency:
+  group: bot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Подобрать жанры
+        env:
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MINUTES: ${{ inputs.minutes || '12' }}
+          ONLY: ${{ inputs.only }}
+        run: python bot/genres.py --minutes "$MINUTES" ${ONLY:+--only "$ONLY"}
+      - name: Сохранить
+        id: save
+        run: |
+          git config user.name "volodyamusicbox-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add albums.json data.json
+          if git diff --cached --quiet; then echo "Ничего нового"; else
+            git commit -m "Жанры и стили [skip ci]"
+            for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done
+            echo "changed=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Собрать мини-приложение
+        if: steps.save.outputs.changed == 'yes'
+        run: |
+          mkdir -p worker/public
+          cp index.html data.json _headers worker/public/
+          cp -r covers worker/public/covers
+          if [ -d wiki ]; then cp -r wiki worker/public/wiki; rm -f worker/public/wiki/state.json worker/public/wiki/tr.json; fi
+      - name: Обновить мини-приложение на Cloudflare
+        if: steps.save.outputs.changed == 'yes'
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          wranglerVersion: "4"
+          command: deploy

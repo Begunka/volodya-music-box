@@ -35,6 +35,7 @@ jobs:
           OWNER_ID: ${{ secrets.OWNER_ID }}
           DIARY_CHAT_ID: ${{ secrets.DIARY_CHAT_ID }}
           CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python bot/bot.py
 
       - name: Сохранить архив

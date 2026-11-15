@@ -3,6 +3,7 @@
 import json
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,7 +33,9 @@ def get_json(url, tries=5):
 
 
 def norm(s):
-    return re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
+    # без диакритики: «Pétrouchka» и «Petrouchka» — одно и то же
+    s = "".join(c for c in unicodedata.normalize("NFKD", (s or "").lower()) if not unicodedata.combining(c))
+    return re.sub(r"[^\w]+", " ", s).strip()
 
 
 def similar(a, b):
@@ -64,29 +67,42 @@ def lookup_year(artist, title):
 DISCOGS_TOKEN = None  # выставляет enrich() из настроек
 
 
+def _dg_artist(r):
+    """У Discogs title = «Исполнитель - Альбом»; у тёзок в имени хвост «(2)», у вариантов имени — «*»."""
+    r_artist, _, r_title = (r.get("title") or "").partition(" - ")
+    return re.sub(r"\s*\(\d+\)|\*", "", r_artist).strip(), r_title
+
+
 def lookup_discogs(artist, title):
     """Год первого выхода по Discogs (master release) + жанры/стили.
-    Возвращает (score, year, title, genres, styles) или None."""
-    best = None
+    Возвращает (score, year, title, genres, styles, cover) или None."""
+    best = tagged = None
     for kind in ("master", "release"):
         params = urllib.parse.urlencode({
             "type": kind, "artist": first_artist(artist), "release_title": title,
             "per_page": 10, "token": DISCOGS_TOKEN})
         data = get_json("https://api.discogs.com/database/search?" + params)
         for r in data.get("results", []):
-            # у Discogs title = "Исполнитель - Альбом"
-            r_artist, _, r_title = (r.get("title") or "").partition(" - ")
+            r_artist, r_title = _dg_artist(r)
             t_sim = similar(r_title, title)
             a_sim = max(similar(r_artist, artist), similar(r_artist, first_artist(artist)))
+            if t_sim < 0.85 or a_sim < 0.6:
+                continue
+            score = t_sim + a_sim
+            # жанры берём у самого похожего результата, у которого они размечены полностью:
+            # у отдельных изданий стили часто пустые, хотя у соседнего издания того же альбома они есть
+            if r.get("style") and (not tagged or score > tagged[0] + 0.01):
+                tagged = (score, r.get("genre", []), r.get("style", []))
             year = str(r.get("year") or "")
-            if t_sim >= 0.85 and a_sim >= 0.6 and re.fullmatch(r"\d{4}", year) and year != "0":
-                score = t_sim + a_sim
+            if re.fullmatch(r"\d{4}", year) and year != "0":
                 # среди одинаково похожих берём самый ранний год
                 if not best or score > best[0] + 0.01 or (abs(score - best[0]) <= 0.01 and year < best[1]):
                     best = (score, year, r_title, r.get("genre", []), r.get("style", []), r.get("cover_image"))
         time.sleep(1.1)  # лимит Discogs: 60 запросов в минуту
-        if best:
+        if best and (best[4] or tagged):
             break
+    if best and not best[4] and tagged:
+        best = best[:3] + (tagged[1] or best[3], tagged[2]) + best[5:]
     return best
 
 
@@ -143,8 +159,9 @@ def first_found(fn, artist, title):
     return None
 
 
-def enrich(album, discogs_token=None):
+def enrich(album, discogs_token=None, albums=None):
     """Дополняет album: год первого выхода, reissue_year, genres, styles.
+    albums — весь архив: по нему жанры подбираются, когда базы про сам альбом молчат.
     Возвращает True, если год подтверждён хотя бы одной базой."""
     global DISCOGS_TOKEN
     DISCOGS_TOKEN = discogs_token
@@ -161,8 +178,14 @@ def enrich(album, discogs_token=None):
         mb = first_found(lookup_year, artist, title)
     except Exception as e:
         print("  MusicBrainz:", e)
-    if dg and dg[3]:
+    if dg and dg[3] and dg[4]:
         album["genres"], album["styles"] = dg[3], dg[4]
+        album["genre_src"] = "discogs"
+    else:
+        if dg and dg[3]:
+            album["genres"] = dg[3]
+        from genres import fill_genres
+        fill_genres(album, albums or [], discogs_token, mb_id=mb[3] if mb else None, skip_exact=bool(discogs_token))
     # откуда можно взять обложку, если в посте её нет
     covers = []
     if dg and len(dg) > 5 and dg[5] and "spacer.gif" not in dg[5]:
