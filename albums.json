@@ -11125,6 +11125,10 @@
   "year": "2013",
   "id": 544,
   "added": "2026-09-13T00:12:47",
+  "reissue_year": "2018",
+  "year_checked": true,
+  "post_url": "https://t.me/volodyamusicbox/5389",
+  "cover_ext": "webp",
   "genres": [
    "Pop"
   ],
@@ -11132,11 +11136,8 @@
    "Indie Rock",
    "Pop Rock"
   ],
-  "reissue_year": "2018",
-  "year_checked": true,
-  "post_url": "https://t.me/volodyamusicbox/5389",
-  "cover_ext": "webp",
-  "genre_src": "artist"
+  "genre_src": "discogs",
+  "genre_tried": 1794766580
  },
  {
   "title": "The Piper at the Gates of Dawn",
@@ -11717,7 +11718,8 @@
   "styles": [
    "Techno"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794766580
  },
  {
   "title": "Wagner: Overtures and Preludes from the Operas",
