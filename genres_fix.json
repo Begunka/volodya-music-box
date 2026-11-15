@@ -1,3 +1,9 @@
 {
- "578": {"genres": ["Stage & Screen"], "styles": ["Soundtrack", "Video Game Music"]}
+ "306": {"genres": ["Rock", "Folk, World, & Country"], "styles": ["Surf", "Beat"]},
+ "558": {"genres": ["Jazz"], "styles": ["Big Band"]},
+ "573": {"genres": ["Classical"], "styles": ["Romantic"]},
+ "578": {"genres": ["Stage & Screen"], "styles": ["Soundtrack", "Video Game Music"]},
+ "615": {"genres": ["Jazz", "Rock"], "styles": ["Jazz-Rock", "Fusion"]},
+ "631": {"genres": ["Rock", "Pop"], "styles": ["Art Rock", "Pop Rock"]},
+ "655": {"genres": ["Rock", "Folk, World, & Country"], "styles": ["Surf", "Beat"]}
 }
