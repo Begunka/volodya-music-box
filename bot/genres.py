@@ -29,7 +29,7 @@ import enrich as E  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 FIX = ROOT / "genres_fix.json"
-WEAK = ("mb", "deezer", "itunes", "artist", "ai")   # такие источники стоит перепроверять
+WEAK = ("mb", "deezer", "itunes", "title", "artist", "ai")   # такие источники стоит перепроверять
 
 DISCOGS_GENRES = ["Rock", "Electronic", "Pop", "Jazz", "Folk, World, & Country", "Funk / Soul", "Hip Hop",
                   "Classical", "Latin", "Blues", "Reggae", "Stage & Screen", "Non-Music", "Brass & Military",
@@ -376,6 +376,24 @@ def broad(names, vocab):
     return genres[:3], styles[:3]
 
 
+VARIOUS = re.compile(r"^(various|various artists|va|v/a|разные исполнители|сборник|verschiedene interpreten|"
+                     r"różni wykonawcy|varios artistas|artistes divers|artisti vari)$", re.I)
+
+
+def is_various(artist):
+    """«Разные исполнители» на любом языке — по такому «исполнителю» жанр не угадать."""
+    return bool(VARIOUS.match(E.first_artist(artist or "").strip()))
+
+
+def from_title(title):
+    """Саундтрек видно по названию: «… (Original Game Soundtrack)», «… OST»."""
+    t = title.lower()
+    if not re.search(r"soundtrack|\bost\b|саундтрек|サウンドトラック|original score|motion picture", t):
+        return None
+    game = re.search(r"game|игр", t)
+    return ["Stage & Screen"], (["Soundtrack", "Video Game Music"] if game else ["Soundtrack"])
+
+
 def from_archive(album, albums):
     """Другие альбомы того же исполнителя в архиве: что у них общего."""
     me = nkey(E.first_artist(album["artist"]))
@@ -522,11 +540,15 @@ def fill_genres(album, albums, discogs_token=None, mb_id=None, skip_exact=False,
         ("mb", lambda: mb_release_group(artist, title, mb_id, vocab)),
         ("deezer", lambda: deezer(album, vocab)),
         ("itunes", lambda: itunes(album, vocab)),
-        ("artist", lambda: from_archive(album, albums)),
-        ("artist", lambda: discogs_artist(artist)),
-        ("artist", lambda: mb_artist(artist, vocab)),
-        ("ai", lambda: gemini(album, vocab)),
+        ("title", lambda: from_title(title)),
     ]
+    if not is_various(artist):
+        steps += [
+            ("artist", lambda: from_archive(album, albums)),
+            ("artist", lambda: discogs_artist(artist)),
+            ("artist", lambda: mb_artist(artist, vocab)),
+        ]
+    steps.append(("ai", lambda: gemini(album, vocab)))
     for name, fn in steps:
         if name in ("deezer", "itunes") and genres:
             continue   # крупный жанр уже есть, а стилей там не бывает
