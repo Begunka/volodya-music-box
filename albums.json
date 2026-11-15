@@ -7945,7 +7945,8 @@
    "City Pop",
    "J-pop"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794767055
  },
  {
   "title": "DEMENTOS",
@@ -8023,16 +8024,13 @@
   "cover_ext": "webp",
   "year_tried": 1794551776,
   "genres": [
-   "Electronic",
-   "Jazz",
-   "Folk, World, & Country"
+   "Stage & Screen"
   ],
   "styles": [
-   "African",
-   "Fusion",
-   "Ambient"
+   "Soundtrack"
   ],
-  "genre_src": "artist"
+  "genre_src": "title",
+  "genre_tried": 1794767055
  },
  {
   "title": "Camoufleur",
