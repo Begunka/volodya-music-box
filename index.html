@@ -44,6 +44,12 @@ header.top{padding-block:22px 6px;display:flex;align-items:flex-end;justify-cont
 .brand h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,5vw,30px);letter-spacing:-.01em;margin:0;line-height:1.05;text-wrap:balance}
 .brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .count{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.top-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.top-btns{display:flex;gap:6px}
+@media (max-width:600px){.top-r{width:100%;flex-direction:row-reverse;justify-content:space-between;align-items:center}}
+.top-btns button{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.top-btns button b{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;line-height:18px;text-align:center;font-variant-numeric:tabular-nums}
+.top-btns button b:empty{display:none}
 
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
 .row{display:flex;gap:8px;align-items:center;min-width:0}
@@ -171,6 +177,8 @@ textarea.field{min-height:90px;resize:vertical}
 .addrow button{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:13px;max-width:90%}
 .s-more{display:flex;gap:6px;margin:0 0 10px}
+.s-more .tag{flex:1;height:40px;border-radius:12px;font-size:14px;font-weight:500}
+.s-more #s-later[aria-pressed="false"]{border-color:var(--accent);color:var(--accent)}
 .gate{position:fixed;inset:0;z-index:40;background:var(--shade);display:flex;align-items:flex-end;justify-content:center;
   padding:0 max(12px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 .gate-card{width:100%;max-width:440px;background:var(--surface);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
@@ -233,7 +241,7 @@ textarea.field{min-height:90px;resize:vertical}
 .today b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today em{flex:none;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
-.later-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0 0 16px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.later-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:10px 0 12px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
 .later-entry b{font-weight:600}
 .later-entry span{color:var(--muted);font-size:13px}
 .pl-entries{margin-bottom:8px}
@@ -259,7 +267,13 @@ textarea.field{min-height:90px;resize:vertical}
       <h1>volodya music box</h1>
       <p>Архив всех альбомов из канала</p>
     </div>
-    <div class="count" id="count">…</div>
+    <div class="top-r">
+      <div class="count" id="count">…</div>
+      <div class="top-btns">
+        <button type="button" id="later-top" hidden title="Отложенные альбомы">🎧 Позже <b id="later-badge"></b></button>
+        <button type="button" id="don-top" hidden title="Пожертвовать звёзды">★ Поддержать</button>
+      </div>
+    </div>
   </header>
 
   <div class="bar">
@@ -288,6 +302,10 @@ textarea.field{min-height:90px;resize:vertical}
 
   <main>
     <button class="today" id="today" type="button" hidden></button>
+    <button class="later-entry" id="later-entry" type="button" hidden>
+      <div><b>Послушаю позже</b><br><span id="later-count">Откладывай альбомы — бот напомнит в личке</span></div>
+      <span aria-hidden="true">→</span>
+    </button>
     <button class="duel-entry" id="duel-entry" type="button">
       <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
       <span aria-hidden="true">→</span>
@@ -296,10 +314,6 @@ textarea.field{min-height:90px;resize:vertical}
       <button type="button" id="pl-official"><b>Плейлисты от Володи</b><span>подборки автора канала</span></button>
       <button type="button" id="pl-people"><b>Плейлисты людей</b><span>собери свой и поделись</span></button>
     </div>
-    <button class="later-entry" id="later-entry" type="button" hidden>
-      <div><b>Послушаю позже</b><br><span id="later-count">Откладывай альбомы — бот напомнит в личке</span></div>
-      <span aria-hidden="true">→</span>
-    </button>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
     <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
@@ -1201,6 +1215,8 @@ textarea.field{min-height:90px;resize:vertical}
     function paint(){
       const n = active().length;
       $("later-entry").hidden = !inTg;
+      $("later-top").hidden = !inTg;
+      $("later-badge").textContent = n || "";
       $("later-count").textContent = n ? `${n} ${plural(n, "альбом", "альбома", "альбомов")} в очереди` : "Откладывай альбомы — бот напомнит в личке";
       const b = $("s-later"), it = openId && items[openId];
       b.hidden = !inTg;
@@ -1353,7 +1369,10 @@ textarea.field{min-height:90px;resize:vertical}
   $("later-entry").addEventListener("click", () => Later.open());
   $("today").addEventListener("click", () => open(+$("today").dataset.id));
   $("don-open").hidden = !(inTg && tgApp.openInvoice && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.1"));
+  $("don-top").hidden = $("don-open").hidden;
   $("don-open").addEventListener("click", () => { $("don").hidden = false; });
+  $("don-top").addEventListener("click", () => { $("don").hidden = false; });
+  $("later-top").addEventListener("click", () => Later.open());
   $("don-close").addEventListener("click", () => { $("don").hidden = true; });
   $("don-row").addEventListener("click", e => { const b = e.target.closest("button"); if (b) donate(+b.dataset.n); });
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
