@@ -198,7 +198,8 @@
   "styles": [
    "Soundtrack"
   ],
-  "genre_src": "itunes"
+  "genre_src": "itunes",
+  "genre_tried": 1794768680
  },
  {
   "title": "THRAK",
@@ -271,7 +272,8 @@
   "styles": [
    "Techno"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794768680
  },
  {
   "title": "The Dark Side of the Moon",
