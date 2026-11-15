@@ -721,11 +721,16 @@ async function onChatMember(m, env) {
 }
 
 const NUM = n => String(n || 0);
-async function statsText(env) {
-  const now = Date.now(), d1 = dayKey(now), d7 = dayKey(now - 6 * 86400000), d30 = dayKey(now - 29 * 86400000);
-  const [st, sn, misc, chats] = await env.DB.batch([
-    env.DB.prepare("SELECT key, SUM(CASE WHEN day = ?1 THEN n ELSE 0 END) AS a, SUM(CASE WHEN day >= ?2 THEN n ELSE 0 END) AS b, SUM(n) AS c FROM stats WHERE day >= ?3 GROUP BY key").bind(d1, d7, d30),
-    env.DB.prepare("SELECT kind, COUNT(DISTINCT CASE WHEN day = ?1 THEN uid END) AS a, COUNT(DISTINCT CASE WHEN day >= ?2 THEN uid END) AS b, COUNT(DISTINCT uid) AS c FROM seen WHERE day >= ?3 GROUP BY kind").bind(d1, d7, d30),
+const pl = (n, a, b, c) => { const m = n % 100, d = n % 10; return m > 10 && m < 20 ? c : d === 1 ? a : d > 1 && d < 5 ? b : c; };
+// Статистика для владельца. days: 1 — сегодня, 7 — неделя, 30 — месяц (сутки по UTC). В цифры входят и твои собственные действия.
+async function statsText(env, days = 7) {
+  days = days === 1 || days === 30 ? days : 7;
+  const now = Date.now(), from = dayKey(now - (days - 1) * 86400000), pFrom = dayKey(now - (2 * days - 1) * 86400000);
+  const [st, sn, pst, psn, misc, chats] = await env.DB.batch([
+    env.DB.prepare("SELECT key, SUM(n) AS n FROM stats WHERE day >= ?1 GROUP BY key").bind(from),
+    env.DB.prepare("SELECT kind, COUNT(DISTINCT uid) AS n FROM seen WHERE day >= ?1 GROUP BY kind").bind(from),
+    env.DB.prepare("SELECT key, SUM(n) AS n FROM stats WHERE day >= ?1 AND day < ?2 GROUP BY key").bind(pFrom, from),
+    env.DB.prepare("SELECT kind, COUNT(DISTINCT uid) AS n FROM seen WHERE day >= ?1 AND day < ?2 GROUP BY kind").bind(pFrom, from),
     env.DB.prepare(`SELECT (SELECT COUNT(*) FROM people) AS people, (SELECT COUNT(*) FROM people WHERE dm = 1 AND blocked = 0) AS dm,
       (SELECT COUNT(*) FROM later WHERE done IS NULL) AS later, (SELECT COUNT(*) FROM later WHERE done IS NOT NULL) AS listened,
       (SELECT COUNT(DISTINCT tg_id) FROM later) AS later_people, (SELECT COALESCE(SUM(amount), 0) FROM donations WHERE refunded = 0) AS stars,
@@ -734,30 +739,45 @@ async function statsText(env) {
       (SELECT COUNT(*) FROM playlists) AS playlists`),
     env.DB.prepare("SELECT type, title, username FROM chats WHERE status IN ('member', 'administrator') ORDER BY at DESC LIMIT 12"),
   ]);
-  const k = {}, u = {};
-  st.results.forEach(r => k[r.key] = r);
-  sn.results.forEach(r => u[r.kind] = r);
+  const k = {}, u = {}, pk = {}, pu = {};
+  st.results.forEach(r => k[r.key] = r.n); sn.results.forEach(r => u[r.kind] = r.n);
+  pst.results.forEach(r => pk[r.key] = r.n); psn.results.forEach(r => pu[r.kind] = r.n);
   const m = misc.results[0] || {};
-  const row = (label, r) => `${label}: <b>${NUM(r && r.a)}</b> · ${NUM(r && r.b)} · ${NUM(r && r.c)}`;
-  const sum = prefix => Object.entries(k).filter(([key]) => key.startsWith(prefix)).reduce((t, [, r]) => ({ a: t.a + r.a, b: t.b + r.b, c: t.c + r.c }), { a: 0, b: 0, c: 0 });
-  const where = { "iq:sender": "в личке с ботом", "iq:private": "в личных чатах", "iq:group": "в группах", "iq:supergroup": "в супергруппах", "iq:channel": "в каналах", "iq:unknown": "неизвестно где" };
-  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов", "sent:playlist": "плейлист", "sent:open": "«открыть архив»" };
-  const open = { "open:plain": "просто открыли", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "по карточке альбома из группы",
-    "open:album_p": "по карточке из личного чата", "open:album_c": "по карточке из канала", "open:album_s": "по карточке из лички бота",
-    "open:album_r": "из напоминания", "open:duel": "по вызову", "open:pl": "по плейлисту" };
-  const block = (title, map) => { const rows = Object.keys(map).filter(key => k[key]).map(key => "  " + row(map[key], k[key])); return rows.length ? [title, ...rows] : []; };
+  const sum = (o, prefix) => Object.entries(o).filter(([key]) => key.startsWith(prefix)).reduce((t, [, n]) => t + n, 0);
+  const trend = (now_, prev) => !prev && !now_ ? "" : ` (раньше: ${prev || 0})`;
+  const label = days === 1 ? "сегодня" : days === 7 ? "за 7 дней" : "за 30 дней";
+  const prevLabel = days === 1 ? "вчера" : days === 7 ? "предыдущие 7 дней" : "предыдущие 30 дней";
+  const where = { "iq:sender": "в личке с ботом", "iq:private": "в личных чатах", "iq:group": "в группах", "iq:supergroup": "в супергруппах", "iq:channel": "в каналах", "iq:unknown": "место неизвестно" };
+  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»" };
+  const open = { "open:plain": "просто открыли архив", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "из карточки альбома в группе",
+    "open:album_p": "из карточки альбома в личном чате", "open:album_c": "из карточки альбома в канале", "open:album_s": "из карточки альбома в личке бота",
+    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту" };
+  const list = (obj, map) => Object.keys(map).filter(key => obj[key]).sort((x, y) => obj[y] - obj[x]).map(key => `   • ${map[key]}: ${obj[key]}`);
+  const inl = sum(k, "iq:"), apps = sum(k, "open:"), sentN = sum(k, "sent:");
   const lines = [
-    "<b>Статистика</b> — сегодня · 7 дней · 30 дней (сутки по UTC)", "",
-    row("Людей в инлайне (@бот в чате)", u.inline), row("Людей в мини-приложении", u.app), "",
-    row("Инлайн-запросов", sum("iq:")), ...block("Где набирали @бота:", where), "",
-    row("Отправлено в чаты через бота", sum("sent:")), ...block("Что отправляли:", sent), "",
-    row("Открытий мини-приложения", sum("open:")), ...block("Откуда открывали:", open), "",
-    row("Нажали /start", k.start), row("Добавили в «послушаю позже»", k["later:add"]),
-    row("Напоминаний отправлено", k["dm:remind"]), row("Ответили «послушал»", k["dm:done"]), "",
-    `Всего: в базе бота ${NUM(m.people)} чел., писать можно ${NUM(m.dm)}; в очередях ${NUM(m.later)} альб. у ${NUM(m.later_people)} чел., послушано ${NUM(m.listened)}`,
-    `Оценок ${NUM(m.votes)} от ${NUM(m.voters)} чел.; вызовов ${NUM(m.duels)}, сыграно ${NUM(m.duels_done)}; плейлистов ${NUM(m.playlists)}; звёзд ${NUM(m.stars)}`,
+    `📊 <b>Бот ${label}</b>`, "",
+    "<b>Сколько людей пользуется</b>",
+    `• Открыли архив: <b>${NUM(u.app)}</b> ${pl(u.app || 0, "человек", "человека", "человек")}${trend(u.app, pu.app)}`,
+    `• Набирали @бота в чате: <b>${NUM(u.inline)}</b> ${pl(u.inline || 0, "человек", "человека", "человек")}${trend(u.inline, pu.inline)}`,
+    `• Нажали /start: <b>${NUM(k.start)}</b>`, "",
+    `<b>Откуда открывали архив</b> — всего <b>${apps}</b> ${pl(apps, "раз", "раза", "раз")}${trend(apps, sum(pk, "open:"))}`,
+    ...(list(k, open).length ? list(k, open) : ["   пока никто"]), "",
+    `<b>Упоминания бота в чатах</b> — запросов <b>${inl}</b>${trend(inl, sum(pk, "iq:"))}`,
+    ...(list(k, where).length ? list(k, where) : ["   пока никто"]),
+    `   Из них отправили что-то в чат: <b>${sentN}</b>`,
+    ...list(k, sent), "",
+    "<b>«Послушаю позже»</b>",
+    `• Добавили альбомов ${label}: ${NUM(k["later:add"])}`,
+    `• Бот напомнил: ${NUM(k["dm:remind"])}, ответили «послушал»: ${NUM(k["dm:done"])}`,
+    `• Сейчас в очередях: ${NUM(m.later)} ${pl(m.later || 0, "альбом", "альбома", "альбомов")} у ${NUM(m.later_people)} ${pl(m.later_people || 0, "человека", "человек", "человек")}, уже послушано ${NUM(m.listened)}`, "",
+    "<b>За всё время</b>",
+    `• Людей в базе бота: ${NUM(m.people)}, из них можно писать в личку: ${NUM(m.dm)}`,
+    `• Оценок: ${NUM(m.votes)} от ${NUM(m.voters)} ${pl(m.voters || 0, "человека", "человек", "человек")}`,
+    `• Вызовов: ${NUM(m.duels)}, сыграно до конца: ${NUM(m.duels_done)}; плейлистов людей: ${NUM(m.playlists)}`,
+    `• Пожертвований: ${NUM(m.stars)} ⭐ (вывод от 1000 ⭐, каждая звезда доступна через 21 день)`,
   ];
-  if (chats.results.length) lines.push("", "Бот стоит в чатах:", ...chats.results.map(c => `  • ${c.type === "channel" ? "канал" : "группа"} «${esc(c.title || "?")}»${c.username ? " @" + esc(c.username) : ""}`));
+  if (chats.results.length) lines.push("", "<b>Бота добавили в чаты</b>", ...chats.results.map(c => `   • ${c.type === "channel" ? "канал" : "группа"} «${esc(c.title || "?")}»${c.username ? " @" + esc(c.username) : ""}`));
+  lines.push("", `<i>В скобках — ${prevLabel}. Цифры включают и твои действия. Другой период: /stats 1 (сегодня), /stats 7, /stats 30.</i>`);
   return lines.join("\n");
 }
 
@@ -820,7 +840,7 @@ async function onPrivate(m, env) {
       { reply_markup: { inline_keyboard: [[{ text: "Удалить всё", callback_data: "fg" }]] } });
     return true;
   }
-  if (c === "/stats" && owner) { await say(env, uid, await statsText(env)); return true; }
+  if (c === "/stats" && owner) { await say(env, uid, await statsText(env, +arg || 7)); return true; }
   return false;
 }
 
