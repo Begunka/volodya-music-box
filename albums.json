@@ -11818,7 +11818,8 @@
    "Score",
    "Video Game Music"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794766501
  },
  {
   "title": "Angry Birds Seasons (Original Game Soundtrack)",
@@ -11859,7 +11860,8 @@
    "Soundtrack",
    "Video Game Music"
   ],
-  "genre_src": "mb"
+  "genre_src": "mb",
+  "genre_tried": 1794766501
  },
  {
   "title": "Angry Birds Space (Original Game Soundtrack), Pt. 2",
