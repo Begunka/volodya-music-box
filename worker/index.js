@@ -2,6 +2,8 @@
 //  • инлайн-запросы (@volodyamusicbox_bot …) — отвечает сразу сам;
 //  • всё остальное складывает в очередь (D1) и будит бота на GitHub,
 //    который делает тяжёлую работу: архив, Discogs, обложки, сайт.
+//  • кнопки под сообщениями бота, команды в личке, оплату звёздами, напоминания
+//    «послушаю позже» (по расписанию, раз в час) и статистику — тоже сам.
 // Если воркер недоступен (например, кончился дневной лимит), бот на GitHub сам
 // переключает Telegram на запасной режим и потом обратно.
 
@@ -30,6 +32,25 @@ export default {
       if (u.inline_query) {
         ctx.waitUntil(inline(u.inline_query, env).catch(e => console.log("inline", e)));
         return new Response("ok");
+      }
+      if (u.pre_checkout_query) {   // Telegram ждёт ответ не дольше 10 секунд — отвечаем сразу
+        const pq = u.pre_checkout_query;
+        const ok = pq.currency === "XTR" && /^don:\d+$/.test(pq.invoice_payload || "");
+        await tgCall(env, "answerPreCheckoutQuery", { pre_checkout_query_id: pq.id, ok, ...(ok ? {} : { error_message: "Этот счёт устарел. Открой архив и попробуй ещё раз." }) }).catch(() => {});
+        return new Response("ok");
+      }
+      if (u.callback_query) {
+        ctx.waitUntil(onCallback(u.callback_query, env).catch(e => console.log("callback", e)));
+        return new Response("ok");
+      }
+      if (u.my_chat_member) {
+        ctx.waitUntil(onChatMember(u.my_chat_member, env).catch(e => console.log("member", e)));
+        return new Response("ok");
+      }
+      if (u.message && u.message.chat.type === "private" && (u.message.successful_payment || /^\//.test(u.message.text || ""))) {
+        // команды в личке и оплата — отвечаем сразу; чего не знаем (например, служебные команды владельца) — в очередь
+        const handled = await onPrivate(u.message, env).catch(e => { console.log("private", e); return false; });
+        if (handled) return new Response("ok");
       }
       if (!worthQueuing(u, env)) return new Response("ok");   // треки, болтовня в комментариях — боту не нужны
       await env.DB.prepare("INSERT OR IGNORE INTO queue (update_id, body, received) VALUES (?, ?, ?)")
@@ -63,6 +84,12 @@ export default {
       return json({ ok: true });
     }
     return new Response("Volodya Music Box", { status: 200 });
+  },
+
+  // раз в час: напоминания «послушаю позже», по понедельникам — сводка владельцу, раз в сутки — уборка
+  async scheduled(event, env, ctx) {
+    env.BOT_TOKEN = (env.BOT_TOKEN || "").trim();
+    ctx.waitUntil(cron(env).catch(e => console.log("cron", e)));
   },
 };
 
@@ -301,15 +328,20 @@ async function tgCall(env, method, body) {
 const CLAIM_TTL = 30 * 60 * 1000;   // принявший вызов держит его 30 минут; не ответил — вызов снова свободен
 const claimActive = d => d.b_id && !d.b_ans && d.claimed && Date.now() - d.claimed < CLAIM_TTL;
 
+// Вызов можно отправить из инлайна, ещё не ответив самому: тогда a_ans = "[]", а автор отвечает
+// по той же кнопке. Итог появляется, когда ответили оба.
+const aDone = d => d.a_ans !== "[]";
 function duelView(d, me) {
   const busy = d.b_ans || claimActive(d);
   const role = me === d.a_id ? "author" : (busy ? (me === d.b_id ? "opponent" : "other") : "new");
   return {
     id: d.id, role, created: d.created, ids: JSON.parse(d.ids), a_name: d.a_name,
-    b_name: busy ? d.b_name : null, a_ans: JSON.parse(d.a_ans),
-    b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans, claimed: !!busy && !d.b_ans,
+    b_name: busy ? d.b_name : null, a_ans: aDone(d) ? JSON.parse(d.a_ans) : null, a_done: aDone(d),
+    b_ans: d.b_ans ? JSON.parse(d.b_ans) : null, done: !!d.b_ans && aDone(d), claimed: !!busy && !d.b_ans,
+    sent: !!d.msg,
   };
 }
+const cleanAns = (list, n) => Array.from({ length: n }, (_, i) => [1, 2].includes(Number((list || [])[i])) ? Number(list[i]) : 0);
 
 // Подписан ли человек на канал. Если Telegram не ответил — пускаем (лучше пропустить, чем зря не пустить).
 async function isSub(env, uid) {
@@ -338,7 +370,28 @@ async function api(req, url, env, ctx) {
 
   const me = await hmacHex(env.BOT_TOKEN, String(user.id), 16);
   const banned = !!(await env.DB.prepare("SELECT 1 FROM bans WHERE uid = ?").bind(me).first());
-  if (url.pathname === "/api/sub") return json({ sub: await isSub(env, user.id), ban: banned });
+  if (url.pathname === "/api/sub") {
+    // этот запрос мини-приложение делает при каждом открытии — заодно считаем открытия и откуда пришли
+    const src = (url.searchParams.get("src") || "plain").replace(/[^a-z_]/g, "").slice(0, 16) || "plain";
+    if (url.searchParams.get("src")) ctx.waitUntil(track(env, ["open:" + src], [["app", me]]).catch(() => {}));
+    // очередь «послушаю позже» отдаём тут же, чтобы не тратить на неё отдельный запрос
+    let later = { items: [], dm: false, remind: true };
+    try {
+      const [items, person] = await env.DB.batch([
+        env.DB.prepare("SELECT album, added, done FROM later WHERE tg_id = ? ORDER BY added DESC LIMIT 300").bind(user.id),
+        env.DB.prepare("SELECT dm, blocked, remind FROM people WHERE tg_id = ?").bind(user.id)]);
+      const p = person.results[0];
+      later = { items: items.results, dm: !!(user.allows_write_to_pm || (p && p.dm && !p.blocked)), remind: !p || !!p.remind };
+    } catch (e) {}
+    return json({ sub: await isSub(env, user.id), ban: banned, later });
+  }
+  if (url.pathname === "/api/later" || url.pathname.startsWith("/api/later/")) return laterApi(req, url, env, user, body);
+  if (url.pathname === "/api/donate" && req.method === "POST") {
+    const amount = Math.floor(Number(body.amount));
+    if (!(amount >= 1 && amount <= 2500)) return json({ error: "bad" });
+    const r = await tgCall(env, "createInvoiceLink", invoice(amount));
+    return json(r.ok ? { link: r.result } : { error: "tg" });
+  }
   // забаненный может смотреть, но не может ничего менять
   if (banned && req.method === "POST") return json({ error: "ban" });
 
@@ -399,7 +452,22 @@ async function api(req, url, env, ctx) {
   if (!m) return json({ error: "not found" });
   const d = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(m[1]).first();
   if (!d) return json({ error: "not found" });
-  if (!m[2] || user.id === d.a_id || d.b_ans) return json(duelView(d, user.id));
+  if (!m[2]) return json(duelView(d, user.id));
+  if (user.id === d.a_id) {
+    // автор отправил вызов из инлайна и теперь отвечает сам
+    if (m[2] === "/answer" && !aDone(d)) {
+      if (!(await isSub(env, user.id))) return json({ error: "sub" });
+      const ans = cleanAns(body.answers, JSON.parse(d.ids).length);
+      const pct = d.b_ans ? duelMatch(ans, JSON.parse(d.b_ans)).pct : null;
+      const upd = await env.DB.prepare("UPDATE duels SET a_ans = ?, pct = ? WHERE id = ? AND a_ans = '[]'")
+        .bind(JSON.stringify(ans), pct, d.id).run();
+      const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
+      if (upd.meta && upd.meta.changes && fresh.b_ans) ctx.waitUntil(editDuelMessage(fresh, env).catch(e => console.log("edit", e)));
+      return json(duelView(fresh, user.id));
+    }
+    return json(duelView(d, user.id));
+  }
+  if (d.b_ans) return json(duelView(d, user.id));
   const free = !d.b_id || d.b_id === user.id || !claimActive(d);
   if (!(await isSub(env, user.id))) return json({ error: "sub" });   // принять и ответить — только подписчикам
 
@@ -415,8 +483,8 @@ async function api(req, url, env, ctx) {
 
   // ответы соперника — один раз
   if (!free) return json(duelView(d, user.id));
-  const ans = (body.answers || []).map(Number);
-  const r = duelMatch(JSON.parse(d.a_ans), ans);
+  const ans = cleanAns(body.answers, JSON.parse(d.ids).length);
+  const r = aDone(d) ? duelMatch(JSON.parse(d.a_ans), ans) : { pct: null };
   const upd = await env.DB.prepare(
     "UPDATE duels SET b_id = ?, b_name = ?, b_ans = ?, pct = ? WHERE id = ? AND b_ans IS NULL")
     .bind(user.id, handle(user), JSON.stringify(ans), r.pct, d.id).run();
@@ -427,6 +495,7 @@ async function api(req, url, env, ctx) {
 
 // Сообщение с вызовом в чате живёт вместе с дуэлью: принят → итог. В личку ничего не шлём.
 function duelText(d) {
+  if (d.b_ans && !aDone(d)) return `${esc(d.b_name)} ответил на вызов ${esc(d.a_name)}.\nИтог появится, когда ${esc(d.a_name)} ответит сам — по этой же кнопке.`;
   if (d.b_ans) {
     const r = duelMatch(JSON.parse(d.a_ans), JSON.parse(d.b_ans));
     return r.pct === null
@@ -440,17 +509,43 @@ async function editDuelMessage(d, env) {
   if (!d.msg) return;
   await tgCall(env, "editMessageText", {
     inline_message_id: d.msg, text: duelText(d), parse_mode: "HTML",
-    reply_markup: { inline_keyboard: [[{ text: d.b_ans ? "Посмотреть ответы" : "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${d.id}` }]] },
+    reply_markup: { inline_keyboard: [[{ text: d.b_ans && aDone(d) ? "Посмотреть ответы" : "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${d.id}` }]] },
   });
 }
 
-// Telegram сообщает, что вызов отправлен в чат — запоминаем сообщение, чтобы потом его обновить
+// 15 альбомов для вызова: с обложкой и исполнителем, поровну из разных десятилетий
+function pickDuel(all, n = 15) {
+  const shuffle = l => l.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+  const byDec = {};
+  all.filter(a => a.has_cover && a.artist).forEach(a => { const k = a.year ? a.year.slice(0, 3) : "?"; (byDec[k] = byDec[k] || []).push(a); });
+  Object.keys(byDec).forEach(k => byDec[k] = shuffle(byDec[k]));
+  const decs = shuffle(Object.keys(byDec)), out = [];
+  while (out.length < n && decs.some(k => byDec[k].length))
+    for (const k of decs) if (byDec[k].length && out.length < n) out.push(byDec[k].pop());
+  return shuffle(out).map(a => a.id);
+}
+
+// Telegram сообщает, что человек выбрал карточку из инлайн-списка
 async function chosen(c, env) {
-  // id дуэли зашит в id результата («duel-<id>»), так что неважно, писал человек «вызов» или «вызов <id>»
-  const m = (c.result_id || "").match(/^duel-([a-f0-9]{10})$/);
-  if (!m || !c.inline_message_id) return;
-  await env.DB.prepare("UPDATE duels SET msg = ? WHERE id = ? AND a_id = ? AND msg IS NULL")
-    .bind(c.inline_message_id, m[1], c.from.id).run();
+  const rid = c.result_id || "";
+  const kind = /^a\d+-r$/.test(rid) ? "random" : /^a\d+-s$/.test(rid) ? "album" : /^(duel|dnew)-/.test(rid) ? "duel"
+    : rid.startsWith("pl-") ? "playlist" : rid === "open" ? "open" : "other";
+  await track(env, ["sent:" + kind], [["inline", await hmacHex(env.BOT_TOKEN, String(c.from.id), 16)]]);
+  if (!c.inline_message_id) return;
+  // вызов с готовыми ответами — запоминаем сообщение, чтобы потом его обновлять
+  const m = rid.match(/^duel-([a-f0-9]{10})$/);
+  if (m) {
+    await env.DB.prepare("UPDATE duels SET msg = ? WHERE id = ? AND a_id = ? AND msg IS NULL")
+      .bind(c.inline_message_id, m[1], c.from.id).run();
+    return;
+  }
+  // вызов прямо из списка: дуэль создаётся в момент отправки, автор ответит по кнопке
+  const n = rid.match(/^dnew-([a-f0-9]{10})$/);
+  if (n) {
+    const ids = pickDuel(await archive(env));
+    await env.DB.prepare("INSERT OR IGNORE INTO duels (id, created, a_id, a_name, ids, a_ans, msg) VALUES (?, ?, ?, ?, ?, '[]', ?)")
+      .bind(n[1], Date.now(), c.from.id, handle(c.from), JSON.stringify(ids), c.inline_message_id).run();
+  }
 }
 
 // ---------------- инлайн-режим ----------------
@@ -475,17 +570,21 @@ function plArticle(p, all, env) {
   return res;
 }
 
-// карточка «Отправить вызов» — по умолчанию вызов принимает тот, кто первым нажмёт
-function duelArticle(id, who, env) {
-  return {
-    type: "article", id: "duel-" + id, title: "⚔️ Отправить вызов",
-    description: "Твои ответы уже сохранены. Ответит тот, кто первым примет",
+// карточка «Отправить вызов» — вызов принимает тот, кто первым нажмёт.
+// ready: ответы автора уже сохранены (прошёл 15 альбомов в архиве); иначе он ответит по той же кнопке.
+function duelArticle(id, who, env, ready, thumb) {
+  const res = {
+    type: "article", id: (ready ? "duel-" : "dnew-") + id, title: "⚔️ Отправить вызов",
+    description: ready ? "Твои ответы уже сохранены. Ответит тот, кто первым примет"
+                       : "Сравнить вкусы: 15 альбомов, потом процент совпадения. Ответит тот, кто первым примет",
     input_message_content: {
       message_text: `${esc(who)} предлагает сравнить музыкальные вкусы.\n15 альбомов из архива @volodyamusicbox, около минуты. Ответить может один человек — кто первым нажмёт.`,
       parse_mode: "HTML",
     },
     reply_markup: { inline_keyboard: [[{ text: "Сравнить вкусы", url: `${env.MINIAPP}?startapp=x${id}` }]] },
   };
+  if (thumb) res.thumbnail_url = thumb;
+  return res;
 }
 
 async function archive(env) {
@@ -497,7 +596,8 @@ async function archive(env) {
 const norm = s => (s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/ё/g, "е");
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-function card(a, env, title) {
+const VIA = { sender: "s", private: "p", group: "g", supergroup: "g", channel: "c" };
+function card(a, env, title, via) {
   const cover = a.has_cover ? `${env.PAGES}covers/jpg/${a.id}.jpg` : null;
   const styles = (a.styles || []).slice(0, 3).join(", ");
   const text = `💽 <b>${esc(a.title)}</b> — ${esc(a.artist || "?")}${a.year ? ` (${a.year})` : ""}`
@@ -513,7 +613,7 @@ function card(a, env, title) {
       message_text: text, parse_mode: "HTML",
       link_preview_options: cover ? { url: cover, prefer_large_media: true, show_above_text: true } : { is_disabled: true },
     },
-    reply_markup: { inline_keyboard: [[{ text: "🗄 Открыть в архиве", url: `${env.MINIAPP}?startapp=album_${a.id}` }]] },
+    reply_markup: { inline_keyboard: [[{ text: "🗄 Открыть в архиве", url: `${env.MINIAPP}?startapp=album_${a.id}${via ? "_" + via : ""}` }]] },
   };
   if (cover) res.thumbnail_url = cover;
   return res;
@@ -523,56 +623,52 @@ async function inline(q, env) {
   const all = await archive(env);
   const raw = q.query.trim();
   const query = norm(raw);
+  const via = VIA[q.chat_type] || "";
+  // счётчик пишется параллельно с ответом, чтобы список не появлялся позже
+  const tracking = q.from ? hmacHex(env.BOT_TOKEN, String(q.from.id), 16)
+    .then(uid => track(env, ["iq:" + (q.chat_type || "unknown")], [["inline", uid]])).catch(() => {}) : null;
   let results;
-  let duel = raw.match(/^вызов ([a-f0-9]{10})$/);
-  if (!duel && /^вызов$/.test(raw) && q.from) {   // просто «вызов» — берём твой последний неотвеченный
-    const last = await env.DB.prepare("SELECT id FROM duels WHERE a_id = ? AND b_ans IS NULL ORDER BY created DESC LIMIT 1").bind(q.from.id).first();
-    if (last) duel = [raw, last.id];
-  }
+  const duel = raw.match(/^вызов ([a-f0-9]{10})$/);
   const who = q.from && q.from.username ? "@" + q.from.username : (q.from && q.from.first_name) || "Кто-то";
   if (duel) {
     const d = await env.DB.prepare("SELECT a_id, b_id FROM duels WHERE id = ?").bind(duel[1]).first();
     if (d && d.a_id === q.from.id && !d.b_id) {
-      results = [duelArticle(duel[1], who, env)];
+      results = [duelArticle(duel[1], who, env, true)];
     } else results = [];
-  } else if (/^вызов$/.test(raw)) {
-    results = [{
-      type: "article", id: "duel-none", title: "У тебя нет неотправленных вызовов",
-      description: "Пройди 15 альбомов в архиве — потом вызов появится здесь",
-      input_message_content: { message_text: "Сравнение музыкальных вкусов: 15 альбомов из архива @volodyamusicbox.", parse_mode: "HTML" },
-      reply_markup: { inline_keyboard: [[{ text: "Начать", url: `${env.MINIAPP}?startapp=duel` }]] },
-    }];
-  } else if (!query) {
+  } else if (/^вызов$/.test(raw) || !query) {
     const rnd = all[Math.floor(Math.random() * all.length)];
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
-    const pending = q.from ? await env.DB.prepare(
-      "SELECT id FROM duels WHERE a_id = ? AND b_id IS NULL AND msg IS NULL ORDER BY created DESC LIMIT 1").bind(q.from.id).first() : null;
-    const myUid = q.from ? await hmacHex(env.BOT_TOKEN, String(q.from.id), 16) : "";
-    const myPl = q.from ? (await env.DB.prepare("SELECT * FROM playlists WHERE uid = ? ORDER BY updated DESC LIMIT 5").bind(myUid).all()).results : [];
-    results = [
-      ...(pending ? [duelArticle(pending.id, who, env)] : []),
-      ...myPl.map(p => plArticle(p, all, env)),
-      card(rnd, env, "🎲 Посоветовать случайный альбом"),
-      {
-        type: "article", id: "duel-new", title: pending ? "⚔️ Новый вызов" : "⚔️ Сравнить вкусы",
-        description: "15 альбомов, потом процент совпадения с другом",
-        thumbnail_url: `${env.PAGES}covers/jpg/${fresh[1].id}.jpg`,
-        input_message_content: { message_text: "Сравнение музыкальных вкусов: ответь про 15 альбомов из архива @volodyamusicbox и отправь вызов кому хочешь.", parse_mode: "HTML" },
-        reply_markup: { inline_keyboard: [[{ text: "Начать", url: `${env.MINIAPP}?startapp=duel` }]] },
-      },
-      {
-        type: "article", id: "open", title: "🗄 Открыть архив",
-        description: `${all.length} альбомов канала — с годами, стилями и обложками`,
-        thumbnail_url: `${env.PAGES}covers/jpg/${fresh[0].id}.jpg`,
-        input_message_content: { message_text: `🗄 <b>Архив канала @volodyamusicbox</b>\n${all.length} альбомов — с годами, стилями и обложками.`, parse_mode: "HTML" },
-        reply_markup: { inline_keyboard: [[{ text: "🗄 Открыть архив", url: env.MINIAPP }]] },
-      },
-      ...fresh.map(a => ({ ...card(a, env), description: "🔥 свежее · " + card(a, env).description })),
-    ];
+    const thumb = `${env.PAGES}covers/jpg/${fresh[1].id}.jpg`;
+    // вызов — одной карточкой: готовый (ответы уже сохранены в архиве) или новый, создаётся при отправке
+    const st = q.from ? await env.DB.prepare(
+      `SELECT (SELECT id FROM duels WHERE a_id = ?1 AND b_id IS NULL AND msg IS NULL AND a_ans != '[]' ORDER BY created DESC LIMIT 1) AS pending,
+              (SELECT COUNT(*) FROM duels WHERE a_id = ?1 AND created > ?2) AS n`).bind(q.from.id, Date.now() - 86400000).first() : null;
+    const duelCard = !q.from ? [] : st && st.pending ? [duelArticle(st.pending, who, env, true, thumb)]
+      : (!st || st.n < 10) ? [duelArticle(crypto.randomUUID().replace(/-/g, "").slice(0, 10), who, env, false, thumb)] : [];
+    if (query) {
+      results = duelCard;
+    } else {
+      const myUid = q.from ? await hmacHex(env.BOT_TOKEN, String(q.from.id), 16) : "";
+      const myPl = q.from ? (await env.DB.prepare("SELECT * FROM playlists WHERE uid = ? ORDER BY updated DESC LIMIT 5").bind(myUid).all()).results : [];
+      results = [
+        ...(st && st.pending ? duelCard : []),      // только что прошёл 15 альбомов в архиве — вызов первым
+        ...myPl.map(p => plArticle(p, all, env)),
+        card(rnd, env, "🎲 Посоветовать случайный альбом", via),
+        ...(st && st.pending ? [] : duelCard),
+        {
+          type: "article", id: "open", title: "🗄 Открыть архив",
+          description: `${all.length} альбомов канала — с годами, стилями и обложками`,
+          thumbnail_url: `${env.PAGES}covers/jpg/${fresh[0].id}.jpg`,
+          input_message_content: { message_text: `🗄 <b>Архив канала @volodyamusicbox</b>\n${all.length} альбомов — с годами, стилями и обложками.`, parse_mode: "HTML" },
+          reply_markup: { inline_keyboard: [[{ text: "🗄 Открыть архив", url: env.MINIAPP }]] },
+        },
+        ...fresh.map(a => { const c = card(a, env, null, via); return { ...c, description: "🔥 свежее · " + c.description }; }),
+      ];
+    }
   } else {
     const words = query.split(/\s+/);
     results = all.filter(a => { const h = norm(`${a.title} ${a.artist} ${a.year} ${(a.styles || []).join(" ")}`); return words.every(w => h.includes(w)); })
-      .slice(0, 30).map(a => card(a, env));
+      .slice(0, 30).map(a => card(a, env, null, via));
     if (!results.length) {
       results = [{
         type: "article", id: "none", title: "Ничего не нашлось",
@@ -588,7 +684,317 @@ async function inline(q, env) {
     body: JSON.stringify({
       inline_query_id: q.id, results,
       // случайный альбом и вызовы — у каждого свои
-      cache_time: (query && !duel) ? 120 : 5, is_personal: !query || !!duel,
+      cache_time: (query && !duel && !/^вызов$/.test(raw)) ? 120 : 5, is_personal: !query || !!duel || /^вызов$/.test(raw),
     }),
   });
+  await tracking;
+}
+
+// ---------------- статистика ----------------
+// stats: счётчики по дням (ключ → сколько раз). seen: кто был в этот день (зашифрованный id) —
+// из него считаются уникальные люди за день/неделю/месяц. Сырых id и текстов запросов тут нет.
+const dayKey = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+async function track(env, keys, seen) {
+  const day = dayKey(), ops = [];
+  (keys || []).forEach(k => ops.push(env.DB.prepare(
+    "INSERT INTO stats (day, key, n) VALUES (?, ?, 1) ON CONFLICT(day, key) DO UPDATE SET n = n + 1").bind(day, k)));
+  (seen || []).forEach(([kind, uid]) => ops.push(env.DB.prepare(
+    "INSERT OR IGNORE INTO seen (day, kind, uid) VALUES (?, ?, ?)").bind(day, kind, uid)));
+  if (ops.length) await env.DB.batch(ops);
+}
+
+// бота добавили в группу или канал (или убрали) — единственный способ узнать, где он стоит
+async function onChatMember(m, env) {
+  const c = m.chat, st = (m.new_chat_member || {}).status || "";
+  if (c.type === "private") {   // человек заблокировал или разблокировал бота
+    await env.DB.prepare("UPDATE people SET blocked = ? WHERE tg_id = ?").bind(st === "kicked" ? 1 : 0, c.id).run();
+    return track(env, [st === "kicked" ? "bot:blocked" : "bot:unblocked"]);
+  }
+  await env.DB.prepare("INSERT INTO chats (id, type, title, username, status, at) VALUES (?, ?, ?, ?, ?, ?) " +
+    "ON CONFLICT(id) DO UPDATE SET type = excluded.type, title = excluded.title, username = excluded.username, status = excluded.status, at = excluded.at")
+    .bind(c.id, c.type, c.title || "", c.username || "", st, Date.now()).run();
+  const joined = ["member", "administrator"].includes(st);
+  await track(env, [joined ? "chat:added" : "chat:removed"]);
+  if (env.OWNER_ID && String(c.id) !== String(env.OWNER_ID))
+    await tgCall(env, "sendMessage", { chat_id: env.OWNER_ID, parse_mode: "HTML", disable_notification: true,
+      text: `${joined ? "➕ Бота добавили" : "➖ Бота убрали"}: ${c.type === "channel" ? "канал" : "группа"} «${esc(c.title || "?")}»${c.username ? " @" + esc(c.username) : ""}` });
+}
+
+const NUM = n => String(n || 0);
+async function statsText(env) {
+  const now = Date.now(), d1 = dayKey(now), d7 = dayKey(now - 6 * 86400000), d30 = dayKey(now - 29 * 86400000);
+  const [st, sn, misc, chats] = await env.DB.batch([
+    env.DB.prepare("SELECT key, SUM(CASE WHEN day = ?1 THEN n ELSE 0 END) AS a, SUM(CASE WHEN day >= ?2 THEN n ELSE 0 END) AS b, SUM(n) AS c FROM stats WHERE day >= ?3 GROUP BY key").bind(d1, d7, d30),
+    env.DB.prepare("SELECT kind, COUNT(DISTINCT CASE WHEN day = ?1 THEN uid END) AS a, COUNT(DISTINCT CASE WHEN day >= ?2 THEN uid END) AS b, COUNT(DISTINCT uid) AS c FROM seen WHERE day >= ?3 GROUP BY kind").bind(d1, d7, d30),
+    env.DB.prepare(`SELECT (SELECT COUNT(*) FROM people) AS people, (SELECT COUNT(*) FROM people WHERE dm = 1 AND blocked = 0) AS dm,
+      (SELECT COUNT(*) FROM later WHERE done IS NULL) AS later, (SELECT COUNT(*) FROM later WHERE done IS NOT NULL) AS listened,
+      (SELECT COUNT(DISTINCT tg_id) FROM later) AS later_people, (SELECT COALESCE(SUM(amount), 0) FROM donations WHERE refunded = 0) AS stars,
+      (SELECT COUNT(DISTINCT uid) FROM votes) AS voters, (SELECT COUNT(*) FROM votes) AS votes,
+      (SELECT COUNT(*) FROM duels) AS duels, (SELECT COUNT(*) FROM duels WHERE b_ans IS NOT NULL) AS duels_done,
+      (SELECT COUNT(*) FROM playlists) AS playlists`),
+    env.DB.prepare("SELECT type, title, username FROM chats WHERE status IN ('member', 'administrator') ORDER BY at DESC LIMIT 12"),
+  ]);
+  const k = {}, u = {};
+  st.results.forEach(r => k[r.key] = r);
+  sn.results.forEach(r => u[r.kind] = r);
+  const m = misc.results[0] || {};
+  const row = (label, r) => `${label}: <b>${NUM(r && r.a)}</b> · ${NUM(r && r.b)} · ${NUM(r && r.c)}`;
+  const sum = prefix => Object.entries(k).filter(([key]) => key.startsWith(prefix)).reduce((t, [, r]) => ({ a: t.a + r.a, b: t.b + r.b, c: t.c + r.c }), { a: 0, b: 0, c: 0 });
+  const where = { "iq:sender": "в личке с ботом", "iq:private": "в личных чатах", "iq:group": "в группах", "iq:supergroup": "в супергруппах", "iq:channel": "в каналах", "iq:unknown": "неизвестно где" };
+  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов", "sent:playlist": "плейлист", "sent:open": "«открыть архив»" };
+  const open = { "open:plain": "просто открыли", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "по карточке альбома из группы",
+    "open:album_p": "по карточке из личного чата", "open:album_c": "по карточке из канала", "open:album_s": "по карточке из лички бота",
+    "open:album_r": "из напоминания", "open:duel": "по вызову", "open:pl": "по плейлисту" };
+  const block = (title, map) => { const rows = Object.keys(map).filter(key => k[key]).map(key => "  " + row(map[key], k[key])); return rows.length ? [title, ...rows] : []; };
+  const lines = [
+    "<b>Статистика</b> — сегодня · 7 дней · 30 дней (сутки по UTC)", "",
+    row("Людей в инлайне (@бот в чате)", u.inline), row("Людей в мини-приложении", u.app), "",
+    row("Инлайн-запросов", sum("iq:")), ...block("Где набирали @бота:", where), "",
+    row("Отправлено в чаты через бота", sum("sent:")), ...block("Что отправляли:", sent), "",
+    row("Открытий мини-приложения", sum("open:")), ...block("Откуда открывали:", open), "",
+    row("Нажали /start", k.start), row("Добавили в «послушаю позже»", k["later:add"]),
+    row("Напоминаний отправлено", k["dm:remind"]), row("Ответили «послушал»", k["dm:done"]), "",
+    `Всего: в базе бота ${NUM(m.people)} чел., писать можно ${NUM(m.dm)}; в очередях ${NUM(m.later)} альб. у ${NUM(m.later_people)} чел., послушано ${NUM(m.listened)}`,
+    `Оценок ${NUM(m.votes)} от ${NUM(m.voters)} чел.; вызовов ${NUM(m.duels)}, сыграно ${NUM(m.duels_done)}; плейлистов ${NUM(m.playlists)}; звёзд ${NUM(m.stars)}`,
+  ];
+  if (chats.results.length) lines.push("", "Бот стоит в чатах:", ...chats.results.map(c => `  • ${c.type === "channel" ? "канал" : "группа"} «${esc(c.title || "?")}»${c.username ? " @" + esc(c.username) : ""}`));
+  return lines.join("\n");
+}
+
+// ---------------- личка: команды, оплата ----------------
+const START_TEXT = "📀 Архив альбомов канала @volodyamusicbox: обложки, годы, стили, оценки, плейлисты и очередь «послушаю позже».";
+const TERMS_TEXT = "<b>Условия</b>\nБот и архив бесплатные, платных функций нет. Пожертвование звёздами добровольное: оно ничего не открывает, не ускоряет и не даёт взамен.\n" +
+  "Вернуть звёзды можно самому в течение 21 дня — команда /paysupport.\n\n" +
+  "<b>Что хранит бот</b>\nТвой Telegram ID и имя — если ты нажал /start, добавил альбом в «послушаю позже», отправил вызов или пожертвование. Оценки и плейлисты хранятся под зашифрованным ID. " +
+  "Напоминания приходят только про альбомы, которые ты сам отложил; отключаются в архиве, в разделе «Послушаю позже». Данные никому не передаются.\n" +
+  "Удалить всё, что бот о тебе хранит, — команда /forget.";
+
+function invoice(amount) {
+  return { title: "Поддержать архив", description: "Добровольное пожертвование автору канала @volodyamusicbox. Ничего не открывает и не даёт взамен.",
+    payload: "don:" + amount, provider_token: "", currency: "XTR", prices: [{ label: "Пожертвование", amount }] };
+}
+const say = (env, chat_id, text, extra) => tgCall(env, "sendMessage", { chat_id, text, parse_mode: "HTML", link_preview_options: { is_disabled: true }, ...(extra || {}) });
+// человек написал боту — значит, боту можно писать ему
+const knowPerson = (env, u) => env.DB.prepare(
+  "INSERT INTO people (tg_id, name, first, dm) VALUES (?, ?, ?, 1) ON CONFLICT(tg_id) DO UPDATE SET name = excluded.name, dm = 1, blocked = 0")
+  .bind(u.id, handle(u), Date.now()).run();
+
+// true — сообщение разобрано здесь, в очередь бота на GitHub не идёт
+async function onPrivate(m, env) {
+  const uid = m.from.id, owner = String(uid) === String(env.OWNER_ID || "");
+  if (m.successful_payment) {
+    const p = m.successful_payment;
+    await env.DB.prepare("INSERT OR IGNORE INTO donations (charge, tg_id, amount, at) VALUES (?, ?, ?, ?)")
+      .bind(p.telegram_payment_charge_id, uid, p.total_amount, Date.now()).run();
+    await track(env, ["donate"]);
+    await say(env, uid, `Спасибо. ${p.total_amount} ⭐ дошли.\nЕсли отправил по ошибке — /paysupport, вернуть можно в течение 21 дня.`);
+    if (env.OWNER_ID && !owner) await say(env, env.OWNER_ID, `⭐ Пожертвование: ${p.total_amount} от ${esc(handle(m.from))}`);
+    return true;
+  }
+  const [cmd, arg = ""] = (m.text || "").trim().split(/\s+/, 2);
+  const c = cmd.split("@")[0].toLowerCase();
+  if (c === "/start") {
+    await knowPerson(env, m.from).catch(() => {});
+    await track(env, ["start"]).catch(() => {});
+    const album = (arg.match(/^album_(\d+)$/) || [])[1];
+    await say(env, uid, START_TEXT, { reply_markup: { inline_keyboard: [[{ text: "🗄 Открыть архив", url: env.MINIAPP + (album ? `?startapp=album_${album}` : "") }]] } });
+    return true;
+  }
+  if (c === "/terms" || c === "/privacy") { await say(env, uid, TERMS_TEXT); return true; }
+  if (c === "/support") { await say(env, uid, "Вопросы и ошибки — в комментариях канала @volodyamusicbox. По звёздам — /paysupport."); return true; }
+  if (c === "/donate") {
+    await say(env, uid, "Пожертвование звёздами — добровольное, ничего не открывает и не даёт взамен. Сколько?",
+      { reply_markup: { inline_keyboard: [[15, 50, 100, 250].map(n => ({ text: `${n} ⭐`, callback_data: "dn:" + n }))] } });
+    return true;
+  }
+  if (c === "/paysupport") {
+    const { results } = await env.DB.prepare("SELECT rowid AS n, amount, at FROM donations WHERE tg_id = ? AND refunded = 0 AND at > ? ORDER BY at DESC LIMIT 8")
+      .bind(uid, Date.now() - 21 * 86400000).all();
+    if (!results.length) { await say(env, uid, "Пожертвований за последние 21 день от тебя нет — возвращать нечего.\nПожертвования добровольные и ничего не открывают; другие вопросы — в комментариях канала @volodyamusicbox."); return true; }
+    await say(env, uid, "Твои пожертвования за 21 день. Любое можно вернуть — звёзды придут обратно сразу.",
+      { reply_markup: { inline_keyboard: results.map(r => [{ text: `Вернуть ${r.amount} ⭐ от ${new Date(r.at).toLocaleDateString("ru-RU")}`, callback_data: "rf:" + r.n }]) } });
+    return true;
+  }
+  if (c === "/forget") {
+    await say(env, uid, "Удалить всё, что бот о тебе хранит: очередь «послушаю позже», оценки, плейлисты, вызовы и разрешение писать в личку? Вернуть будет нельзя.",
+      { reply_markup: { inline_keyboard: [[{ text: "Удалить всё", callback_data: "fg" }]] } });
+    return true;
+  }
+  if (c === "/stats" && owner) { await say(env, uid, await statsText(env)); return true; }
+  return false;
+}
+
+// ---------------- «послушаю позже» ----------------
+// Очередь человека и напоминания в личку. Тут нужен настоящий Telegram ID: иначе боту некуда писать.
+const LATER = { max: 100, first: 3 * 86400000, snooze: 86400000, again: 3 * 86400000, tries: 5, perRun: 20, quiet: 20 * 3600000 };
+
+async function laterApi(req, url, env, user, body) {
+  const now = Date.now();
+  const person = await env.DB.prepare("SELECT dm, blocked, remind FROM people WHERE tg_id = ?").bind(user.id).first();
+  if (req.method !== "POST") return json({ error: "bad" });
+  const album = Number(body.album);
+
+  // напоминания вкл/выкл (очередь при этом остаётся)
+  if (url.pathname === "/api/later/remind") {
+    // dm: человек только что разрешил боту писать ему (запрос разрешения в мини-приложении)
+    const dm = body.dm ? 1 : 0;
+    await env.DB.prepare("INSERT INTO people (tg_id, name, first, remind, dm) VALUES (?, ?, ?, ?, ?) " +
+      "ON CONFLICT(tg_id) DO UPDATE SET remind = excluded.remind, dm = MAX(dm, excluded.dm), blocked = CASE WHEN excluded.dm = 1 THEN 0 ELSE blocked END")
+      .bind(user.id, handle(user), now, body.on ? 1 : 0, dm).run();
+    return json({ ok: true });
+  }
+  if (!(album > 0)) return json({ error: "bad" });
+
+  if (url.pathname === "/api/later/done") {
+    await env.DB.prepare("UPDATE later SET done = ?, remind_at = NULL WHERE tg_id = ? AND album = ?").bind(body.on === false ? null : now, user.id, album).run();
+    return json({ ok: true });
+  }
+  if (url.pathname !== "/api/later") return json({ error: "not found" });
+  if (!body.on) {
+    await env.DB.prepare("DELETE FROM later WHERE tg_id = ? AND album = ?").bind(user.id, album).run();
+    return json({ ok: true });
+  }
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM later WHERE tg_id = ? AND done IS NULL").bind(user.id).first();
+  if (n && n.n >= LATER.max) return json({ error: "full" });
+  // писать в личку можно, если человек нажимал /start или разрешил это в мини-приложении
+  const dm = !!(user.allows_write_to_pm || body.dm || (person && person.dm && !person.blocked));
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO people (tg_id, name, first, dm) VALUES (?, ?, ?, ?) ON CONFLICT(tg_id) DO UPDATE SET name = excluded.name, dm = MAX(dm, excluded.dm), blocked = CASE WHEN excluded.dm = 1 THEN 0 ELSE blocked END")
+      .bind(user.id, handle(user), now, dm ? 1 : 0),
+    env.DB.prepare("INSERT INTO later (tg_id, album, added, remind_at) VALUES (?, ?, ?, ?) ON CONFLICT(tg_id, album) DO UPDATE SET done = NULL, added = excluded.added, remind_at = excluded.remind_at, tries = 0")
+      .bind(user.id, album, now, now + LATER.first),
+  ]);
+  await track(env, ["later:add"]).catch(() => {});
+  return json({ ok: true, dm, remind: !person || !!person.remind });
+}
+
+const REMIND_LINES = [
+  "Три дня назад ты отложил этот альбом. Послушал?",
+  "Альбом всё ещё лежит в очереди. Послушал?",
+  "Третье напоминание. Альбом сам себя не послушает.",
+  "Четвёртое. Не давлю — просто веду учёт.",
+  "Последнее напоминание. Дальше альбом просто лежит в очереди, без меня.",
+];
+const albumLine = a => `💽 <b>${esc(a.title)}</b> — ${esc(a.artist || "?")}${a.year ? ` (${a.year})` : ""}`;
+
+async function sendReminders(env) {
+  const now = Date.now();
+  const { results } = await env.DB.prepare(
+    `SELECT l.tg_id, l.album, l.tries FROM later l JOIN people p ON p.tg_id = l.tg_id
+     WHERE l.done IS NULL AND l.remind_at IS NOT NULL AND l.remind_at <= ?1 AND p.dm = 1 AND p.blocked = 0 AND p.remind = 1
+       AND (p.last_dm IS NULL OR p.last_dm < ?2) ORDER BY l.remind_at LIMIT 200`).bind(now, now - LATER.quiet).all();
+  if (!results.length) return;
+  const all = await archive(env), seen = new Set(), ops = [];
+  let sent = 0;
+  for (const r of results) {
+    if (seen.has(r.tg_id) || sent >= LATER.perRun) continue;   // одному человеку — одно напоминание в сутки
+    seen.add(r.tg_id);
+    const a = all.find(x => x.id === r.album);
+    if (!a) { ops.push(env.DB.prepare("DELETE FROM later WHERE tg_id = ? AND album = ?").bind(r.tg_id, r.album)); continue; }
+    const tries = Math.min(r.tries, REMIND_LINES.length - 1);
+    const text = `${REMIND_LINES[tries]}\n\n${albumLine(a)}`;
+    const reply_markup = { inline_keyboard: [
+      [{ text: "Послушал", callback_data: "ld:" + a.id }, { text: "Напомни завтра", callback_data: "ls:" + a.id }],
+      [{ text: "Убрать из очереди", callback_data: "lx:" + a.id }, { text: "Открыть в архиве", url: `${env.MINIAPP}?startapp=album_${a.id}_r` }]] };
+    const res = a.has_cover
+      ? await tgCall(env, "sendPhoto", { chat_id: r.tg_id, photo: `${env.PAGES}covers/jpg/${a.id}.jpg`, caption: text, parse_mode: "HTML", reply_markup })
+      : await tgCall(env, "sendMessage", { chat_id: r.tg_id, text, parse_mode: "HTML", reply_markup });
+    if (res.ok) {
+      sent++;
+      const last = r.tries + 1 >= LATER.tries;
+      ops.push(env.DB.prepare("UPDATE later SET tries = tries + 1, remind_at = ? WHERE tg_id = ? AND album = ?").bind(last ? null : now + LATER.again, r.tg_id, r.album),
+               env.DB.prepare("UPDATE people SET last_dm = ? WHERE tg_id = ?").bind(now, r.tg_id));
+    } else if (res.error_code === 403) {   // человек заблокировал бота — больше не пишем
+      ops.push(env.DB.prepare("UPDATE people SET blocked = 1 WHERE tg_id = ?").bind(r.tg_id));
+    } else if (res.error_code === 429) break;
+  }
+  if (sent) ops.push(env.DB.prepare("INSERT INTO stats (day, key, n) VALUES (?, 'dm:remind', ?) ON CONFLICT(day, key) DO UPDATE SET n = n + excluded.n").bind(dayKey(), sent));
+  if (ops.length) await env.DB.batch(ops);
+}
+
+// кнопки под сообщениями бота в личке
+async function onCallback(cq, env) {
+  const uid = cq.from.id, data = cq.data || "", msg = cq.message;
+  const answer = (text, alert) => tgCall(env, "answerCallbackQuery", { callback_query_id: cq.id, ...(text ? { text, show_alert: !!alert } : {}) });
+  const edit = (text, keyboard) => {
+    if (!msg) return null;
+    const base = { chat_id: msg.chat.id, message_id: msg.message_id, parse_mode: "HTML", reply_markup: { inline_keyboard: keyboard || [] } };
+    return msg.photo ? tgCall(env, "editMessageCaption", { ...base, caption: text }) : tgCall(env, "editMessageText", { ...base, text });
+  };
+  let m;
+  if ((m = data.match(/^l([dsx]):(\d+)$/))) {
+    const album = Number(m[2]), now = Date.now();
+    const a = (await archive(env)).find(x => x.id === album);
+    const line = a ? albumLine(a) : "";
+    const openBtn = [{ text: "Открыть в архиве", url: `${env.MINIAPP}?startapp=album_${album}_r` }];
+    if (m[1] === "d") {
+      await env.DB.prepare("UPDATE later SET done = ?, remind_at = NULL WHERE tg_id = ? AND album = ?").bind(now, uid, album).run();
+      await edit(`Отмечено: послушал.\n\n${line}`, [[{ text: "Поставить оценку", url: `${env.MINIAPP}?startapp=album_${album}_r` }]]);
+      await track(env, ["dm:done"]);
+      return answer("Отмечено");
+    }
+    if (m[1] === "s") {
+      await env.DB.prepare("UPDATE later SET remind_at = ? WHERE tg_id = ? AND album = ? AND done IS NULL").bind(now + LATER.snooze, uid, album).run();
+      await edit(`Ладно. Напомню завтра.\n\n${line}`, [openBtn]);
+      await track(env, ["dm:snooze"]);
+      return answer("Напомню завтра");
+    }
+    await env.DB.prepare("DELETE FROM later WHERE tg_id = ? AND album = ?").bind(uid, album).run();
+    await edit(`Убрал из очереди.\n\n${line}`, [openBtn]);
+    await track(env, ["dm:drop"]);
+    return answer("Убрал");
+  }
+  if (data === "fg") {   // человек просит удалить его данные
+    const h = await hmacHex(env.BOT_TOKEN, String(uid), 16);
+    const [votes, likes] = await env.DB.batch([
+      env.DB.prepare("SELECT album, v FROM votes WHERE uid = ?").bind(h),
+      env.DB.prepare("SELECT pid FROM playlist_likes WHERE uid = ?").bind(h)]);
+    const ops = votes.results.map(r => env.DB.prepare("UPDATE counts SET likes = MAX(likes - ?, 0), dislikes = MAX(dislikes - ?, 0) WHERE album = ?")
+      .bind(r.v === 1 ? 1 : 0, r.v === -1 ? 1 : 0, r.album));
+    likes.results.forEach(r => ops.push(env.DB.prepare("UPDATE playlists SET likes = MAX(likes - 1, 0) WHERE id = ?").bind(r.pid)));
+    ops.push(
+      env.DB.prepare("DELETE FROM votes WHERE uid = ?").bind(h), env.DB.prepare("DELETE FROM playlist_likes WHERE uid = ?").bind(h),
+      env.DB.prepare("DELETE FROM playlist_likes WHERE pid IN (SELECT id FROM playlists WHERE uid = ?)").bind(h),
+      env.DB.prepare("DELETE FROM playlists WHERE uid = ?").bind(h),
+      env.DB.prepare("DELETE FROM duels WHERE a_id = ? OR b_id = ?").bind(uid, uid),
+      env.DB.prepare("DELETE FROM later WHERE tg_id = ?").bind(uid), env.DB.prepare("DELETE FROM people WHERE tg_id = ?").bind(uid));
+    await env.DB.batch(ops);
+    await edit("Удалил. Оценки в самом приложении хранит Telegram — они сотрутся, если очистить данные мини-приложения.");
+    return answer("Удалено");
+  }
+  if ((m = data.match(/^dn:(\d+)$/))) {
+    const amount = Number(m[1]);
+    if (amount >= 1 && amount <= 2500) await tgCall(env, "sendInvoice", { chat_id: uid, ...invoice(amount) });
+    return answer();
+  }
+  if ((m = data.match(/^rf:(\d+)$/))) {
+    const d = await env.DB.prepare("SELECT rowid AS n, charge, amount, at, refunded FROM donations WHERE rowid = ? AND tg_id = ?").bind(Number(m[1]), uid).first();
+    if (!d || d.refunded) return answer("Это пожертвование уже возвращено", true);
+    if (Date.now() - d.at > 21 * 86400000) return answer("Прошло больше 21 дня — вернуть уже нельзя", true);
+    const r = await tgCall(env, "refundStarPayment", { user_id: uid, telegram_payment_charge_id: d.charge });
+    if (!r.ok && !/ALREADY/i.test(r.description || "")) return answer("Не получилось вернуть. Попробуй позже.", true);
+    await env.DB.prepare("UPDATE donations SET refunded = 1 WHERE rowid = ?").bind(d.n).run();
+    await edit(`Вернул ${d.amount} ⭐.`);
+    return answer("Звёзды возвращены");
+  }
+  return answer();
+}
+
+async function cron(env) {
+  const now = new Date(), hour = now.getUTCHours();
+  // напоминания — только днём по Москве (10:00–22:00), чтобы не будить
+  if (hour >= 7 && hour <= 18) await sendReminders(env).catch(e => console.log("remind", e));
+  // по понедельникам утром — сводка владельцу
+  if (now.getUTCDay() === 1 && hour === 7 && env.OWNER_ID) {
+    const done = await env.DB.prepare("SELECT value FROM meta WHERE key = 'digest'").first();
+    if (!done || done.value !== dayKey()) {
+      await env.DB.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('digest', ?)").bind(dayKey()).run();
+      await say(env, env.OWNER_ID, await statsText(env), { disable_notification: true });
+    }
+  }
+  // раз в сутки — уборка: «кто был» храним 40 дней, счётчики — год с небольшим
+  if (hour === 3) await env.DB.batch([
+    env.DB.prepare("DELETE FROM seen WHERE day < ?").bind(dayKey(Date.now() - 40 * 86400000)),
+    env.DB.prepare("DELETE FROM stats WHERE day < ?").bind(dayKey(Date.now() - 400 * 86400000)),
+  ]);
 }

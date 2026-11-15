@@ -21,3 +21,21 @@ CREATE TABLE IF NOT EXISTS playlists (
 CREATE TABLE IF NOT EXISTS playlist_likes (pid TEXT NOT NULL, uid TEXT NOT NULL, PRIMARY KEY (pid, uid));
 -- забаненные: не могут публиковать плейлисты, лайкать и играть в дуэли
 CREATE TABLE IF NOT EXISTS bans (uid TEXT PRIMARY KEY, author TEXT, at INTEGER NOT NULL);
+-- «послушаю позже»: очередь человека и когда напомнить. Здесь настоящий Telegram ID — иначе боту некуда писать
+CREATE TABLE IF NOT EXISTS later (
+  tg_id INTEGER NOT NULL, album INTEGER NOT NULL, added INTEGER NOT NULL,
+  remind_at INTEGER, tries INTEGER NOT NULL DEFAULT 0, done INTEGER, PRIMARY KEY (tg_id, album)
+);
+CREATE INDEX IF NOT EXISTS later_due ON later (remind_at);
+-- кому бот может писать в личку: нажал /start или разрешил в мини-приложении. remind — хочет ли напоминания
+CREATE TABLE IF NOT EXISTS people (
+  tg_id INTEGER PRIMARY KEY, name TEXT, first INTEGER NOT NULL, dm INTEGER NOT NULL DEFAULT 0,
+  blocked INTEGER NOT NULL DEFAULT 0, remind INTEGER NOT NULL DEFAULT 1, last_dm INTEGER
+);
+-- статистика: счётчики по дням и «кто был в этот день» (зашифрованный ID) для подсчёта уникальных людей
+CREATE TABLE IF NOT EXISTS stats (day TEXT NOT NULL, key TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, key));
+CREATE TABLE IF NOT EXISTS seen (day TEXT NOT NULL, kind TEXT NOT NULL, uid TEXT NOT NULL, PRIMARY KEY (day, kind, uid));
+-- группы и каналы, куда добавили бота
+CREATE TABLE IF NOT EXISTS chats (id INTEGER PRIMARY KEY, type TEXT, title TEXT, username TEXT, status TEXT, at INTEGER);
+-- пожертвования звёздами (charge нужен, чтобы вернуть)
+CREATE TABLE IF NOT EXISTS donations (charge TEXT PRIMARY KEY, tg_id INTEGER NOT NULL, amount INTEGER NOT NULL, at INTEGER NOT NULL, refunded INTEGER NOT NULL DEFAULT 0);

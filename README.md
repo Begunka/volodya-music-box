@@ -4,7 +4,8 @@
 
 - `index.html`, `data.json`, `covers/` — мини-приложение (GitHub Pages)
 - `albums.json` — полный архив
-- `bot/` — бот [@volodyamusicbox_bot](https://t.me/volodyamusicbox_bot); запускается GitHub Actions раз в ~10 минут
+- `bot/` — бот [@volodyamusicbox_bot](https://t.me/volodyamusicbox_bot); запускается GitHub Actions
+- `worker/` — Cloudflare Worker: инлайн-режим, мини-приложение, очередь «послушаю позже» с напоминаниями, статистика
 
 Как пополняется: всё, что кидаешь в чат-дневник с ботом, попадает в архив
 (год первого выхода и жанры — из Discogs и MusicBrainz, обложка — из картинки или из баз).

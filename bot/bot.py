@@ -774,6 +774,18 @@ class Bot:
             if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
                 tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
                    max_connections=10)
+            if self.state.get("commands_v") != 1:
+                # меню команд в личке с ботом (отвечает на них воркер)
+                try:
+                    tg("setMyCommands", scope={"type": "all_private_chats"}, commands=[
+                        {"command": "start", "description": "Открыть архив"},
+                        {"command": "donate", "description": "Поддержать архив звёздами"},
+                        {"command": "paysupport", "description": "Вернуть звёзды"},
+                        {"command": "terms", "description": "Условия и что хранит бот"},
+                        {"command": "forget", "description": "Удалить мои данные"}])
+                    self.state["commands_v"] = 1
+                except Exception as e:
+                    print("  меню команд не поставилось:", e)
             if mode != "worker":
                 if mode == "polling" and self.owner():
                     say(self.owner(), "☁️ Cloudflare снова в строю — вернул основной режим, инлайн работает.")

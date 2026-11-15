@@ -225,6 +225,30 @@ textarea.field{min-height:90px;resize:vertical}
 .cmp .v.n{color:var(--ink)}
 .cmp .v.o{color:var(--muted);font-weight:400}
 .duel .alt{height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500;width:100%}
+/* «в этот день»: маленькая обложка и одна кнопка */
+.today{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 2px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.today img,.today .ph{width:52px;height:52px;border-radius:6px;object-fit:cover;flex:none;background:var(--chip)}
+.today div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.today small{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.today b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today em{flex:none;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+.later-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0 0 16px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.later-entry b{font-weight:600}
+.later-entry span{color:var(--muted);font-size:13px}
+.pl-entries{margin-bottom:8px}
+.tag[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--chip)}
+.lrow{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px}
+.lrow .op{display:flex;gap:10px;align-items:center;flex:1;min-width:0;background:none;border:0;padding:0;color:var(--ink);text-align:left}
+.lrow img,.lrow .ph{width:44px;height:44px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
+.lrow .op div{min-width:0;font-size:13px;line-height:1.3}
+.lrow .op b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .op span{color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .act{flex:none;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:12px}
+.lrow .act.x{width:34px;padding:0;font-size:16px;color:var(--muted)}
+.foot-link{display:block;margin:10px auto 0;background:none;border:0;padding:4px 8px;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:2px}
+.don-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.don-row button{height:46px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -263,6 +287,7 @@ textarea.field{min-height:90px;resize:vertical}
   </div>
 
   <main>
+    <button class="today" id="today" type="button" hidden></button>
     <button class="duel-entry" id="duel-entry" type="button">
       <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
       <span aria-hidden="true">→</span>
@@ -271,10 +296,15 @@ textarea.field{min-height:90px;resize:vertical}
       <button type="button" id="pl-official"><b>Плейлисты от Володи</b><span>подборки автора канала</span></button>
       <button type="button" id="pl-people"><b>Плейлисты людей</b><span>собери свой и поделись</span></button>
     </div>
+    <button class="later-entry" id="later-entry" type="button" hidden>
+      <div><b>Послушаю позже</b><br><span id="later-count">Откладывай альбомы — бот напомнит в личке</span></div>
+      <span aria-hidden="true">→</span>
+    </button>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
     <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
     <p class="proto">Годы и жанры — из Discogs и MusicBrainz. Пополняется ботом @volodyamusicbox_bot.</p>
+    <button class="foot-link" id="don-open" type="button" hidden>поддержать архив звёздами</button>
   </main>
 </div>
 
@@ -293,7 +323,7 @@ textarea.field{min-height:90px;resize:vertical}
     <button type="button" data-v="-1" aria-pressed="false">👎 Не зашло <b id="s-dislikes">0</b></button>
   </div>
   <p class="note" id="s-note" hidden></p>
-  <div class="s-more"><button class="tag" type="button" id="s-addpl">+ в плейлист</button></div>
+  <div class="s-more"><button class="tag" type="button" id="s-later" aria-pressed="false">Послушаю позже</button><button class="tag" type="button" id="s-addpl">+ в плейлист</button></div>
   <div class="actions" id="s-actions"></div>
   <div class="info" id="s-info" hidden></div>
 </section>
@@ -302,7 +332,18 @@ textarea.field{min-height:90px;resize:vertical}
 
 <section class="duel" id="gp" hidden><div class="duel-in" id="gp-in"></div></section>
 <section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
+<section class="duel" id="lt" hidden><div class="duel-in" id="lt-in"></div></section>
 <div class="toast" id="toast" hidden></div>
+
+<div class="gate" id="don" hidden role="dialog" aria-modal="true" aria-labelledby="don-title">
+  <div class="gate-card">
+    <h3 id="don-title">Поддержать архив</h3>
+    <p>Пожертвование звёздами Telegram — добровольное. Оно ничего не открывает и не даёт взамен: архив и все функции бесплатные и такими останутся.</p>
+    <div class="don-row" id="don-row"><button type="button" data-n="15">15 ⭐</button><button type="button" data-n="50">50 ⭐</button><button type="button" data-n="100">100 ⭐</button><button type="button" data-n="250">250 ⭐</button></div>
+    <button class="alt" id="don-close" type="button">Не сейчас</button>
+    <p style="font-size:12px">Вернуть звёзды можно в течение 21 дня: команда /paysupport в боте.</p>
+  </div>
+</div>
 
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-title">
   <div class="gate-card">
@@ -410,7 +451,7 @@ textarea.field{min-height:90px;resize:vertical}
           ${ss.length ? `<div class="chipset">${ss.slice(0, lim).map(chip).join("")}${ss.length > lim ? `<button type="button" class="more" data-more="${esc(x)}">ещё ${ss.length - lim}</button>` : ""}</div>` : ""}</div>`;
       }).join("");
       const none = pool.filter(a => !(a.genres || []).length).length;
-      if (none) html += `<p style="font-size:12px">Без жанра: ${none} — их не нашли ни в Discogs, ни в MusicBrainz.</p>`;
+      if (none) html += `<p style="font-size:12px">Без жанра: ${none} — про них молчат все базы.</p>`;
     }
     $("gp-list").innerHTML = html;
   }
@@ -494,7 +535,7 @@ textarea.field{min-height:90px;resize:vertical}
     else if (a.unverified) notes.push("Год взят из поста, в базах не нашёлся");
     if (a.added) notes.push("Добавлен " + new Date(a.added).toLocaleDateString("ru-RU", {day:"numeric", month:"long", year:"numeric"}));
     $("s-note").textContent = notes.join(" · "); $("s-note").hidden = !notes.length;
-    openId = a.id; paintVote();
+    openId = a.id; paintVote(); Later.paint();
     $("s-author").hidden = !a.author;
     if (a.author) $("s-author").innerHTML = a.author > 0 ? "♥ <b>Автору канала зашло</b>" : "Автору канала <b>не зашло</b>";
     $("s-actions").innerHTML =
@@ -502,7 +543,7 @@ textarea.field{min-height:90px;resize:vertical}
       (a.listen_url ? `<a class="${a.post_url ? "alt" : "go"}" href="${esc(a.listen_url)}" target="_blank" rel="noopener">Слушать</a>` : "");
     $("s-actions").hidden = !a.listen_url && !a.post_url;
     $("s-actions").style.gridTemplateColumns = a.listen_url && a.post_url ? "1fr 1fr" : "1fr";
-    const over = !$("duel").hidden || !$("pl").hidden;
+    const over = !$("duel").hidden || !$("pl").hidden || !$("lt").hidden;
     $("scrim").classList.toggle("top", over); $("sheet").classList.toggle("top", over);
     $("scrim").hidden = false; $("sheet").hidden = false;
     requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
@@ -553,8 +594,9 @@ textarea.field{min-height:90px;resize:vertical}
   function fromTelegram(){
     if (!tgApp || !tgApp.initData) return;
     const sp = tgApp.initDataUnsafe.start_param || "";
-    const m = sp.match(/^album_(\d+)$/);
+    const m = sp.match(/^album_(\d+)(?:_[a-z])?$/);
     if (m) open(+m[1]);
+    else if (sp === "later") Later.open();
     else if (sp === "duel") Duel.start();
     else if (/^p[a-f0-9]{8}$/.test(sp)) Playlists.openById(sp.slice(1));
     else if (/^[dex][A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
@@ -605,11 +647,21 @@ textarea.field{min-height:90px;resize:vertical}
   let subscribed = null, gateAction = null, banned = false;
   const BAN_TEXT = "Администратор закрыл тебе оценки, сравнения и плейлисты";
   function banNote(){ const t = $("toast"); t.textContent = BAN_TEXT; t.hidden = false; clearTimeout(banNote._t); banNote._t = setTimeout(() => t.hidden = true, 3500); }
+  // откуда открыли приложение — для статистики владельца (только вид ссылки, без личных данных)
+  function openSource(){
+    const sp = (tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param) || "";
+    const m = sp.match(/^album_\d+(?:_([a-z]))?$/);
+    return m ? "album" + (m[1] ? "_" + m[1] : "") : /^p[a-f0-9]{8}$/.test(sp) ? "pl" : sp === "duel" || /^x[a-f0-9]{10}$/.test(sp) ? "duel"
+      : sp === "later" ? "later" : /from=kb/.test(location.search) ? "kb" : "plain";
+  }
+  let subAsked = false;
   async function checkSub(){
     if (!inTg) return true;   // вне Telegram оценки остаются только в этом браузере, проверять нечего
     try {
-      const r = await fetch("/api/sub?initData=" + encodeURIComponent(tgApp.initData)).then(r => r.json());
+      const src = subAsked ? "" : "&src=" + openSource(); subAsked = true;   // открытие считаем один раз
+      const r = await fetch("/api/sub?initData=" + encodeURIComponent(tgApp.initData) + src).then(r => r.json());
       subscribed = r.sub !== false; banned = !!r.ban;
+      if (r.later) Later.load(r.later);
     } catch (e) { subscribed = true; }
     return subscribed;
   }
@@ -756,7 +808,7 @@ textarea.field{min-height:90px;resize:vertical}
       const finished = list.filter(x => x.done);
       let html = top("Сравнение вкусов");
       if (open_.length) html += `<div class="label">Без ответа</div><div class="rows">${open_.slice(0, 3).map(x =>
-        `<button class="row" data-duel="${x.id}"><div><b>${x.claimed ? `Отвечает ${esc(x.b_name)}` : "Вызов ждёт соперника"}</b><span>от ${new Date(+x.created).toLocaleDateString("ru-RU", {day: "numeric", month: "long"})}</span></div></button>`).join("")}</div>`;
+        `<button class="row" data-duel="${x.id}"><div><b>${!x.a_done ? "Вызов отправлен — ответь сам" : x.claimed ? `Отвечает ${esc(x.b_name)}` : "Вызов ждёт соперника"}</b><span>от ${new Date(+x.created).toLocaleDateString("ru-RU", {day: "numeric", month: "long"})}</span></div></button>`).join("")}</div>`;
       if (finished.length) html += `<div class="label">Итоги</div><div class="rows">${finished.slice(0, 5).map(x => {
         const other = x.role === "author" ? x.b_name : x.a_name, r = match(x.a_ans, x.b_ans);
         return `<button class="row" data-duel="${x.id}"><div><b>${esc(other)} — ${r.pct === null ? "мало общих" : r.pct + "%"}</b><span>${x.role === "author" ? "ответил на твой вызов" : "ты ответил на вызов"}</span></div></button>`;
@@ -768,7 +820,12 @@ textarea.field{min-height:90px;resize:vertical}
     async function accept(sp){
       if (!/^x[a-f0-9]{10}$/.test(sp)) return fail("Этот вызов из старой версии. Пройди новый — кнопка «Сравнить вкусы» в архиве.");
       show(`${top("Сравнение вкусов")}<p>Загружаю…</p>`);
-      try { d = await call("/api/duel/" + sp.slice(1)); } catch (e) { return fail("Не получилось загрузить вызов. Проверь интернет и открой ещё раз."); }
+      // вызов из инлайн-списка создаётся в момент отправки сообщения — если нажали мгновенно, он мог ещё не записаться
+      for (let i = 0; i < 4; i++) {
+        try { d = await call("/api/duel/" + sp.slice(1)); } catch (e) { return fail("Не получилось загрузить вызов. Проверь интернет и открой ещё раз."); }
+        if (!d || d.error !== "not found") break;
+        await new Promise(r => setTimeout(r, 1200));
+      }
       if (!d || d.error) return fail(d && d.error === "Открой через Telegram" ? d.error : "Вызов не найден");
       view();
     }
@@ -776,8 +833,15 @@ textarea.field{min-height:90px;resize:vertical}
     // что показать по текущему состоянию дуэли
     function view(){
       set = d.ids; idx = 0;
+      if (d.role === "author" && !d.a_done) {
+        // вызов отправлен прямо из списка бота — автор ещё не отвечал
+        mine = [];
+        return show(`${top("Сравнение вкусов")}<h3>Вызов отправлен</h3>
+          <p>${d.b_ans ? `${esc(d.b_name)} уже ответил.` : d.claimed ? `${esc(d.b_name)} принял вызов и отвечает.` : "Соперник ответит по кнопке в сообщении."} Теперь ответь на те же ${set.length} альбомов сам — итог появится, когда ответите оба.</p>
+          <button class="go" data-x="self">Ответить</button><button class="alt" data-x="close">Позже</button>`);
+      }
       if (d.role === "author") { mine = d.a_ans; return board(); }
-      if (d.done && d.role === "opponent") { mine = d.b_ans; return board(); }
+      if (d.b_ans && d.role === "opponent") { mine = d.b_ans; return board(); }
       if (d.done || (d.role === "other")) return spectator();
       // свободный вызов или принятый мной, но не законченный
       mine = [];
@@ -796,13 +860,15 @@ textarea.field{min-height:90px;resize:vertical}
         html += r.pct === null
           ? `<h3>Ты и ${esc(other)} почти не пересеклись</h3><p>Оба слышали только ${r.both} из ${set.length}.</p>`
           : `<div class="big">${r.pct}%</div><h3>Ты и ${esc(other)}</h3><p>Оба слышали ${r.both} из ${set.length}, одинаково оценили ${r.same}. Совпадения подсвечены.</p>`;
+      } else if (!isAuthor) {
+        html += `<h3>Ответы сохранены</h3><p>${esc(other)} ещё не ответил на свой же вызов. Его колонка заполнится, когда ответит, — сообщение в чате тоже обновится.</p>`;
       } else if (d.claimed) {
         html += `<h3>Вызов принял ${esc(d.b_name)}</h3><p>Отвечает. Его колонка заполнится, когда закончит, — сообщение в чате тоже обновится.</p>`;
       } else {
         html += `<h3>Ждём соперника</h3><p>Ответить сможет один человек — кто первым нажмёт кнопку в сообщении.</p>`;
       }
-      html += table(mine, "ты", right, right ? other : (d.claimed ? d.b_name : ""), d.claimed ? "отвечает" : "ждём");
-      if (isAuthor && !right && !d.claimed) html += `<button class="go" data-x="send">Отправить вызов в чат</button>
+      html += table(mine, "ты", right, right ? other : (!isAuthor ? other : d.claimed ? d.b_name : ""), d.claimed ? "отвечает" : "ждём");
+      if (isAuthor && !right && !d.claimed && !d.sent) html += `<button class="go" data-x="send">Отправить вызов в чат</button>
         <p style="font-size:13px">Выбери чат — над полем ввода всплывёт карточка «⚔️ Отправить вызов». Нажми на неё.</p>`;
       if (right) {
         const ra = match(mine, set.map(id => { const a = byId(id); return a && a.author ? (a.author > 0 ? 1 : 2) : 0; }));
@@ -867,7 +933,7 @@ textarea.field{min-height:90px;resize:vertical}
           if (r.error === "ban") { banned = true; return fail(BAN_TEXT); }
           if (r.error === "limit") return fail("На сегодня вызовов хватит: не больше 10 в сутки. Завтра можно снова.");
           if (!r.id) throw 0;
-          d = {id: r.id, role: "author", ids: set, a_ans: mine, done: false, claimed: false};
+          d = {id: r.id, role: "author", ids: set, a_ans: mine, a_done: true, sent: false, done: false, claimed: false};
         } else {
           const r = await call(`/api/duel/${d.id}/answer`, {answers: mine});
           if (r.error === "sub") { subscribed = false; show(`${top("Готово")}<p>Ответы не потерялись — подпишись, и они сохранятся.</p>`); return openGate(done); }
@@ -888,6 +954,7 @@ textarea.field{min-height:90px;resize:vertical}
       if (x.dataset.x === "close") hide();
       if (x.dataset.x === "fresh") fresh();
       if (x.dataset.x === "claim") claim();
+      if (x.dataset.x === "self" && d) { mine = []; idx = 0; ask(); }
       if (x.dataset.x === "send" && d) {
         // пустой запрос: бот сам первой строкой предложит этот вызов
         try { tgApp.switchInlineQuery("", ["users", "groups"]); }
@@ -1119,6 +1186,125 @@ textarea.field{min-height:90px;resize:vertical}
     return {list, openById, addFromAlbum, myList};
   })();
 
+  // ---------- «послушаю позже» ----------
+  // Очередь хранится на сервере: бот по ней напоминает в личке. Приходит вместе с проверкой подписки.
+  const Later = (() => {
+    let items = {}, dm = false, remind = true, loaded = false;
+    const byId = id => all.find(a => a.id === id);
+    const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 3200); };
+    const post = (path, body) => fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...body, initData: tgApp.initData})}).then(r => r.json());
+    const active = () => Object.keys(items).filter(id => !items[id].done);
+    function load(l){
+      items = {}; (l.items || []).forEach(x => items[x.album] = {added: x.added, done: x.done});
+      dm = !!l.dm; remind = l.remind !== false; loaded = true; paint();
+    }
+    function paint(){
+      const n = active().length;
+      $("later-entry").hidden = !inTg;
+      $("later-count").textContent = n ? `${n} ${plural(n, "альбом", "альбома", "альбомов")} в очереди` : "Откладывай альбомы — бот напомнит в личке";
+      const b = $("s-later"), it = openId && items[openId];
+      b.hidden = !inTg;
+      b.textContent = it ? (it.done ? "Послушано ✓" : "В очереди ✓") : "Послушаю позже";
+      b.setAttribute("aria-pressed", !!it);
+      if (!$("lt").hidden) screen();
+    }
+    // разрешение боту писать в личку — Telegram спрашивает его сам, один раз
+    function askDm(){
+      return new Promise(res => {
+        if (dm || (tgApp.initDataUnsafe.user && tgApp.initDataUnsafe.user.allows_write_to_pm)) return res(true);
+        if (!tgApp.requestWriteAccess || !tgApp.isVersionAtLeast("6.9")) return res(false);
+        try { tgApp.requestWriteAccess(ok => res(!!ok)); } catch (e) { res(false); }
+      });
+    }
+    async function toggle(id){
+      if (!inTg) return toast("Очередь работает внутри Telegram");
+      if (banned) return banNote();
+      if (items[id]) {
+        delete items[id]; paint();
+        post("/api/later", {album: id, on: false}).catch(() => {});
+        return toast("Убрано из очереди");
+      }
+      const can = await askDm();
+      items[id] = {added: Date.now(), done: null}; paint();
+      if (tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
+      try {
+        const r = await post("/api/later", {album: id, on: true, dm: can});
+        if (r.error === "full") { delete items[id]; paint(); return toast("В очереди уже 100 альбомов — сначала послушай что-нибудь"); }
+        if (r.error) throw 0;
+        dm = !!r.dm; remind = r.remind !== false;
+        toast(!dm ? "В очереди. Напоминаний не будет: бот не может тебе писать" : !remind ? "В очереди. Напоминания выключены"
+          : "В очереди. Через три дня бот спросит в личке, послушал ли");
+      } catch (e) { delete items[id]; paint(); toast("Не получилось. Проверь интернет"); }
+    }
+    function setDone(id, on){
+      if (!items[id]) return;
+      items[id].done = on ? Date.now() : null; paint();
+      post("/api/later/done", {album: id, on}).catch(() => {});
+    }
+    async function setRemind(on){
+      let can = dm;
+      if (on && !dm) { can = await askDm(); if (!can) return toast("Telegram не дал разрешения — бот не может тебе писать"); }
+      remind = on; if (can) dm = true; paint();
+      post("/api/later/remind", {on, dm: can}).catch(() => {});
+    }
+    const row = (a, done) => `<div class="lrow"><button class="op" type="button" data-open="${a.id}">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="" loading="lazy">` : `<div class="ph"></div>`}
+      <div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div></button>
+      ${done ? `<button class="act" type="button" data-undo="${a.id}">Вернуть</button>` : `<button class="act" type="button" data-done="${a.id}">Послушал</button>`}
+      <button class="act x" type="button" data-rm="${a.id}" aria-label="Убрать">×</button></div>`;
+    function screen(){
+      const ids = Object.keys(items).map(Number).sort((x, y) => items[y].added - items[x].added);
+      const todo = ids.filter(id => !items[id].done).map(byId).filter(Boolean), heard = ids.filter(id => items[id].done).map(byId).filter(Boolean);
+      let html = `<div class="duel-top"><span class="step">Послушаю позже</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div><h3>Послушаю позже</h3>`;
+      html += dm && remind ? `<p>Через три дня после добавления бот спросит в личке, послушал ли. Не чаще одного сообщения в сутки.</p><button class="alt" data-x="remind-off">Выключить напоминания</button>`
+        : `<p>${dm ? "Напоминания выключены" : "Бот пока не может тебе писать, поэтому напоминаний нет"}. Очередь работает и без них.</p><button class="alt" data-x="remind-on">Включить напоминания в личке</button>`;
+      html += `<div class="label">В очереди: ${todo.length}</div>` + (todo.length ? `<div class="rows">${todo.map(a => row(a)).join("")}</div>`
+        : `<p>Пусто. Открой любой альбом и нажми «Послушаю позже».</p>`);
+      if (heard.length) html += `<div class="label">Послушано: ${heard.length}</div><div class="rows">${heard.map(a => row(a, true)).join("")}</div>`;
+      $("lt-in").innerHTML = html;
+    }
+    function openScreen(){ screen(); $("lt").hidden = false; $("lt").scrollTop = 0; }
+    $("lt").addEventListener("click", e => {
+      const o = e.target.closest("[data-open]"); if (o) return open(+o.dataset.open);
+      const dn = e.target.closest("[data-done]"); if (dn) return setDone(+dn.dataset.done, true);
+      const un = e.target.closest("[data-undo]"); if (un) return setDone(+un.dataset.undo, false);
+      const rm = e.target.closest("[data-rm]"); if (rm) return toggle(+rm.dataset.rm);
+      const x = e.target.closest("[data-x]"); if (!x) return;
+      if (x.dataset.x === "close") $("lt").hidden = true;
+      if (x.dataset.x === "remind-off") setRemind(false);
+      if (x.dataset.x === "remind-on") setRemind(true);
+    });
+    return {load, paint, toggle, open: openScreen};
+  })();
+  function plural(n, one, few, many){ const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; }
+
+  // ---------- «в этот день» ----------
+  // Один альбом, вышедший в сегодняшнее число (если такого нет — в один из шести предыдущих дней).
+  function paintToday(){
+    const now = new Date(), key = d => String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    for (let back = 0; back < 7; back++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+      const pool = all.filter(a => a.day === key(d) && a.year);
+      if (!pool.length) continue;
+      const a = pool[(now.getFullYear() + now.getDate()) % pool.length], ago = now.getFullYear() - +a.year;
+      const when = back ? d.toLocaleDateString("ru-RU", {day: "numeric", month: "long"}) + " " + a.year : "в этот день, " + a.year;
+      $("today").innerHTML = `${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}
+        <div><small>Вышел ${esc(when)}${ago > 0 ? ` · ${ago} ${plural(ago, "год", "года", "лет")} назад` : ""}</small><b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span></div><em>Об альбоме</em>`;
+      $("today").dataset.id = a.id; $("today").hidden = false;
+      return;
+    }
+  }
+
+  // ---------- пожертвование звёздами ----------
+  // Ссылка внизу страницы → окно с пояснением → сумма → окно оплаты Telegram. Случайно не нажать.
+  async function donate(n){
+    $("don").hidden = true;
+    try {
+      const r = await fetch("/api/donate", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({amount: n, initData: tgApp.initData})}).then(r => r.json());
+      if (!r.link) throw 0;
+      tgApp.openInvoice(r.link, st => { if (st === "paid") { const t = $("toast"); t.textContent = "Спасибо. Звёзды дошли"; t.hidden = false; setTimeout(() => t.hidden = true, 3200); } });
+    } catch (e) { const t = $("toast"); t.textContent = "Не получилось открыть оплату. Попробуй позже"; t.hidden = false; setTimeout(() => t.hidden = true, 3200); }
+  }
+
   if (tgApp && tgApp.initData) {
     tgApp.ready(); tgApp.expand();
     document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
@@ -1163,6 +1349,13 @@ textarea.field{min-height:90px;resize:vertical}
   $("pl-official").addEventListener("click", () => Playlists.list("official"));
   $("pl-people").addEventListener("click", () => Playlists.list("people"));
   $("s-addpl").addEventListener("click", () => { if (openId) Playlists.addFromAlbum(openId); });
+  $("s-later").addEventListener("click", () => { if (openId) Later.toggle(openId); });
+  $("later-entry").addEventListener("click", () => Later.open());
+  $("today").addEventListener("click", () => open(+$("today").dataset.id));
+  $("don-open").hidden = !(inTg && tgApp.openInvoice && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.1"));
+  $("don-open").addEventListener("click", () => { $("don").hidden = false; });
+  $("don-close").addEventListener("click", () => { $("don").hidden = true; });
+  $("don-row").addEventListener("click", e => { const b = e.target.closest("button"); if (b) donate(+b.dataset.n); });
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   // закрывают приложение — дошлём оценки сразу
   document.addEventListener("visibilitychange", () => { if (document.hidden) flushOnClose(); });
@@ -1174,7 +1367,7 @@ textarea.field{min-height:90px;resize:vertical}
   window.addEventListener("hashchange", fromHash);
 
   fetch("data.json").then(r => r.json()).then(d => {
-    all = d; buildGenres(); buildDecades();
+    all = d; buildGenres(); buildDecades(); paintToday(); Later.paint();
     if (inTg) checkSub();   // заранее, чтобы кнопки не ждали
     Promise.all([loadVotes(), loadCounts()]).then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
   }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });

@@ -6,11 +6,14 @@
 - Канал @volodyamusicbox (любимые альбомы автора), бот @volodyamusicbox_bot, мини-приложение «Volodya Music Archive».
 - Архив альбомов (~680) с годами первого выхода, жанрами/стилями Discogs, обложками, справкой (Википедия + состав из Discogs).
 - Интерактив: лайки/дизлайки (видны всем), «Сравнить вкусы» (дуэли через инлайн), плейлисты («от Володи» и «людей»), инлайн-режим, бан и модерация для владельца.
+- «Послушаю позже»: очередь человека + напоминания бота в личке; «Вышел в этот день» на главной; пожертвование звёздами; статистика для владельца (`/stats`).
 - Владелец: OWNER_ID в секретах. Репозиторий: Begunka/volodya-music-box, ветка main.
 
 ## Жёсткие требования владельца
 - Всё бесплатно. Никаких платных тарифов и карт.
-- Минимум контакта с личкой бота: никаких сообщений людям в ЛС, статусы дуэлей — правкой сообщения в чате.
+- Личка бота: пишем только тем, кто сам это включил, и только по делу — напоминания «послушаю позже» (не чаще одного в сутки, максимум 5 на альбом, выключаются в архиве). Статусы дуэлей — по-прежнему правкой сообщения в чате, не в личку. Рекламные рассылки владелец хочет в будущем: только по согласию и с отпиской (правила Telegram, п. 5.2).
+- Пожертвование звёздами не должно ничего открывать и не должно бросаться в глаза (ссылка внизу страницы → окно с пояснением → сумма). Платных функций нет.
+- Альбом не должен оставаться без жанра: каскад источников в `bot/genres.py`.
 - Тексты сухие, без ИИ-клише, без кича («детский лепет» — его слова про кичевые идеи).
 - Беречь квоту Cloudflare (100k запросов/сутки на бесплатном): кэш, без лишних запросов.
 - Фичи должны подталкивать подписаться на канал, но не как реклама (гейт подписки на лайки/дуэли/плейлисты).
@@ -21,15 +24,19 @@
 ## Архитектура
 - **Cloudflare Worker** `worker/index.js` (имя volodya-archive, https://volodya-archive.zaharmakaka.workers.dev/):
   - раздаёт мини-приложение как static assets (`worker/public`, собирается в Actions; статика бесплатна и не считается в квоту);
-  - `POST /tg` — вебхук Telegram (секрет в заголовке): инлайн-запросы и chosen_inline_result отвечает сам, остальное кладёт в очередь D1 и будит GitHub (`wakeGithub`, не чаще раза в 30 с);
+  - `POST /tg` — вебхук Telegram (секрет в заголовке): инлайн-запросы, chosen_inline_result, кнопки (callback_query), оплату (pre_checkout_query, successful_payment), my_chat_member и команды в личке (`/start`, `/donate`, `/paysupport`, `/terms`, `/forget`, владельцу `/stats`) отвечает сам, остальное кладёт в очередь D1 и будит GitHub (`wakeGithub`, не чаще раза в 30 с);
+  - `scheduled` (cron `17 * * * *`): напоминания «послушаю позже» (7–18 UTC, до 20 за запуск), по понедельникам сводка владельцу, раз в сутки чистка `seen`/`stats`;
   - `/queue`, `/ack` — очередь для бота; `/health`;
-  - `/api/counts` (кэш 30 с), `/api/pl` (кэш 60 с), `/api/vote`, `/api/duel/*`, `/api/pl/*` (в т.ч. owner-only `/api/pl/admin`, `/api/pl/ban`), `/api/sub`.
-  - Авторизация мини-аппа — проверка initData (HMAC "WebAppData"). uid в базе = hmacHex(BOT_TOKEN, user.id, 16), сырые id не храним.
+  - `/api/counts` (кэш 30 с), `/api/pl` (кэш 60 с), `/api/vote`, `/api/duel/*`, `/api/pl/*` (в т.ч. owner-only `/api/pl/admin`, `/api/pl/ban`), `/api/sub` (заодно отдаёт очередь «послушаю позже» и считает открытие: `?src=`), `/api/later`, `/api/later/done`, `/api/later/remind`, `/api/donate`.
+  - Авторизация мини-аппа — проверка initData (HMAC "WebAppData"). uid в оценках/плейлистах/статистике = hmacHex(BOT_TOKEN, user.id, 16). Настоящий id хранится только там, где без него нельзя: `duels`, `later`, `people` (кому можно писать), `donations` (для возврата).
+  - Дуэли: вызов можно отправить прямо из инлайн-списка (карточка `dnew-<id>`): строка в `duels` создаётся в `chosen()` с `a_ans = '[]'`, автор отвечает по той же кнопке; итог — когда ответили оба. Старый путь (15 альбомов в архиве → карточка `duel-<id>`) тоже работает.
+  - Статистика: `track()` пишет счётчики в `stats` (iq:<тип чата>, sent:<что>, open:<откуда>, start, later:add, dm:*) и уникальных в `seen`. Ссылки на альбом из инлайн-карточек помечены типом чата (`album_12_g`/`_p`/`_c`/`_s`, из напоминаний `_r`). Упоминания бота в чужих чатах Telegram ботам не отдаёт — только тип чата инлайн-запроса и чаты, куда бота добавили (`chats`).
   - `isSub` — getChatMember по каналу, fail-open; владелец всегда «подписан».
-- **D1** база archive-queue, схема `worker/schema.sql` (queue, meta, duels, votes, counts, playlists, playlist_likes, bans). Миграции также в `migrate()` в index.js. Проверка без персданных: workflow d1-check.yml + `worker/check.sql`.
+- **D1** база archive-queue, схема `worker/schema.sql` (queue, meta, duels, votes, counts, playlists, playlist_likes, bans, later, people, stats, seen, chats, donations). Миграции также в `migrate()` в index.js. Проверка без персданных: workflow d1-check.yml + `worker/check.sql`.
 - **GitHub Actions** — тяжёлая работа:
   - `bot.yml` — запуск `bot/bot.py`: забирает очередь из воркера, обрабатывает посты, добавляет альбомы, комментарии под постами, коммитит albums.json/data.json/covers/bot_state.json, деплоит воркер при изменениях. Будится воркером, cron-job.org (основной будильник «Бот архива», сейчас стоит каждые 3 мин) и запасным cron.
   - `worker.yml` — на push в worker/**, index.html, _headers: собирает public (index.html, data.json, _headers, covers, wiki без state.json/tr.json), применяет schema.sql (`npx --yes wrangler@4`), деплоит.
+  - `genres.yml` — вручную и раз в неделю (inputs minutes ≤ 12, only): `bot/genres.py` дозаполняет жанры, пересобирает data.json, деплоит. Стоит в одной очереди (concurrency `bot`) с ботом: оба правят albums.json/data.json.
   - `wiki.yml` — раз в сутки и вручную (inputs minutes, only=номера через запятую): `bot/wiki.py` собирает справку, коммитит wiki/, деплоит.
 - **Запасной режим**: если воркер недоступен, бот снимает вебхук, переходит на getUpdates и включает «быстрый» job на cron-job.org (каждые 3 мин) через API; когда воркер оживает — возвращает всё назад. Код: `ensure_mode` в bot.py.
   - В основном режиме бот раз в час подтверждает, что «быстрый» job выключен (`fast_off_at` в bot_state.json) — раньше он залипал включённым.
@@ -41,21 +48,24 @@
 - `bot/bot.py` — бот: Archive (albums.json, обложки webp + covers/jpg, export в data.json, `recheck()` — понемногу перепроверяет годы, не найденные в базах), обработка постов канала/группы обсуждения/дневника, scan_channel, комментарии с кнопкой мини-аппа, ensure_mode, report владельцу.
 - `bot/parser.py` — разбор текста постов (форматы DeezLoad, Soulseek, свободный), clean_title, album_key.
 - `bot/enrich.py` — год первого выхода и жанры: Discogs (DISCOGS_TOKEN, 60 запр/мин) + MusicBrainz (1 запр/с); `artist_variants`/`first_found` — поиск по другим написаниям исполнителя (Aquarium → Аквариум).
+- `bot/genres.py` — каскад жанров, когда точный поиск Discogs не дал и жанр, и стиль: Discogs по другим написаниям названия → жанры MusicBrainz → Deezer/iTunes (крупный жанр) → исполнитель (его альбомы в архиве, релизы в Discogs, жанры в MusicBrainz) → Gemini (только если есть секрет GEMINI_API_KEY). Источник — в `genre_src`; всё, кроме `discogs`/`manual`, `recheck()` раз в месяц пробует уточнить. `genres_fix.json` в корне — ручные поправки: `{"номер": {"genres": [...], "styles": [...]}}`.
 - `bot/wiki.py` — справка: Википедия (через MusicBrainz→Wikidata, иначе поиск ru/en) + состав из Discogs (роли переведены, музыканты первыми, без авторов песен). Хранение: `wiki/pack-N.json` (по 50 альбомов, грузятся при открытии карточки), `wiki/state.json` (что проверено; ненайденное перепроверяется через 30 дней), `wiki/fix.json` (ручные поправки: `"номер": "en:Статья"` или `"none"`), `wiki/tr.json` (переводы английских текстов: ручные + автоперевод MyMemory до ~4500 знаков/сутки, помечается `auto`; ключ — хэш исходника).
 - `index.html` — мини-приложение целиком (одна страница): сетка, поиск, десятилетия, панель жанров/стилей (поиск по-русски), сортировки, карточка альбома (оценки, «+ в плейлист», справка), дуэли, плейлисты, модерация, гейт подписки.
 - `worker/wrangler.toml` — привязки: assets, D1 (DB), vars.
-- `albums.json` — архив (источник правды), `data.json` — экспорт для сайта, `ratings.json` — устаревшее.
+- `albums.json` — архив (источник правды), `data.json` — экспорт для сайта (поле `day` = «ММ-ДД» для блока «в этот день»: только если дата в посте полная и её год — год первого выхода), `ratings.json` — устаревшее.
 
 ## Секреты (только в GitHub Secrets, имена)
-BOT_TOKEN, DISCOGS_TOKEN, OWNER_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, GH_DISPATCH_TOKEN, CRONJOB_API_KEY.
+BOT_TOKEN, DISCOGS_TOKEN, OWNER_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, GH_DISPATCH_TOKEN, CRONJOB_API_KEY. Необязательный: GEMINI_API_KEY (последний шанс для жанров).
 
 ## Как работать
 - Сеть из облачной песочницы до Telegram/Discogs/Wikipedia закрыта — проверять такое запуском workflow (`gh api -X POST repos/Begunka/volodya-music-box/actions/workflows/<file>/dispatches -f ref=main ...`) и чтением лога.
-- Фронт проверять локально: мок-сервер воркера + playwright (Chromium предустановлен), скриншоты своих экранов.
+- Фронт проверять локально: мок-сервер воркера + playwright (Chromium предустановлен), скриншоты своих экранов. Воркер запускается в Node как есть: D1 подменяется `node:sqlite` (схема из `worker/schema.sql` + `ALTER TABLE duels ADD COLUMN claimed INTEGER`), `fetch` к api.telegram.org — заглушкой.
+- Не коммитить руками albums.json/data.json без нужды: data.json — одна строка, с коммитом бота будет конфликт. Пересборка — через `genres.yml` или бота.
 - Перед push: `git pull --rebase` — бот постоянно коммитит в main. Коммиты бота с `[skip ci]`.
 - `node --check worker/index.js`, синтаксис JS из index.html проверять отдельно.
 
 ## Отложено / идеи
 - Кнопка «Скачать» через DeezLoad — отложена; если когда-нибудь будут деньги/донаты, её лучше не делать.
-- Донаты звёздами Telegram — возможно потом, без платных функций.
+- Если владелец сменит имя бота в BotFather: поменять `MINIAPP` в worker/wrangler.toml, `MINIAPP`/`BOT_USERNAME` в bot/bot.py, ссылку в `share` и подпись в index.html. Старые кнопки под постами перестанут открываться.
+- Рассылки (в т.ч. рекламные): таблица `people` уже знает, кому можно писать; нужны отдельное согласие и отписка.
 - Запасной режим мини-аппа на GitHub Pages (архив без лайков при падении Cloudflare) — предложено, не сделано.

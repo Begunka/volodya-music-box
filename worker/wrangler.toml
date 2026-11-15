@@ -10,6 +10,10 @@ workers_dev = true
 directory = "./public"
 binding = "ASSETS"
 
+# раз в час: напоминания «послушаю позже», сводка владельцу, уборка (24 запуска в сутки из 100 000)
+[triggers]
+crons = ["17 * * * *"]
+
 [vars]
 REPO = "Begunka/volodya-music-box"
 PAGES = "https://volodya-archive.zaharmakaka.workers.dev/"
