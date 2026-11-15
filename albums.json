@@ -2727,7 +2727,8 @@
    "Experimental",
    "Avantgarde"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794768494
  },
  {
   "title": "God Bless the Red Krayola and All Who Sail With It",
@@ -2887,7 +2888,8 @@
   "styles": [
    "Jazz-Rock"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794768494
  },
  {
   "title": "Separation Anxieties",
