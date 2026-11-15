@@ -11816,14 +11816,13 @@
   "cover_ext": "webp",
   "year_tried": 1794549974,
   "genres": [
-   "Rock",
-   "Electronic"
+   "Stage & Screen"
   ],
   "styles": [
-   "Alternative Rock",
-   "Synth-pop"
+   "Soundtrack",
+   "Video Game Music"
   ],
-  "genre_src": "artist"
+  "genre_src": "manual"
  },
  {
   "title": "Bad Piggies (Original Game Soundtrack)",
@@ -11836,7 +11835,15 @@
   "title_full": "Bad Piggies (Original Game Soundtrack) (Extended Edition)",
   "post_url": "https://t.me/volodyamusicbox/5828",
   "cover_ext": "webp",
-  "year_tried": 1794549793
+  "year_tried": 1794549793,
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack",
+   "Video Game Music"
+  ],
+  "genre_src": "mb"
  },
  {
   "title": "Angry Birds Space (Original Game Soundtrack), Pt. 2",
@@ -11847,7 +11854,16 @@
   "id": 580,
   "added": "2026-10-09T10:01:20",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack",
+   "Score",
+   "Video Game Music"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "HEAT SCALE",
@@ -11941,7 +11957,16 @@
   "id": 585,
   "added": "2026-10-10T20:28:26",
   "cover_ext": "webp",
-  "year_tried": 1794549793
+  "year_tried": 1794549793,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Acid",
+   "Downtempo",
+   "Breakbeat"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Move Ever Onward",
@@ -11953,7 +11978,16 @@
   "added": "2026-10-12T13:11:58",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5870",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Soul-Jazz",
+   "Space-Age",
+   "Free Improvisation"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Drawing On Other Peoples Heads",
@@ -12007,7 +12041,12 @@
   "added": "2026-10-13T23:59:21",
   "post_url": "https://t.me/volodyamusicbox/5918",
   "cover_ext": "webp",
-  "year_tried": 1794549629
+  "year_tried": 1794549629,
+  "genres": [
+   "Electronic"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794765485
  },
  {
   "title": "The Lost Tapes",
@@ -12020,9 +12059,15 @@
   "genres": [
    "Jazz"
   ],
-  "styles": [],
+  "styles": [
+   "Big Band",
+   "Swing",
+   "Bop",
+   "Contemporary Jazz"
+  ],
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Psychosis Sounds",
@@ -12038,7 +12083,17 @@
   "added": "2026-10-15T13:49:11",
   "post_url": "https://t.me/volodyamusicbox/5925",
   "cover_ext": "webp",
-  "year_tried": 1794549629
+  "year_tried": 1794549629,
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "Indie Pop",
+   "Indie Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Illinois",
@@ -12217,7 +12272,14 @@
   "id": 600,
   "added": "2026-10-19T12:28:30",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Space-Age"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Miles Smiles",
@@ -12314,7 +12376,15 @@
   "added": "2026-10-27T01:42:35",
   "post_url": "https://t.me/volodyamusicbox/6067",
   "cover_ext": "webp",
-  "year_tried": 1794549433
+  "year_tried": 1794549433,
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "The Cocaine Sessions",
@@ -12326,7 +12396,17 @@
   "added": "2026-10-27T18:03:53",
   "post_url": "https://t.me/volodyamusicbox/6083",
   "cover_ext": "webp",
-  "year_tried": 1794549433
+  "year_tried": 1794549433,
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Art Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Бременские музыканты",
@@ -12339,7 +12419,12 @@
   "title_full": "Бременские музыканты (2024 Remastered)",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/6102",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Pop"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794765485
  },
  {
   "title": "Малыш и Карлсон (Из м/ф \"Малыш и Карлсон\")",
@@ -12493,7 +12578,8 @@
   "added": "2026-10-31T15:55:49",
   "post_url": "https://t.me/volodyamusicbox/6203",
   "cover_ext": "webp",
-  "year_tried": 1794549254
+  "year_tried": 1794549254,
+  "genre_tried": 1794765485
  },
  {
   "title": "Tales of the Inexpressible",
@@ -12608,7 +12694,12 @@
   "added": "2026-11-06T04:08:22",
   "post_url": "https://t.me/volodyamusicbox/6235",
   "cover_ext": "webp",
-  "year_tried": 1794549254
+  "year_tried": 1794549254,
+  "genres": [
+   "Electronic"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794765485
  },
  {
   "title": "Shut Down, Vol. 2",
@@ -12742,7 +12833,16 @@
   "added": "2026-09-24T16:53:52",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/5541",
-  "year_tried": 1794549073
+  "year_tried": 1794549073,
+  "genres": [
+   "Jazz",
+   "Non-Music"
+  ],
+  "styles": [
+   "Easy Listening",
+   "Spoken Word"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Sallies Fforth",
@@ -12793,7 +12893,8 @@
   "added": "2026-10-30T02:04:46",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6163",
-  "year_tried": 1794549073
+  "year_tried": 1794549073,
+  "genre_tried": 1794765485
  },
  {
   "title": "Flamingo Serenade",
@@ -12926,7 +13027,14 @@
   "added": "2026-07-12T12:28:54",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/4707",
-  "year_tried": 1794548893
+  "year_tried": 1794548893,
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Psychedelic"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Man In The Bowler Hat",
@@ -13153,7 +13261,8 @@
   "added": "2026-03-10T18:56:46",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2073",
-  "year_tried": 1794548893
+  "year_tried": 1794548893,
+  "genre_tried": 1794765485
  },
  {
   "title": "Elpmas",
@@ -13204,7 +13313,16 @@
   "added": "2026-03-23T13:51:10",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2305",
-  "year_checked": true
+  "year_checked": true,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Group Sounds",
+   "Garage Rock"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Awa Crazy Dance / Japanese Folk Songs in Elec. Guitars» (阿波踊り / エレキギターで民謡を)",
@@ -13216,7 +13334,8 @@
   "added": "2026-03-24T01:12:17",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2350",
-  "year_tried": 1794548719
+  "year_tried": 1794548719,
+  "genre_tried": 1794765485
  },
  {
   "title": "Cherry Viewing A Go Go (桜音頭a Gogo!)",
@@ -13229,7 +13348,17 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2399",
   "title_full": "Spacemen, The 1966 - (ザ・スペイスメン) - Cherry Viewing A Go Go (桜音頭a Gogo!) (0000) () [Vinyl 0-44]",
-  "year_tried": 1794548536
+  "year_tried": 1794548536,
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Beat",
+   "Folk Rock",
+   "Surf"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Iijanaika",
@@ -13324,7 +13453,16 @@
   "added": "2026-04-17T15:45:25",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2991",
-  "year_tried": 1794548356
+  "year_tried": 1794548356,
+  "genres": [
+   "Jazz",
+   "Pop"
+  ],
+  "styles": [
+   "Vocal",
+   "Easy Listening"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Twilight Forest Soundtrack",
@@ -13336,7 +13474,14 @@
   "added": "2026-01-25T12:10:45",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/1114",
-  "year_tried": 1794548356
+  "year_tried": 1794548356,
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack"
+  ],
+  "genre_src": "title"
  },
  {
   "title": "The Elder Scrolls V: Skyrim (Original Game Soundtrack)",
