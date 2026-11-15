@@ -12960,5 +12960,23 @@
   "added": "2026-11-15T09:38:27",
   "cover_ext": "webp",
   "year_tried": 1794735533
+ },
+ {
+  "title": "In The Region Of The Summer Stars",
+  "artist": "The Enid",
+  "date": "1976-05-17",
+  "tracks": 9,
+  "year": "1976",
+  "id": 691,
+  "added": "2026-11-15T10:14:01",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock",
+   "Symphonic Rock"
+  ],
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
