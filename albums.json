@@ -100,7 +100,26 @@
   "reissue_year": "2016",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/3284",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Rock",
+   "Funk / Soul",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Psychedelic Rock",
+   "Prog Rock",
+   "Ballad",
+   "Rock & Roll",
+   "Soft Rock",
+   "Soul",
+   "Rhythm & Blues",
+   "Art Rock",
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Quique",
@@ -172,7 +191,14 @@
   "added": "2026-04-18T19:37:09",
   "title_full": "Sonic Mania Original Sound Track(Selected Edition)",
   "cover_ext": "webp",
-  "year_tried": 1794555559
+  "year_tried": 1794555559,
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack"
+  ],
+  "genre_src": "itunes"
  },
  {
   "title": "THRAK",
@@ -238,7 +264,14 @@
   "id": 13,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555559
+  "year_tried": 1794555559,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Techno"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Dark Side of the Moon",
@@ -268,7 +301,15 @@
   "id": 15,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555453
+  "year_tried": 1794555453,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Jungle",
+   "Drum n Bass"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Money Store",
@@ -341,7 +382,14 @@
   "id": 19,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555375
+  "year_tried": 1794555375,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Wish You Were Here",
@@ -473,7 +521,14 @@
   "reissue_year": "2018",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/304",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "One Size Fits All",
@@ -827,7 +882,21 @@
   "added": "2026-04-18T19:37:09",
   "reissue_year": "2012",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Musique Concrète",
+   "Avantgarde",
+   "Symphonic Rock",
+   "Rhythm & Blues",
+   "Psychedelic Rock",
+   "Experimental",
+   "Parody"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Surf's Up",
@@ -842,9 +911,14 @@
   "genres": [
    "Rock"
   ],
-  "styles": [],
+  "styles": [
+   "Pop Rock",
+   "Rock & Roll",
+   "Psychedelic Rock"
+  ],
   "post_url": "https://t.me/volodyamusicbox/2694",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Weasels Ripped My Flesh",
@@ -857,7 +931,18 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/394",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Blues Rock",
+   "Free Jazz",
+   "Fusion",
+   "Avantgarde"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "In Rainbows",
@@ -1077,7 +1162,14 @@
   "title_full": "Stravinsky: Pétrouchka (2022 Remastered Version)",
   "post_url": "https://t.me/volodyamusicbox/446",
   "cover_ext": "webp",
-  "year_tried": 1794555193
+  "year_tried": 1794555193,
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Modern"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Adventures In Utopia",
@@ -1229,7 +1321,14 @@
   "reissue_year": "1991",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1449",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Argus",
@@ -1366,7 +1465,18 @@
   "title_full": "Apostrophe (') (50th Anniversary Super Deluxe)",
   "reissue_year": "2024",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Fusion",
+   "Psychedelic Rock",
+   "Avantgarde",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Wonderwall Music",
@@ -1524,7 +1634,14 @@
   "id": 79,
   "added": "2026-04-18T19:37:10",
   "cover_ext": "webp",
-  "year_tried": 1794555025
+  "year_tried": 1794555025,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Disco"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Tales from Topographic Oceans",
@@ -1795,7 +1912,15 @@
   "reissue_year": "2007",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/788",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Pop",
+   "Rock"
+  ],
+  "styles": [
+   "Pop Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "KID A MNESIA",
@@ -2400,7 +2525,14 @@
   "added": "2026-04-18T19:37:16",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1120",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Hip Hop"
+  ],
+  "styles": [
+   "Gangsta"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Smiley Smile",
@@ -2456,10 +2588,20 @@
    "Rock",
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Synth-pop",
+   "Art Rock",
+   "Soul",
+   "Jazz-Rock",
+   "Pop Rock",
+   "Ballad",
+   "Funk",
+   "Hard Rock"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1127",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "JESUS IS KING",
@@ -2490,7 +2632,14 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1133",
   "cover_ext": "webp",
-  "year_tried": 1794555025
+  "year_tried": 1794555025,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Soft Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Sgt. Pepper's Lonely Hearts Club Band",
@@ -2505,11 +2654,14 @@
    "Rock",
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Psychedelic Rock"
+  ],
   "reissue_year": "2015",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2053",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Here Are the Sonics",
@@ -2541,7 +2693,18 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1167",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Experimental",
+   "Avantgarde",
+   "Art Rock",
+   "Acid Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Coconut Hotel",
@@ -2555,7 +2718,16 @@
   "year_checked": true,
   "note": "записан в 1967, издан в 1995",
   "post_url": "https://t.me/volodyamusicbox/1161",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Experimental",
+   "Avantgarde"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "God Bless the Red Krayola and All Who Sail With It",
@@ -2569,7 +2741,17 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1182",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Art Rock",
+   "Avantgarde",
+   "Experimental",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "OK Computer",
@@ -2601,7 +2783,15 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1213",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Blues Rock",
+   "Avantgarde"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Global",
@@ -2670,7 +2860,15 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1301",
   "cover_ext": "webp",
-  "year_tried": 1794554834
+  "year_tried": 1794554834,
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Jazz-Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Ethnic Experiences",
@@ -2682,7 +2880,14 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1242",
   "cover_ext": "webp",
-  "year_tried": 1794554834
+  "year_tried": 1794554834,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Jazz-Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Separation Anxieties",
@@ -2805,9 +3010,12 @@
    "Rock",
    "Blues"
   ],
-  "styles": [],
+  "styles": [
+   "Blues Rock"
+  ],
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Angherr Shisspa Revisited",
@@ -2894,7 +3102,17 @@
   "id": 152,
   "added": "2026-04-18T19:37:16",
   "cover_ext": "webp",
-  "year_tried": 1794554732
+  "year_tried": 1794554732,
+  "genres": [
+   "Jazz",
+   "Rock",
+   "Blues"
+  ],
+  "styles": [
+   "Blues Rock",
+   "Neofolk"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Heavy Weather",
@@ -2925,7 +3143,17 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1407",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Garage Rock",
+   "Art Rock",
+   "Experimental",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Year Of The Snitch",
@@ -3278,7 +3506,15 @@
   "added": "2026-04-18T19:37:17",
   "post_url": "https://t.me/volodyamusicbox/1547",
   "cover_ext": "webp",
-  "year_tried": 1794554653
+  "year_tried": 1794554653,
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Electroacoustic",
+   "Health-Fitness"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Garden Of Mirrors",
@@ -3465,7 +3701,16 @@
   "added": "2026-04-18T19:37:17",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1637",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Post-Punk",
+   "Experimental",
+   "Art Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Сергей Курёхин: Полинезия. Введение в историю (Live)",
@@ -3477,7 +3722,16 @@
   "added": "2026-04-18T19:37:17",
   "post_url": "https://t.me/volodyamusicbox/1651",
   "cover_ext": "webp",
-  "year_tried": 1794554653
+  "year_tried": 1794554653,
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Experimental",
+   "Free Improvisation",
+   "Future Jazz"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "Metal Machine Music",
@@ -3605,11 +3859,14 @@
   "genres": [
    "Hip Hop"
   ],
-  "styles": [],
+  "styles": [
+   "Cloud Rap"
+  ],
   "reissue_year": "2022",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1743",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "In And Out Of Focus",
@@ -3812,7 +4069,14 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/1831",
   "cover_ext": "webp",
-  "year_tried": 1794554473
+  "year_tried": 1794554473,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "The Complete Recordings",
@@ -3823,7 +4087,17 @@
   "id": 201,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794554473
+  "year_tried": 1794554473,
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Surf",
+   "Novelty",
+   "Avantgarde"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Pieces of a Man",
@@ -3875,7 +4149,17 @@
   "reissue_year": "2014",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/1890",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Free Jazz",
+   "Avant-garde Jazz",
+   "Big Band",
+   "Space-Age"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Moon Gas",
@@ -3909,7 +4193,15 @@
   "id": 206,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794554294
+  "year_tried": 1794554294,
+  "genres": [
+   "Rock",
+   "Blues"
+  ],
+  "styles": [
+   "Rock & Roll"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Lord of the Rings",
@@ -3965,7 +4257,19 @@
   "reissue_year": "2012",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/4635",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Modern Classical",
+   "Avantgarde",
+   "Experimental",
+   "Parody",
+   "Psychedelic Rock",
+   "Musique Concrète"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "At Home with Screamin' Jay Hawkins",
@@ -3996,7 +4300,14 @@
   "added": "2026-04-18T19:37:41",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/5640",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Modern"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "[re]Production",
@@ -4093,10 +4404,15 @@
   "genres": [
    "Hip Hop"
   ],
-  "styles": [],
+  "styles": [
+   "Experimental",
+   "Psychedelic",
+   "Hip Hop"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2022",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Animal Lover",
@@ -4195,10 +4511,13 @@
   "genres": [
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Rock & Roll"
+  ],
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2075",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "Я Заказан",
@@ -4293,7 +4612,14 @@
   "reissue_year": "2016",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2102",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Contemporary"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "SEAWEED JESUS",
@@ -4540,7 +4866,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/3742",
   "cover_ext": "webp",
-  "year_tried": 1794554294
+  "year_tried": 1794554294,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Fusion",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "deezer"
  },
  {
   "title": "The Shadows",
@@ -4569,7 +4903,15 @@
   "id": 240,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794554120
+  "year_tried": 1794554120,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Folk Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Suring",
@@ -4581,7 +4923,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2319",
   "cover_ext": "webp",
-  "year_tried": 1794554120
+  "year_tried": 1794554120,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Surf",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Лабиринт. Джазовые композиции",
@@ -4593,7 +4943,16 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2430",
   "cover_ext": "webp",
-  "year_tried": 1794553933
+  "year_tried": 1794553933,
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Fusion",
+   "Jazz-Rock",
+   "Jazz-Funk"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "レッツ・ゴーエレキ節",
@@ -4604,7 +4963,15 @@
   "id": 243,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794553933
+  "year_tried": 1794553933,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Surf",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "artist"
  },
  {
   "title": "Zvoňte zvonky",
@@ -4616,7 +4983,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2385",
   "cover_ext": "webp",
-  "year_tried": 1794553756
+  "year_tried": 1794553756,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Beat",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Silversand",
@@ -4711,7 +5086,20 @@
   "reissue_year": "2010",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2454",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Jazz",
+   "Latin",
+   "Pop",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Easy Listening",
+   "Space-Age",
+   "Afro-Cuban",
+   "Exotica"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "PRELUDE AU SOMMEIL",
@@ -4785,7 +5173,8 @@
   "id": 253,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794553756
+  "year_tried": 1794553756,
+  "genre_tried": 1794763870
  },
  {
   "title": "Hildegard von Bingen - Canticles Of Ecstasy",
@@ -4797,7 +5186,14 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2508",
   "cover_ext": "webp",
-  "year_tried": 1794553575
+  "year_tried": 1794553575,
+  "genres": [
+   "Classical"
+  ],
+  "styles": [
+   "Medieval"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Spinoza",
@@ -4852,7 +5248,19 @@
   "added": "2026-04-18T19:37:41",
   "reissue_year": "2005",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Electronic",
+   "Folk, World, & Country",
+   "Jazz"
+  ],
+  "styles": [
+   "Ambient",
+   "Ballad",
+   "Chillout",
+   "Contemporary"
+  ],
+  "genre_src": "mb"
  },
  {
   "title": "Hit Tunes By Electric Guitar Vol. 2",
@@ -4942,7 +5350,17 @@
   "reissue_year": "2013",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2602",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Lo-Fi",
+   "Psychedelic Rock",
+   "Indie Rock",
+   "Experimental"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Persepolis",
@@ -4973,7 +5391,17 @@
   "id": 264,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_checked": true
+  "year_checked": true,
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Emo",
+   "Post Rock",
+   "Shoegaze"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Spirit They’re Gone, Spirit They’ve Vanished",
@@ -5052,7 +5480,8 @@
   "reissue_year": "2024",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2760",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_tried": 1794763870
  },
  {
   "title": "Mushroom Ceremony of the Mazatec Indians of Mexico",
@@ -5065,9 +5494,13 @@
   "genres": [
    "Folk, World, & Country"
   ],
-  "styles": [],
+  "styles": [
+   "Field Recording",
+   "Religious"
+  ],
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genre_src": "discogs"
  },
  {
   "title": "All Summer Long",
@@ -5180,7 +5613,16 @@
   "added": "2026-04-18T19:37:41",
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2878",
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Hard Rock",
+   "Psychedelic Rock",
+   "Folk Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Health Resorts of the Caucasus",
@@ -5192,7 +5634,12 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2888",
   "cover_ext": "webp",
-  "year_tried": 1794553396
+  "year_tried": 1794553396,
+  "genres": [
+   "Electronic"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1794763870
  },
  {
   "title": "Sort Of",
@@ -5248,7 +5695,16 @@
   "added": "2026-04-18T19:37:41",
   "reissue_year": "2016",
   "year_checked": true,
-  "cover_ext": "webp"
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Port Entropy",
@@ -5362,7 +5818,18 @@
   "added": "2026-04-18T19:37:47",
   "post_url": "https://t.me/volodyamusicbox/3097",
   "cover_ext": "webp",
-  "year_tried": 1794553396
+  "year_tried": 1794553396,
+  "genres": [
+   "Rock",
+   "Latin",
+   "Pop"
+  ],
+  "styles": [
+   "Vocal",
+   "Schlager",
+   "Beat"
+  ],
+  "genre_src": "discogs"
  },
  {
   "title": "Tabou",
