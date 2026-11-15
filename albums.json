@@ -13185,10 +13185,16 @@
    "Rock",
    "Pop"
   ],
-  "styles": [],
+  "styles": [
+   "Indie Rock",
+   "Indie Pop",
+   "Art Rock"
+  ],
   "year_checked": true,
   "cover_ext": "webp",
-  "post_url": "https://t.me/volodyamusicbox/1666"
+  "post_url": "https://t.me/volodyamusicbox/1666",
+  "genre_src": "discogs",
+  "genre_tried": 1794764621
  },
  {
   "title": "The Walls Came Down",
@@ -13426,7 +13432,15 @@
   "id": 690,
   "added": "2026-11-15T09:38:27",
   "cover_ext": "webp",
-  "year_tried": 1794735533
+  "year_tried": 1794735533,
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "genre_tried": 1794764621
  },
  {
   "title": "In The Region Of The Summer Stars",
