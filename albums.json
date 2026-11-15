@@ -4874,7 +4874,8 @@
    "Fusion",
    "Psychedelic Rock"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794768003
  },
  {
   "title": "The Shadows",
@@ -4931,7 +4932,8 @@
    "Surf",
    "Psychedelic Rock"
   ],
-  "genre_src": "artist"
+  "genre_src": "artist",
+  "genre_tried": 1794768003
  },
  {
   "title": "Лабиринт. Джазовые композиции",
