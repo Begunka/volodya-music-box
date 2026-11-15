@@ -5895,7 +5895,8 @@
   "styles": [
    "Vocal"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794767774
  },
  {
   "title": "Tamboo!",
@@ -6105,7 +6106,8 @@
    "Schlager",
    "Beat"
   ],
-  "genre_src": "deezer"
+  "genre_src": "deezer",
+  "genre_tried": 1794767774
  },
  {
   "title": "Begin",
