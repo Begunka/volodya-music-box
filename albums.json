@@ -5233,7 +5233,7 @@
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
   "year_tried": 1794824558,
-  "genre_tried": 1794763870,
+  "genre_tried": 1794829397,
   "year_suspect": "2009",
   "disco_v": 1
  },
@@ -5545,7 +5545,7 @@
   "year_checked": true,
   "post_url": "https://t.me/volodyamusicbox/2760",
   "cover_ext": "webp",
-  "genre_tried": 1794763870
+  "genre_tried": 1794829397
  },
  {
   "title": "Mushroom Ceremony of the Mazatec Indians of Mexico",
@@ -5703,7 +5703,7 @@
    "Electronic"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794763870,
+  "genre_tried": 1794829397,
   "disco_v": 1
  },
  {
@@ -9534,7 +9534,7 @@
   "added": "2026-07-09T03:18:18",
   "cover_ext": "webp",
   "year_tried": 1794822496,
-  "genre_tried": 1794764659,
+  "genre_tried": 1794829397,
   "disco_v": 1
  },
  {
@@ -11116,8 +11116,8 @@
   "genres": [
    "Hip Hop"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794764659
+  "genre_src": "artist",
+  "genre_tried": 1794829397
  },
  {
   "title": "The Poison Boyfriend",
@@ -12202,7 +12202,7 @@
    "Electronic"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794765485,
+  "genre_tried": 1794829397,
   "disco_v": 1
  },
  {
@@ -12587,8 +12587,8 @@
   "genres": [
    "Pop"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794765485
+  "genre_src": "artist",
+  "genre_tried": 1794829397
  },
  {
   "title": "Малыш и Карлсон (Из м/ф \"Малыш и Карлсон\")",
@@ -12872,7 +12872,7 @@
    "Electronic"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794765485,
+  "genre_tried": 1794829397,
   "disco_v": 1
  },
  {
@@ -13450,7 +13450,7 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2073",
   "year_tried": 1794820694,
-  "genre_tried": 1794765485,
+  "genre_tried": 1794829397,
   "disco_v": 1
  },
  {
