@@ -790,7 +790,7 @@ class Bot:
             if info.get("url") != hook or sorted(info.get("allowed_updates") or []) != sorted(UPDATE_TYPES):
                 tg("setWebhook", url=hook, secret_token=HOOK_SECRET, allowed_updates=UPDATE_TYPES,
                    max_connections=10)
-            if self.state.get("commands_v") != 1:
+            if self.state.get("commands_v") != 2:
                 # меню команд в личке с ботом (отвечает на них воркер)
                 try:
                     tg("setMyCommands", scope={"type": "all_private_chats"}, commands=[
