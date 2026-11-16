@@ -13007,8 +13007,8 @@
   "added": "2026-09-24T16:53:52",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/5541",
-  "year_tried": 1794821054,
-  "disco_v": 1,
+  "year_tried": 1794846625,
+  "disco_v": 2,
   "genres": [
    "Jazz",
    "Non-Music"
@@ -13017,7 +13017,7 @@
    "Easy Listening",
    "Spoken Word"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794826633
  },
  {
@@ -13069,7 +13069,7 @@
   "added": "2026-10-30T02:04:46",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6163",
-  "year_tried": 1794820875,
+  "year_tried": 1794846625,
   "genres": [
    "Rock",
    "Pop"
@@ -13079,8 +13079,7 @@
    "Pop Rock"
   ],
   "genre_src": "manual",
-  "year_suspect": "0029",
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Flamingo Serenade",
