@@ -11202,6 +11202,7 @@
   "post_url": "https://t.me/volodyamusicbox/5370",
   "cover_ext": "webp",
   "year_tried": 1794822134,
+  "disco_v": 1,
   "genres": [
    "Electronic",
    "Jazz"
@@ -11211,8 +11212,8 @@
    "Avantgarde",
    "Free Improvisation"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826633
  },
  {
   "title": "Health",
@@ -12982,6 +12983,7 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/5541",
   "year_tried": 1794821054,
+  "disco_v": 1,
   "genres": [
    "Jazz",
    "Non-Music"
@@ -12990,8 +12992,8 @@
    "Easy Listening",
    "Spoken Word"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826633
  },
  {
   "title": "Sallies Fforth",
