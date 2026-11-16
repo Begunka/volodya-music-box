@@ -8272,6 +8272,10 @@
   "added": "2026-06-10T23:25:20",
   "post_url": "https://t.me/volodyamusicbox/3980",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "reissue_year": "2017",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Electronic",
    "Jazz"
@@ -8280,11 +8284,8 @@
    "Fusion",
    "Synth-pop"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "reissue_year": "2017",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826996
  },
  {
   "title": "An Electric Storm",
@@ -8905,6 +8906,7 @@
   "post_url": "https://t.me/volodyamusicbox/4357",
   "cover_ext": "webp",
   "year_tried": 1794822674,
+  "disco_v": 1,
   "genres": [
    "Electronic"
   ],
@@ -8913,8 +8915,8 @@
    "Experimental",
    "Musique Concrète"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826996
  },
  {
   "title": "Secrets Of The Beehive",
