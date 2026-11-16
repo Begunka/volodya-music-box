@@ -5239,14 +5239,15 @@
   "post_url": "https://t.me/volodyamusicbox/2508",
   "cover_ext": "webp",
   "year_tried": 1794824476,
+  "disco_v": 1,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Medieval"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827728
  },
  {
   "title": "Spinoza",
@@ -5874,6 +5875,7 @@
   "post_url": "https://t.me/volodyamusicbox/3097",
   "cover_ext": "webp",
   "year_tried": 1794824295,
+  "disco_v": 1,
   "genres": [
    "Rock",
    "Latin",
@@ -5884,8 +5886,8 @@
    "Schlager",
    "Beat"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827728
  },
  {
   "title": "Tabou",
