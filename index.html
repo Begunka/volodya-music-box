@@ -1296,18 +1296,22 @@ textarea.field{min-height:90px;resize:vertical}
   // ---------- «в этот день» ----------
   // Один альбом, вышедший в сегодняшнее число (если такого нет — в один из шести предыдущих дней).
   function paintToday(){
+    // Точная дата — «в этот день». Если на сегодня альбома нет, ближайший в пределах трёх дней (сначала прошедшие), с честной датой.
     const now = new Date(), key = d => String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    for (let back = 0; back < 7; back++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+    for (const shift of [0, -1, 1, -2, 2, -3, 3]) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + shift);
       const pool = all.filter(a => a.day === key(d) && a.year);
       if (!pool.length) continue;
       const a = pool[(now.getFullYear() + now.getDate()) % pool.length], ago = now.getFullYear() - +a.year;
-      const when = back ? d.toLocaleDateString("ru-RU", {day: "numeric", month: "long"}) + " " + a.year : "в этот день, " + a.year;
+      const date = d.toLocaleDateString("ru-RU", {day: "numeric", month: "long"}) + " " + a.year;
+      const head = shift ? "Вышел " + date : `В этот день · ${a.year}`;
+      const sub = ago > 0 ? `${ago} ${plural(ago, "год", "года", "лет")} назад` : "";
       $("today").innerHTML = `${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}
-        <div><small>Вышел ${esc(when)}${ago > 0 ? ` · ${ago} ${plural(ago, "год", "года", "лет")} назад` : ""}</small><b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span></div><em>Об альбоме</em>`;
+        <div><small>${head}</small><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${sub ? " · " + sub : ""}</span></div><em>Об альбоме</em>`;
       $("today").dataset.id = a.id; $("today").hidden = false;
       return;
     }
+    $("today").hidden = true;
   }
 
   // ---------- пожертвование звёздами ----------
