@@ -7503,7 +7503,7 @@
   "added": "2026-05-22T21:17:48",
   "post_url": "https://t.me/volodyamusicbox/3661",
   "cover_ext": "webp",
-  "year_tried": 1794552321,
+  "year_tried": 1794823235,
   "genres": [
    "Pop"
   ],
@@ -7512,8 +7512,9 @@
    "Art Rock",
    "Acoustic"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794767234
+  "genre_src": "artist",
+  "genre_tried": 1794767234,
+  "disco_v": 1
  },
  {
   "title": "Cryptic Crunch",
@@ -7648,7 +7649,7 @@
   "added": "2026-05-25T12:06:54",
   "post_url": "https://t.me/volodyamusicbox/3717",
   "cover_ext": "webp",
-  "year_tried": 1794552134,
+  "year_tried": 1794823235,
   "genres": [
    "Electronic",
    "Latin"
@@ -7658,7 +7659,8 @@
    "J-pop"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794767234
+  "genre_tried": 1794767234,
+  "disco_v": 1
  },
  {
   "title": "Malesch",
