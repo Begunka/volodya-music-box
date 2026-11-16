@@ -4949,12 +4949,11 @@
   "artist": "Melodiya Ensemble",
   "date": "2014-01-01",
   "tracks": 4,
-  "year": "2014",
+  "year": "1974",
   "id": 242,
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2430",
   "cover_ext": "webp",
-  "year_tried": 1794553933,
   "genres": [
    "Jazz"
   ],
@@ -4963,18 +4962,20 @@
    "Jazz-Rock",
    "Jazz-Funk"
   ],
-  "genre_src": "discogs"
+  "genre_src": "discogs",
+  "reissue_year": "2014",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "レッツ・ゴーエレキ節",
   "artist": "Takeshi Terauchi and Blue Jeans",
   "date": "2006-08-23",
   "tracks": 12,
-  "year": "2006",
+  "year": "1965",
   "id": 243,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794553933,
   "genres": [
    "Rock"
   ],
@@ -4983,7 +4984,11 @@
    "Psychedelic Rock"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794767955
+  "genre_tried": 1794767955,
+  "year_src": "discography",
+  "reissue_year": "2006",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Zvoňte zvonky",
