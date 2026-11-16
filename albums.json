@@ -6441,14 +6441,15 @@
   "id": 313,
   "added": "2026-04-25T19:21:22",
   "cover_ext": "webp",
-  "year_tried": 1794552853,
+  "year_tried": 1794823754,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Contemporary"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "For How Much Longer Do We Tolerate Mass Murder?",
@@ -6724,14 +6725,16 @@
   "id": 327,
   "added": "2026-04-29T18:43:44",
   "cover_ext": "webp",
-  "year_tried": 1794552675,
+  "year_tried": 1794823754,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Renaissance"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_suspect": "1996",
+  "disco_v": 1
  },
  {
   "title": "6 6 6",
