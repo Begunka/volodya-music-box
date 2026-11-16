@@ -6505,15 +6505,15 @@
   "id": 313,
   "added": "2026-04-25T19:21:22",
   "cover_ext": "webp",
-  "year_tried": 1794823754,
-  "disco_v": 1,
+  "year_tried": 1794848682,
+  "disco_v": 2,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Contemporary"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827353
  },
  {
@@ -6790,17 +6790,17 @@
   "id": 327,
   "added": "2026-04-29T18:43:44",
   "cover_ext": "webp",
-  "year_tried": 1794823754,
-  "year_suspect": "1996",
-  "disco_v": 1,
+  "year_tried": 1794848682,
+  "disco_v": 2,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Renaissance"
   ],
-  "genre_src": "discogs",
-  "genre_tried": 1794827353
+  "genre_src": "artist",
+  "genre_tried": 1794827353,
+  "year_suspect": "1996"
  },
  {
   "title": "6 6 6",
