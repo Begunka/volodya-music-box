@@ -268,7 +268,7 @@
   "id": 13,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794826280,
+  "year_tried": 1794849786,
   "genres": [
    "Electronic"
   ],
@@ -277,7 +277,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794768680,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "The Dark Side of the Moon",
@@ -391,15 +391,15 @@
   "id": 19,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794826095,
-  "disco_v": 1,
+  "year_tried": 1794849786,
+  "disco_v": 2,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Psychedelic Rock"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794828625
  },
  {
