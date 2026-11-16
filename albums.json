@@ -4938,6 +4938,10 @@
   "id": 240,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "reissue_year": "2016",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
@@ -4945,11 +4949,8 @@
    "Psychedelic Rock",
    "Folk Rock"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "reissue_year": "2016",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827908
  },
  {
   "title": "Suring",
@@ -5032,6 +5033,8 @@
   "post_url": "https://t.me/volodyamusicbox/2385",
   "cover_ext": "webp",
   "year_tried": 1794824558,
+  "year_suspect": "1970",
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
@@ -5039,9 +5042,8 @@
    "Beat",
    "Prog Rock"
   ],
-  "genre_src": "artist",
-  "year_suspect": "1970",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827908
  },
  {
   "title": "Silversand",
