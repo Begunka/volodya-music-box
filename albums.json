@@ -3124,6 +3124,7 @@
   "added": "2026-04-18T19:37:16",
   "cover_ext": "webp",
   "year_tried": 1794825405,
+  "disco_v": 1,
   "genres": [
    "Jazz",
    "Rock",
@@ -3133,8 +3134,8 @@
    "Blues Rock",
    "Neofolk"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828076
  },
  {
   "title": "Heavy Weather",
@@ -4097,14 +4098,15 @@
   "post_url": "https://t.me/volodyamusicbox/1831",
   "cover_ext": "webp",
   "year_tried": 1794825195,
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Psychedelic Rock"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828076
  },
  {
   "title": "The Complete Recordings",
