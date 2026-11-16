@@ -303,7 +303,6 @@
   "id": 15,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555453,
   "genres": [
    "Electronic"
   ],
@@ -311,8 +310,11 @@
    "Jungle",
    "Drum n Bass"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768543
+  "genre_src": "artist",
+  "genre_tried": 1794768543,
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "The Money Store",
@@ -385,14 +387,15 @@
   "id": 19,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555375,
+  "year_tried": 1794826095,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Psychedelic Rock"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Wish You Were Here",
