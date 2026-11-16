@@ -14144,5 +14144,24 @@
   "reissue_year": "2014",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Gangster Of Love",
+  "artist": "Johnny \"Guitar\" Watson",
+  "date": "2019-03-14",
+  "tracks": 20,
+  "year": "1977",
+  "id": 694,
+  "added": "2026-11-16T06:57:56",
+  "genres": [
+   "Funk / Soul"
+  ],
+  "styles": [
+   "Rhythm & Blues"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2019",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
