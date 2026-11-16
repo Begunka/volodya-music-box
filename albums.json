@@ -12127,7 +12127,7 @@
   "added": "2026-10-15T13:49:11",
   "post_url": "https://t.me/volodyamusicbox/5925",
   "cover_ext": "webp",
-  "year_tried": 1794549629,
+  "year_tried": 1794821311,
   "genres": [
    "Rock",
    "Pop"
@@ -12137,8 +12137,9 @@
    "Indie Pop",
    "Indie Rock"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766154
+  "genre_src": "artist",
+  "genre_tried": 1794766154,
+  "disco_v": 1
  },
  {
   "title": "Illinois",
@@ -12421,7 +12422,7 @@
   "added": "2026-10-27T01:42:35",
   "post_url": "https://t.me/volodyamusicbox/6067",
   "cover_ext": "webp",
-  "year_tried": 1794549433,
+  "year_tried": 1794821311,
   "genres": [
    "Rock",
    "Pop"
@@ -12430,7 +12431,8 @@
    "Pop Rock"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794766154
+  "genre_tried": 1794766154,
+  "disco_v": 1
  },
  {
   "title": "The Cocaine Sessions",
