@@ -213,14 +213,42 @@ textarea.field{min-height:90px;resize:vertical}
 .gate-card button{height:46px;border-radius:12px;font-weight:600;width:100%}
 .gate-card .go{border:0;background:var(--accent);color:var(--accent-ink)}
 .gate-card .alt{border:1px solid var(--line);background:none;color:var(--ink);font-weight:500}
-.col-grid{display:grid;gap:4px}
-.col-cell{aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--surface);padding:0;overflow:hidden;color:var(--muted);font-size:20px;position:relative}
-.col-cell.full{border-style:solid}
+/* коллаж: «сцена» выглядит как готовая картинка, альбомы выбираются в отдельном окне */
+.col-opts{display:flex;gap:8px;align-items:stretch}
+.col-opts .tabs{flex:1;grid-template-columns:repeat(3,1fr)}
+.col-sw{flex:none;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--muted);font-weight:500}
+.col-sw[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.col-stage{background:#121110;border:1px solid #2c2925;border-radius:18px;padding:14px;box-shadow:0 24px 48px -28px rgba(0,0,0,.8)}
+.col-stage>b{display:block;color:#f2ede6;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2;margin:2px 2px 12px;overflow-wrap:anywhere}
+.col-stage>b:empty{display:none}
+.col-grid{display:grid;gap:5px}
+.col-cell{aspect-ratio:1;border:1px dashed #3d3833;border-radius:6px;background:#1b1917;padding:0;overflow:hidden;color:#a39a8b;font-size:22px;position:relative;transition:transform .1s}
+.col-cell:active{transform:scale(.96)}
+.col-cell.full{border:0}
 .col-cell img{width:100%;height:100%;object-fit:cover;display:block}
 .col-cell[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:-3px}
-.col-cell small{position:absolute;inset:auto 0 0 0;font-size:9px;line-height:1.2;padding:2px 3px;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
-.col-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
-.col-bar button{flex:none;width:auto!important;height:34px!important;padding:0 14px}
+.col-cell small{position:absolute;inset:auto 0 0 0;font-size:9px;line-height:1.2;padding:10px 4px 3px;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.col-sign{display:flex;justify-content:space-between;gap:8px;color:#a39a8b;font-size:10px;margin:12px 2px 0}
+.col-sign b{color:#f2ede6;font-weight:700}
+.col-bar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:40px}
+.col-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:600}
+.col-bar button{flex:none;width:auto!important;height:36px!important;padding:0 14px}
+.col-hint{min-height:40px;display:flex;align-items:center;font-size:13px}
+.col-act{position:sticky;bottom:0;display:grid;grid-template-columns:1.4fr 1fr;gap:8px;background:var(--bg);padding:10px 0 calc(12px + env(safe-area-inset-bottom,0px));margin-bottom:calc(-24px - env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.col-pick{position:fixed;inset:0;z-index:33;background:var(--bg);overflow:auto;overscroll-behavior:contain;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.col-pick-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.cp-head{position:sticky;top:0;z-index:1;background:var(--bg);display:flex;flex-direction:column;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 0 10px;border-bottom:1px solid var(--line)}
+.cp-label{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.cp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px}
+@media (min-width:520px){.cp-grid{grid-template-columns:repeat(4,1fr)}}
+.cp-grid button{position:relative;min-width:0;background:none;border:0;padding:0;color:var(--ink);text-align:left}
+.cp-grid img,.cp-grid .ph{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;display:block;background:var(--chip);transition:transform .1s}
+.cp-grid button:active img{transform:scale(.95)}
+.cp-grid b{display:block;font-size:12px;font-weight:600;line-height:1.25;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-grid span{display:block;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-grid .used{opacity:.35}
+.cp-grid .used::after{content:"✓";position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;display:grid;place-items:center}
 .duel .pl-row .alt{flex:1;width:auto}
 .duel{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -403,6 +431,14 @@ textarea.field{min-height:90px;resize:vertical}
 <section class="duel" id="gp" hidden><div class="duel-in" id="gp-in"></div></section>
 <section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
 <section class="duel" id="col" hidden><div class="duel-in" id="col-in"></div></section>
+<section class="col-pick" id="colpick" hidden><div class="col-pick-in">
+  <div class="cp-head">
+    <div class="duel-top"><span class="step" id="cp-n"></span><button class="alt" id="cp-done" type="button" style="width:auto;padding:0 14px;height:40px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500">Готово</button></div>
+    <label class="search" for="cp-q"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="cp-q" type="search" placeholder="Альбом, исполнитель, год или стиль" autocomplete="off"></label>
+  </div>
+  <div id="cp-list" style="display:flex;flex-direction:column;gap:14px"></div>
+</div></section>
 <section class="duel" id="lt" hidden><div class="duel-in" id="lt-in"></div></section>
 <section class="duel" id="ts" hidden><div class="duel-in" id="ts-in"></div></section>
 <div class="toast" id="toast" hidden></div>
@@ -634,7 +670,7 @@ textarea.field{min-height:90px;resize:vertical}
       <a href="https://music.yandex.ru/search?text=${q}" target="_blank" rel="noopener">Яндекс Музыка</a>
       <a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify</a>`;
     paintSimilar(a);
-    const over = ["duel", "pl", "lt", "ts", "col"].some(id => !$(id).hidden);
+    const over = ["duel", "pl", "lt", "ts", "col", "colpick"].some(id => !$(id).hidden);
     $("scrim").classList.toggle("top", over); $("sheet").classList.toggle("top", over);
     $("scrim").hidden = false; $("sheet").hidden = false;
     requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
@@ -1497,17 +1533,20 @@ textarea.field{min-height:90px;resize:vertical}
   // ---------- коллаж обложек ----------
   // Сетка 3×3…5×5. Картинку рисуем тут же на canvas; для отправки в чат она уходит в воркер,
   // тот готовит сообщение от имени бота, и Telegram сам предлагает выбрать чат (shareMessage).
+  // Сетка 3×3…5×5. Экран рисуется один раз, дальше обновляются только сетка и строка под ней —
+  // поэтому страница не прыгает. Альбом выбирается в отдельном окне с поиском: выбрал — встал в клетку,
+  // окно само переходит к следующей пустой.
   const Collage = (() => {
     const KEY = "collage", byId = id => all.find(a => a.id === id);
-    let st = {size: 3, names: true, cells: []}, sel = null;
+    let st = {size: 3, names: true, title: "", cells: []}, sel = null, target = null;
     const cover = a => a && a.has_cover ? `covers/${a.id}.${a.cover_ext || "webp"}` : "";
     function fix(){
       const n = st.size * st.size, ids = (st.cells || []).filter(id => byId(id));
       // при смене размера порядок сохраняется, лишнее отрезается
       const cells = (st.cells || []).map(id => byId(id) ? id : 0);
-      if (cells.length > n) { st.cells = ids.slice(0, n); }
-      else st.cells = cells;
+      st.cells = cells.length > n ? ids.slice(0, n) : cells;
       while (st.cells.length < n) st.cells.push(0);
+      st.title = String(st.title || "").slice(0, 40);
     }
     function save(){
       const s = JSON.stringify(st);
@@ -1524,66 +1563,107 @@ textarea.field{min-height:90px;resize:vertical}
     const liked = () => Object.keys(cur).filter(id => cur[id] === 1).map(Number).filter(id => byId(id)).sort((x, y) => y - x);
     function fillLiked(){
       const have = new Set(st.cells), add = liked().filter(id => !have.has(id));
-      if (!add.length) return toast(Object.keys(cur).length ? "Всё, что зашло, уже в коллаже" : "Пока нет альбомов с отметкой «Зашло» — найди их через поиск ниже");
+      if (!add.length) return toast(liked().length ? "Всё, что зашло, уже в коллаже" : "Пока нет альбомов с отметкой «Зашло» — выбери их, нажав на клетку", 3500);
       st.cells = st.cells.map(id => id || add.shift() || 0); save(); paint();
     }
     async function open(){
       await load(); fix();
       if (!st.cells.some(Boolean) && liked().length) st.cells = st.cells.map((_, i) => liked()[i] || 0);
-      sel = null; paint(); $("col").hidden = false; $("col").scrollTop = 0;
+      sel = null;
+      $("col-in").innerHTML = `<div class="duel-top"><span class="step" id="col-n"></span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
+        <h3>Коллаж обложек</h3>
+        <div class="col-opts"><div class="tabs" id="col-size">${[3, 4, 5].map(k => `<button type="button" data-size="${k}">${k}×${k}</button>`).join("")}</div>
+          <button type="button" class="col-sw" data-x="names">Подписи</button></div>
+        <input class="field" id="col-title" maxlength="40" placeholder="Заголовок на картинке — необязательно" autocomplete="off">
+        <div class="col-stage"><b id="col-head"></b><div class="col-grid" id="col-grid"></div>
+          <div class="col-sign"><b>volodya music box</b><span>собрано в архиве @volodyamusicbox_bot</span></div></div>
+        <div id="col-under"></div>
+        <div class="pl-row"><button class="alt" data-x="liked">Добавить, что зашло</button><button class="alt" data-x="clear">Очистить</button></div>
+        <div class="col-act"><button class="go" data-x="send">Отправить в чат</button><button class="alt" data-x="save">Сохранить</button></div>`;
+      $("col-title").value = st.title;
+      $("col-title").addEventListener("input", () => { st.title = $("col-title").value.slice(0, 40); $("col-head").textContent = st.title.trim(); save(); });
+      paint(); $("col").hidden = false; $("col").scrollTop = 0;
     }
     function paint(){
-      const n = st.size, filled = st.cells.filter(Boolean).length;
-      const s = sel !== null ? byId(st.cells[sel]) : null;
-      $("col-in").innerHTML = `<div class="duel-top"><span class="step">${filled} из ${n * n}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
-        <h3>Коллаж обложек</h3>
-        <div class="chipset">${[3, 4, 5].map(k => `<button type="button" data-size="${k}" aria-pressed="${k === n}">${k}×${k}</button>`).join("")}
-          <button type="button" data-x="names" aria-pressed="${st.names}">названия под обложками</button></div>
-        <div class="col-grid" style="grid-template-columns:repeat(${n},1fr)">${st.cells.map((id, i) => {
-          const a = byId(id);
-          return `<button type="button" class="col-cell${a ? " full" : ""}" data-i="${i}" aria-pressed="${sel === i}" aria-label="${a ? esc(a.title) : "Пустая клетка"}">${a ? (cover(a) ? `<img src="${cover(a)}" alt="">` : "") + (n < 5 ? `<small>${esc(a.title)}</small>` : "") : "+"}</button>`;
-        }).join("")}</div>
-        ${sel === null ? `<p>Нажми на клетку: на пустую — поставить альбом из поиска, на занятую — поменять местами или убрать.</p>`
-          : s ? `<div class="col-bar"><span>«${esc(s.title)}»: нажми другую клетку, чтобы поменять местами</span><button class="alt" data-x="rm">Убрать</button></div>`
-          : `<div class="col-bar"><span>Найди альбом ниже — он встанет в эту клетку</span><button class="alt" data-x="unsel">Отмена</button></div>`}
-        <input class="field" id="col-q" placeholder="Найти альбом в архиве" autocomplete="off">
-        <div id="col-found"></div>
-        <div class="pl-row"><button class="alt" data-x="liked">Добавить, что зашло</button><button class="alt" data-x="clear">Очистить</button></div>
-        <button class="go" data-x="send"${filled ? "" : " disabled"}>Отправить в чат</button>
-        <button class="alt" data-x="save"${filled ? "" : " disabled"}>Сохранить картинку</button>`;
-      $("col-q").addEventListener("input", search);
-    }
-    function search(){
-      const q = norm($("col-q").value.trim());
-      if (q.length < 2) { $("col-found").innerHTML = ""; return; }
-      $("col-found").innerHTML = all.filter(a => !st.cells.includes(a.id) && norm(a.title + " " + (a.artist || "")).includes(q)).slice(0, 8)
-        .map(a => `<div class="addrow">${cover(a) ? `<img src="${cover(a)}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div><button type="button" data-add="${a.id}" aria-label="Поставить в коллаж">+</button></div>`).join("") || `<p>Ничего не нашлось</p>`;
-    }
-    function add(id){
-      let i = sel !== null && !st.cells[sel] ? sel : st.cells.indexOf(0);
-      if (i < 0) return toast(st.size < 5 ? "Сетка заполнена — убери альбом или сделай сетку больше" : "Сетка заполнена — убери какой-нибудь альбом");
-      st.cells[i] = id; sel = null; save(); paint();
+      const n = st.size, filled = st.cells.filter(Boolean).length, s = sel !== null ? byId(st.cells[sel]) : null;
+      $("col-n").textContent = `${filled} из ${n * n}`;
+      $("col-size").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.size === n));
+      $("col-in").querySelector('[data-x="names"]').setAttribute("aria-pressed", !!st.names);
+      $("col-head").textContent = st.title.trim();
+      $("col-grid").style.gridTemplateColumns = `repeat(${n},1fr)`;
+      $("col-grid").innerHTML = st.cells.map((id, i) => {
+        const a = byId(id);
+        return `<button type="button" class="col-cell${a ? " full" : ""}" data-i="${i}" aria-pressed="${sel === i}" aria-label="${a ? esc(a.title) : "Пустая клетка"}">${a ? (cover(a) ? `<img src="${cover(a)}" alt="">` : "") + (st.names && n < 5 ? `<small>${esc(a.title)}</small>` : "") : "+"}</button>`;
+      }).join("");
+      $("col-under").innerHTML = s
+        ? `<div class="col-bar"><span>${esc(s.title)}</span><button class="alt" data-x="replace">Заменить</button><button class="alt" data-x="rm">Убрать</button></div>`
+        : `<p class="col-hint">${filled ? "Нажми на клетку: пустая — выбрать альбом, занятая — заменить, убрать или переставить." : "Нажми на клетку и выбери альбом."}</p>`;
+      $("col-in").querySelectorAll('[data-x="send"], [data-x="save"]').forEach(b => { if (!b.dataset.t) b.disabled = !filled; });
     }
     function tap(i){
-      if (sel === null) { sel = i; paint(); if (!st.cells[i]) $("col-q").focus(); return; }
-      if (sel === i) { sel = null; return paint(); }
-      if (st.cells[sel] || st.cells[i]) [st.cells[sel], st.cells[i]] = [st.cells[i], st.cells[sel]];
-      sel = null; save(); paint();
+      if (sel === null) { if (!st.cells[i]) return pick(i); sel = i; return paint(); }
+      if (sel !== i) { [st.cells[sel], st.cells[i]] = [st.cells[i], st.cells[sel]]; save(); }
+      sel = null; paint();
     }
+
+    // ---- окно выбора альбома ----
+    const tile = (a, used) => `<button type="button" data-add="${a.id}"${used.has(a.id) ? ' class="used"' : ""}>${cover(a) ? `<img src="${cover(a)}" alt="" loading="lazy">` : `<div class="ph"></div>`}<b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></button>`;
+    function results(){
+      const q = norm($("cp-q").value.trim()), used = new Set(st.cells.filter(Boolean));
+      const block = (label, list) => list.length ? `<div><div class="cp-label">${label}</div><div class="cp-grid">${list.map(a => tile(a, used)).join("")}</div></div>` : "";
+      if (q) {
+        const words = q.split(/\s+/);
+        const found = all.filter(a => { const h = norm(`${a.title} ${a.artist || ""} ${a.year || ""} ${(a.styles || []).join(" ")} ${(a.genres || []).join(" ")}`); return words.every(w => h.includes(w)); });
+        $("cp-list").innerHTML = found.length ? block(`Нашлось: ${found.length}${found.length > 60 ? ", показаны первые 60" : ""}`, found.slice(0, 60))
+          : `<p style="color:var(--muted);margin:0">Ничего не нашлось. Попробуй исполнителя, год или стиль — например, «1973» или «jazz».</p>`;
+      } else {
+        const mine = liked().map(byId).slice(0, 30), mineIds = new Set(mine.map(a => a.id));
+        const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).filter(a => !mineIds.has(a.id)).slice(0, 30);
+        $("cp-list").innerHTML = block("Тебе зашло", mine) + block("Недавно в архиве", fresh);
+      }
+    }
+    const cpLabel = () => { $("cp-n").textContent = `Клетка ${target + 1} из ${st.cells.length}${st.cells[target] ? " · замена" : ""}`; };
+    function pick(i){
+      target = i; sel = null; cpLabel();
+      $("cp-q").value = ""; results();
+      $("colpick").hidden = false; $("colpick").scrollTop = 0;
+      if (!("ontouchstart" in window)) $("cp-q").focus();   // на телефоне клавиатуру не выдёргиваем: сначала видно, что зашло
+    }
+    function closePick(){ $("colpick").hidden = true; target = null; paint(); }
+    function choose(btn){
+      const id = +btn.dataset.add;
+      if (st.cells.includes(id)) return toast("Этот альбом уже в коллаже");
+      st.cells[target] = id; save(); btn.classList.add("used");
+      if (tgApp && tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
+      // дальше — следующая пустая клетка; если пустых нет, окно закрывается
+      const n = st.cells.length; let next = -1;
+      for (let k = 1; k <= n; k++) { const j = (target + k) % n; if (!st.cells[j]) { next = j; break; } }
+      if (next < 0) return closePick();
+      target = next; cpLabel(); paint();
+    }
+    let cpTimer;
+    $("cp-q").addEventListener("input", () => { clearTimeout(cpTimer); cpTimer = setTimeout(() => { results(); $("colpick").scrollTop = 0; }, 120); });
+    $("cp-done").addEventListener("click", closePick);
+    $("cp-list").addEventListener("click", e => { const b = e.target.closest("[data-add]"); if (b) choose(b); });
+    new MutationObserver(() => { if ($("colpick").hidden && !$("col").hidden) paint(); }).observe($("colpick"), {attributes: true, attributeFilter: ["hidden"]});
+
     // ---- картинка ----
     async function draw(){
       const C = Pic.C, n = st.size, cell = {3: 320, 4: 250, 5: 210}[n], gap = 10, pad = 32, lab = st.names ? Math.round(cell * 0.2) : 0, foot = 70;
+      const title = st.title.trim(), head = title ? 86 : 0;
       // пустые ряды в конце не рисуем
       let end = st.cells.length - 1; while (end > 0 && !st.cells[end]) end--;
       const rows = Math.floor(end / n) + 1, cells = st.cells.slice(0, rows * n);
-      const W = pad * 2 + n * cell + (n - 1) * gap, H = pad * 2 + rows * (cell + lab) + (rows - 1) * gap + foot;
+      const W = pad * 2 + n * cell + (n - 1) * gap, H = pad * 2 + head + rows * (cell + lab) + (rows - 1) * gap + foot;
       const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
       const ctx = cv.getContext("2d");
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
       ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
       const pics = await Promise.all(cells.map(id => cover(byId(id)) ? Pic.img(cover(byId(id))) : null));
-      const font = getComputedStyle(document.body).fontFamily;
+      const font = getComputedStyle(document.body).fontFamily, disp = getComputedStyle(document.querySelector("h1")).fontFamily;
+      if (title) { ctx.fillStyle = C.ink; ctx.font = `700 46px ${disp}`; ctx.fillText(Pic.fit(ctx, title, W - pad * 2), pad, pad + 50); }
       cells.forEach((id, i) => {
-        const a = byId(id), x = pad + (i % n) * (cell + gap), y = pad + Math.floor(i / n) * (cell + lab + gap), p = pics[i];
+        const a = byId(id), x = pad + (i % n) * (cell + gap), y = pad + head + Math.floor(i / n) * (cell + lab + gap), p = pics[i];
         ctx.fillStyle = C.cell; ctx.fillRect(x, y, cell, cell);
         if (p) Pic.square(ctx, p, x, y, cell);
         else if (a) { ctx.fillStyle = C.ink; ctx.font = `700 ${Math.round(cell / 11)}px ${font}`; ctx.fillText(Pic.fit(ctx, a.title, cell - 24), x + 12, y + cell / 2); }
@@ -1600,15 +1680,14 @@ textarea.field{min-height:90px;resize:vertical}
     const send = () => Pic.run($("col-in"), () => Pic.send("collage", JSON.stringify(st), draw, {size: st.size}));
     const download = () => Pic.run($("col-in"), () => Pic.save("collage", JSON.stringify(st), draw, {size: st.size}, "volodya-collage.jpg"));
     $("col").addEventListener("click", e => {
-      const x = e.target.closest("[data-x],[data-size],[data-i],[data-add]"); if (!x) return;
+      const x = e.target.closest("[data-x],[data-size],[data-i]"); if (!x) return;
       if (x.dataset.size) { st.size = +x.dataset.size; fix(); sel = null; save(); return paint(); }
       if (x.dataset.i !== undefined) return tap(+x.dataset.i);
-      if (x.dataset.add) return add(+x.dataset.add);
       const k = x.dataset.x;
       if (k === "close") $("col").hidden = true;
       if (k === "names") { st.names = !st.names; save(); paint(); }
-      if (k === "rm") { st.cells[sel] = 0; sel = null; save(); paint(); }
-      if (k === "unsel") { sel = null; paint(); }
+      if (k === "replace" && sel !== null) pick(sel);
+      if (k === "rm" && sel !== null) { st.cells[sel] = 0; sel = null; save(); paint(); }
       if (k === "liked") fillLiked();
       if (k === "clear") { st.cells = st.cells.map(() => 0); sel = null; save(); paint(); }
       if (k === "send") send();
@@ -1746,7 +1825,7 @@ textarea.field{min-height:90px;resize:vertical}
   if (cloud) cloud.getItem("skin", (err, v) => { if (!err && v && (v === "vinyl" ? "" : v) !== (root.getAttribute("data-skin") || "")) setSkin(v === "vinyl" ? "" : v, false); });
 
   // Кнопка «Назад» в шапке Telegram закрывает верхнее окно
-  const layers = ["gate", "don", "sheet", "gp", "ts", "col", "lt", "pl", "duel"];
+  const layers = ["gate", "don", "sheet", "gp", "ts", "colpick", "col", "lt", "pl", "duel"];
   function closeTop(){
     const id = layers.find(l => !$(l).hidden); if (!id) return;
     if (id === "sheet") close(); else if (id === "gate") closeGate(); else $(id).hidden = true;
