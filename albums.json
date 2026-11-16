@@ -5981,8 +5981,8 @@
   "added": "2026-04-18T19:39:30",
   "post_url": "https://t.me/volodyamusicbox/2472",
   "cover_ext": "webp",
-  "year_tried": 1794824123,
-  "disco_v": 1,
+  "year_tried": 1794848884,
+  "disco_v": 2,
   "genres": [
    "Pop",
    "Folk, World, & Country"
@@ -5992,7 +5992,7 @@
    "Lounge",
    "Exotica"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827534
  },
  {
@@ -6170,7 +6170,7 @@
   "id": 297,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794824123,
+  "year_tried": 1794848884,
   "genres": [
    "Pop"
   ],
@@ -6181,7 +6181,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794767774,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Begin",
