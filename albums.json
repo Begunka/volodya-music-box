@@ -13421,7 +13421,7 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2399",
   "title_full": "Spacemen, The 1966 - (ザ・スペイスメン) - Cherry Viewing A Go Go (桜音頭a Gogo!) (0000) () [Vinyl 0-44]",
-  "year_tried": 1794548536,
+  "year_tried": 1794820522,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -13431,7 +13431,8 @@
    "Folk Rock",
    "Surf"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Iijanaika",
@@ -13526,7 +13527,7 @@
   "added": "2026-04-17T15:45:25",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2991",
-  "year_tried": 1794548356,
+  "year_tried": 1794820522,
   "genres": [
    "Jazz",
    "Pop"
@@ -13535,7 +13536,8 @@
    "Vocal",
    "Easy Listening"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Twilight Forest Soundtrack",
