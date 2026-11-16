@@ -12742,7 +12742,7 @@
   "added": "2026-10-31T15:55:49",
   "post_url": "https://t.me/volodyamusicbox/6203",
   "cover_ext": "webp",
-  "year_tried": 1794821235,
+  "year_tried": 1794846799,
   "genres": [
    "Jazz",
    "Rock"
@@ -12752,7 +12752,7 @@
    "Fusion"
   ],
   "genre_src": "manual",
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Tales of the Inexpressible",
@@ -12867,13 +12867,13 @@
   "added": "2026-11-06T04:08:22",
   "post_url": "https://t.me/volodyamusicbox/6235",
   "cover_ext": "webp",
-  "year_tried": 1794821054,
+  "year_tried": 1794846799,
   "genres": [
    "Electronic"
   ],
   "genre_src": "artist",
   "genre_tried": 1794829397,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Shut Down, Vol. 2",
