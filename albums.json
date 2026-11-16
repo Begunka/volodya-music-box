@@ -3507,12 +3507,11 @@
   "artist": "Raymond Scott",
   "date": "2021-06-18",
   "tracks": 11,
-  "year": "2021",
+  "year": "1999",
   "id": 172,
   "added": "2026-04-18T19:37:17",
   "post_url": "https://t.me/volodyamusicbox/1547",
   "cover_ext": "webp",
-  "year_tried": 1794554653,
   "genres": [
    "Electronic"
   ],
@@ -3520,8 +3519,12 @@
    "Electroacoustic",
    "Health-Fitness"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768321
+  "genre_src": "artist",
+  "genre_tried": 1794768321,
+  "year_src": "discography",
+  "reissue_year": "2021",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "The Garden Of Mirrors",
@@ -3729,7 +3732,7 @@
   "added": "2026-04-18T19:37:17",
   "post_url": "https://t.me/volodyamusicbox/1651",
   "cover_ext": "webp",
-  "year_tried": 1794554653,
+  "year_tried": 1794825310,
   "genres": [
    "Jazz"
   ],
@@ -3737,8 +3740,9 @@
    "Modern Classical",
    "Experimental"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768321
+  "genre_src": "artist",
+  "genre_tried": 1794768321,
+  "disco_v": 1
  },
  {
   "title": "Metal Machine Music",
