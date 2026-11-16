@@ -4102,15 +4102,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/1831",
   "cover_ext": "webp",
-  "year_tried": 1794825195,
-  "disco_v": 1,
+  "year_tried": 1794849320,
+  "disco_v": 2,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Psychedelic Rock"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794828076
  },
  {
@@ -4122,7 +4122,7 @@
   "id": 201,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794825195,
+  "year_tried": 1794849320,
   "genres": [
    "Rock",
    "Pop"
@@ -4134,7 +4134,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794768134,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Pieces of a Man",
