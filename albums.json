@@ -14299,5 +14299,24 @@
   "reissue_year": "2019",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Weltschmerz",
+  "artist": "Siddhartha",
+  "date": "1975-12-12",
+  "tracks": 5,
+  "year": "1975",
+  "id": 695,
+  "added": "2026-11-16T11:35:59",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
