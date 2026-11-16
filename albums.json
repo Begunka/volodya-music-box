@@ -7809,6 +7809,9 @@
   "added": "2026-05-27T16:33:02",
   "post_url": "https://t.me/volodyamusicbox/3821",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Jazz",
    "Funk / Soul"
@@ -7818,10 +7821,8 @@
    "Latin Jazz",
    "Jazz-Funk"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827190
  },
  {
   "title": "Mganga! The Primitive Sounds of Tak Shindo",
@@ -8230,6 +8231,7 @@
   "post_url": "https://t.me/volodyamusicbox/3955",
   "cover_ext": "webp",
   "year_tried": 1794822854,
+  "disco_v": 1,
   "genres": [
    "Electronic",
    "Rock",
@@ -8241,8 +8243,8 @@
    "New Age",
    "Modern Classical"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827190
  },
  {
   "title": "ADUNA",
