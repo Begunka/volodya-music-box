@@ -12442,7 +12442,6 @@
   "added": "2026-10-27T18:03:53",
   "post_url": "https://t.me/volodyamusicbox/6083",
   "cover_ext": "webp",
-  "year_tried": 1794549433,
   "genres": [
    "Rock",
    "Pop"
@@ -12453,7 +12452,10 @@
    "Psychedelic Rock"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794765975
+  "genre_tried": 1794765975,
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Бременские музыканты",
@@ -12625,7 +12627,7 @@
   "added": "2026-10-31T15:55:49",
   "post_url": "https://t.me/volodyamusicbox/6203",
   "cover_ext": "webp",
-  "year_tried": 1794549254,
+  "year_tried": 1794821235,
   "genres": [
    "Jazz",
    "Rock"
@@ -12634,7 +12636,8 @@
    "Jazz-Rock",
    "Fusion"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "disco_v": 1
  },
  {
   "title": "Tales of the Inexpressible",
