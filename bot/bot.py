@@ -302,7 +302,7 @@ class Archive:
         # disco_v: альбом ещё не искали по дискографии исполнителя — проверяем без ожидания месяца
         todo = [a for a in self.albums if not a.get("year_checked") and a.get("artist")
                 and not a["title"].startswith("http")
-                and (now - a.get("year_tried", 0) > 30 * 86400 or a.get("disco_v") != 1)]
+                and (now - a.get("year_tried", 0) > 30 * 86400 or a.get("disco_v") != 2)]
         todo.sort(key=lambda a: -a["id"])   # сначала свежие
         for a in todo[:limit]:
             before = (a.get("year"), a.get("genres"))
@@ -310,7 +310,7 @@ class Archive:
             enrich(a, DISCOGS, self.albums)
             a.pop("_cover_candidates", None)
             a["year_tried"] = now
-            a["disco_v"] = 1
+            a["disco_v"] = 2
             if a.get("year_suspect") and a.get("year_suspect") != had:
                 self.suspects.append(a)
             if a.get("year_checked"):

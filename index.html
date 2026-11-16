@@ -436,6 +436,7 @@ textarea.field{min-height:90px;resize:vertical}
     <div class="duel-top"><span class="step" id="cp-n"></span><button class="alt" id="cp-done" type="button" style="width:auto;padding:0 14px;height:40px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500">Готово</button></div>
     <label class="search" for="cp-q"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="cp-q" type="search" placeholder="Альбом, исполнитель, год или стиль" autocomplete="off"></label>
+    <div class="chips" id="cp-chips" role="group" aria-label="Жанры и стили"></div>
   </div>
   <div id="cp-list" style="display:flex;flex-direction:column;gap:14px"></div>
 </div></section>
@@ -1508,7 +1509,7 @@ textarea.field{min-height:90px;resize:vertical}
       btns.forEach(b => { b.disabled = true; b.dataset.t = b.textContent; b.textContent = "Собираю картинку…"; });
       try { await fn(); } catch (e) { toast(e && e.message && e.message.length < 80 ? e.message : "Не получилось. Проверь интернет и попробуй ещё раз"); }
       busy = false;
-      btns.forEach(b => { if (b.isConnected) { b.disabled = false; b.textContent = b.dataset.t; } });
+      btns.forEach(b => { if (b.isConnected) { b.disabled = false; b.textContent = b.dataset.t; } delete b.dataset.t; });
     }
     async function send(kind, key, draw, extra){
       if (!inTg) return toast("Отправлять можно, когда архив открыт в Telegram. Сохранить картинку можно и тут");
@@ -1608,13 +1609,29 @@ textarea.field{min-height:90px;resize:vertical}
 
     // ---- окно выбора альбома ----
     const tile = (a, used) => `<button type="button" data-add="${a.id}"${used.has(a.id) ? ' class="used"' : ""}>${cover(a) ? `<img src="${cover(a)}" alt="" loading="lazy">` : `<div class="ph"></div>`}<b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></button>`;
+    // подсказки: одна прокручиваемая строка. Сначала жанры; выбрал жанр — в строке его стили.
+    let cpG = "", cpS = "";
+    function chips(){
+      const gc = {}, sc = {};
+      all.forEach(a => { (a.genres || []).forEach(x => gc[x] = (gc[x] || 0) + 1); if (!cpG || (a.genres || []).includes(cpG)) (a.styles || []).forEach(x => sc[x] = (sc[x] || 0) + 1); });
+      const chip = (attr, val, text, on) => `<button type="button" class="chip" ${attr}="${esc(val)}" aria-pressed="${on}">${text}</button>`;
+      if (!cpG) {
+        $("cp-chips").innerHTML = Object.keys(gc).sort((x, y) => gc[y] - gc[x]).map(g => chip("data-g", g, `${esc(GENRE_RU[g] || g)} · ${gc[g]}`, false)).join("");
+      } else {
+        const own = Object.keys(sc).filter(x => tax.parent[x] === cpG).sort((x, y) => sc[y] - sc[x]).slice(0, 40);
+        $("cp-chips").innerHTML = chip("data-g", "", `× ${esc(GENRE_RU[cpG] || cpG)}`, true) + own.map(x => chip("data-s", x, `${esc(x)} · ${sc[x]}`, cpS === x)).join("");
+      }
+    }
     function results(){
       const q = norm($("cp-q").value.trim()), used = new Set(st.cells.filter(Boolean));
       const block = (label, list) => list.length ? `<div><div class="cp-label">${label}</div><div class="cp-grid">${list.map(a => tile(a, used)).join("")}</div></div>` : "";
-      if (q) {
-        const words = q.split(/\s+/);
-        const found = all.filter(a => { const h = norm(`${a.title} ${a.artist || ""} ${a.year || ""} ${(a.styles || []).join(" ")} ${(a.genres || []).join(" ")}`); return words.every(w => h.includes(w)); });
-        $("cp-list").innerHTML = found.length ? block(`Нашлось: ${found.length}${found.length > 60 ? ", показаны первые 60" : ""}`, found.slice(0, 60))
+      if (q || cpG) {
+        const words = q ? q.split(/\s+/) : [], mine = cur;
+        const found = all.filter(a => (!cpG || (a.genres || []).includes(cpG)) && (!cpS || (a.styles || []).includes(cpS))).filter(a => { const h = norm(`${a.title} ${a.artist || ""} ${a.year || ""} ${(a.styles || []).join(" ")} ${(a.genres || []).join(" ")}`); return words.every(w => h.includes(w)); })
+          // сначала то, что зашло тебе, потом то, что зашло автору канала, дальше — свежее
+          .sort((x, y) => ((mine[y.id] === 1) - (mine[x.id] === 1)) || ((y.author > 0) - (x.author > 0)) || (y.added || "").localeCompare(x.added || ""));
+        const what = [cpS || (cpG ? GENRE_RU[cpG] || cpG : ""), q ? `«${$("cp-q").value.trim()}»` : ""].filter(Boolean).join(" + ");
+        $("cp-list").innerHTML = found.length ? block(`${esc(what)}: ${found.length}${found.length > 90 ? ", показаны первые 90" : ""}`, found.slice(0, 90))
           : `<p style="color:var(--muted);margin:0">Ничего не нашлось. Попробуй исполнителя, год или стиль — например, «1973» или «jazz».</p>`;
       } else {
         const mine = liked().map(byId).slice(0, 30), mineIds = new Set(mine.map(a => a.id));
@@ -1625,7 +1642,7 @@ textarea.field{min-height:90px;resize:vertical}
     const cpLabel = () => { $("cp-n").textContent = `Клетка ${target + 1} из ${st.cells.length}${st.cells[target] ? " · замена" : ""}`; };
     function pick(i){
       target = i; sel = null; cpLabel();
-      $("cp-q").value = ""; results();
+      $("cp-q").value = ""; cpG = cpS = ""; chips(); results();
       $("colpick").hidden = false; $("colpick").scrollTop = 0;
       if (!("ontouchstart" in window)) $("cp-q").focus();   // на телефоне клавиатуру не выдёргиваем: сначала видно, что зашло
     }
@@ -1644,6 +1661,12 @@ textarea.field{min-height:90px;resize:vertical}
     let cpTimer;
     $("cp-q").addEventListener("input", () => { clearTimeout(cpTimer); cpTimer = setTimeout(() => { results(); $("colpick").scrollTop = 0; }, 120); });
     $("cp-done").addEventListener("click", closePick);
+    $("cp-chips").addEventListener("click", e => {
+      const b = e.target.closest(".chip"); if (!b) return;
+      if (b.dataset.g !== undefined) { cpG = b.dataset.g; cpS = ""; chips(); $("cp-chips").scrollLeft = 0; }
+      else { cpS = cpS === b.dataset.s ? "" : b.dataset.s; $("cp-chips").querySelectorAll("[data-s]").forEach(x => x.setAttribute("aria-pressed", x.dataset.s === cpS)); }
+      results(); $("colpick").scrollTop = 0;
+    });
     $("cp-list").addEventListener("click", e => { const b = e.target.closest("[data-add]"); if (b) choose(b); });
     new MutationObserver(() => { if ($("colpick").hidden && !$("col").hidden) paint(); }).observe($("colpick"), {attributes: true, attributeFilter: ["hidden"]});
 

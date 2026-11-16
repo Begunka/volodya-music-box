@@ -150,6 +150,13 @@ def discography(artist):
     if key in _disco:
         return _disco[key]
     out = []
+    try:   # у сборников («Разные исполнители» на любом языке) дискографии нет
+        from genres import is_various
+        if is_various(artist):
+            _disco[key] = out
+            return out
+    except ImportError:
+        pass
     names = [first_artist(artist)] + artist_variants(artist)[:2]
     if DISCOGS_TOKEN:
         for name in names:
@@ -184,6 +191,8 @@ def discography(artist):
             break
         except Exception as e:
             print("  MusicBrainz (дискография):", e)
+    # в базах встречаются мусорные годы («0029») — оставляем только правдоподобные
+    out = [(t, y) for t, y in out if 1900 <= int(y) <= time.gmtime().tm_year + 1]
     _disco[key] = out
     return out
 
