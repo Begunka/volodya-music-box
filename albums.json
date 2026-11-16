@@ -13654,8 +13654,8 @@
   "added": "2026-04-17T15:45:25",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2991",
-  "year_tried": 1794820522,
-  "disco_v": 1,
+  "year_tried": 1794846075,
+  "disco_v": 2,
   "genres": [
    "Jazz",
    "Pop"
@@ -13664,7 +13664,7 @@
    "Vocal",
    "Easy Listening"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794826453
  },
  {
@@ -13677,7 +13677,7 @@
   "added": "2026-01-25T12:10:45",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/1114",
-  "year_tried": 1794820336,
+  "year_tried": 1794846075,
   "genres": [
    "Stage & Screen"
   ],
@@ -13686,7 +13686,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794765884,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "The Elder Scrolls V: Skyrim (Original Game Soundtrack)",
