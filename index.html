@@ -190,6 +190,15 @@ textarea.field{min-height:90px;resize:vertical}
 .duel-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:14px 0 2px;padding:12px 14px;border-radius:12px;
   border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
 .duel-entry b{font-weight:600}
+.col-grid{display:grid;gap:4px}
+.col-cell{aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--surface);padding:0;overflow:hidden;color:var(--muted);font-size:20px;position:relative}
+.col-cell.full{border-style:solid}
+.col-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.col-cell[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:-3px}
+.col-cell small{position:absolute;inset:auto 0 0 0;font-size:9px;line-height:1.2;padding:2px 3px;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.col-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+.col-bar button{flex:none;width:auto!important;height:34px!important;padding:0 14px}
+.duel .pl-row .alt{flex:1;width:auto}
 .duel-entry span{color:var(--muted);font-size:13px}
 .duel{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -310,6 +319,10 @@ textarea.field{min-height:90px;resize:vertical}
       <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
       <span aria-hidden="true">→</span>
     </button>
+    <button class="duel-entry" id="col-entry" type="button">
+      <div><b>Коллаж обложек</b><br><span>Сетка из любимых альбомов архива — сохрани картинкой или отправь в чат</span></div>
+      <span aria-hidden="true">→</span>
+    </button>
     <div class="pl-entries">
       <button type="button" id="pl-official"><b>Плейлисты от Володи</b><span>подборки автора канала</span></button>
       <button type="button" id="pl-people"><b>Плейлисты людей</b><span>собери свой и поделись</span></button>
@@ -346,6 +359,7 @@ textarea.field{min-height:90px;resize:vertical}
 
 <section class="duel" id="gp" hidden><div class="duel-in" id="gp-in"></div></section>
 <section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
+<section class="duel" id="col" hidden><div class="duel-in" id="col-in"></div></section>
 <section class="duel" id="lt" hidden><div class="duel-in" id="lt-in"></div></section>
 <div class="toast" id="toast" hidden></div>
 
@@ -611,6 +625,7 @@ textarea.field{min-height:90px;resize:vertical}
     const m = sp.match(/^album_(\d+)(?:_[a-z])?$/);
     if (m) open(+m[1]);
     else if (sp === "later") Later.open();
+    else if (sp === "collage") Collage.open();
     else if (sp === "duel") Duel.start();
     else if (/^p[a-f0-9]{8}$/.test(sp)) Playlists.openById(sp.slice(1));
     else if (/^[dex][A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
@@ -666,7 +681,7 @@ textarea.field{min-height:90px;resize:vertical}
     const sp = (tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param) || "";
     const m = sp.match(/^album_\d+(?:_([a-z]))?$/);
     return m ? "album" + (m[1] ? "_" + m[1] : "") : /^p[a-f0-9]{8}$/.test(sp) ? "pl" : sp === "duel" || /^x[a-f0-9]{10}$/.test(sp) ? "duel"
-      : sp === "later" ? "later" : /from=kb/.test(location.search) ? "kb" : "plain";
+      : sp === "later" ? "later" : sp === "collage" ? "collage" : /from=kb/.test(location.search) ? "kb" : "plain";
   }
   let subAsked = false;
   async function checkSub(){
@@ -1314,6 +1329,171 @@ textarea.field{min-height:90px;resize:vertical}
     $("today").hidden = true;
   }
 
+
+  // ---------- коллаж обложек ----------
+  // Сетка 3×3…5×5. Картинку рисуем тут же на canvas; для отправки в чат она уходит в воркер,
+  // тот готовит сообщение от имени бота, и Telegram сам предлагает выбрать чат (shareMessage).
+  const Collage = (() => {
+    const KEY = "collage", byId = id => all.find(a => a.id === id);
+    let st = {size: 3, names: true, cells: []}, sel = null, busy = false, last = null;
+    const cover = a => a && a.has_cover ? `covers/${a.id}.${a.cover_ext || "webp"}` : "";
+    const toast = t => { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => $("toast").hidden = true, 2800); };
+    const canShare = () => inTg && tgApp.shareMessage && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("8.0");
+    function fix(){
+      const n = st.size * st.size, ids = (st.cells || []).filter(id => byId(id));
+      // при смене размера порядок сохраняется, лишнее отрезается
+      const cells = (st.cells || []).map(id => byId(id) ? id : 0);
+      if (cells.length > n) { st.cells = ids.slice(0, n); }
+      else st.cells = cells;
+      while (st.cells.length < n) st.cells.push(0);
+    }
+    function save(){
+      const s = JSON.stringify(st);
+      try { localStorage.setItem(KEY, s); } catch (e) {}
+      if (cloud) cloud.setItem(KEY, s, () => {});
+    }
+    function load(){
+      return new Promise(res => {
+        try { const s = localStorage.getItem(KEY); if (s) st = {...st, ...JSON.parse(s)}; } catch (e) {}
+        if (!cloud) return res();
+        cloud.getItem(KEY, (err, v) => { try { if (v) st = {...st, ...JSON.parse(v)}; } catch (e) {} res(); });
+      });
+    }
+    const liked = () => Object.keys(cur).filter(id => cur[id] === 1).map(Number).filter(id => byId(id)).sort((x, y) => y - x);
+    function fillLiked(){
+      const have = new Set(st.cells), add = liked().filter(id => !have.has(id));
+      if (!add.length) return toast(Object.keys(cur).length ? "Всё, что зашло, уже в коллаже" : "Пока нет альбомов с отметкой «Зашло» — найди их через поиск ниже");
+      st.cells = st.cells.map(id => id || add.shift() || 0); save(); paint();
+    }
+    async function open(){
+      await load(); fix();
+      if (!st.cells.some(Boolean) && liked().length) st.cells = st.cells.map((_, i) => liked()[i] || 0);
+      sel = null; paint(); $("col").hidden = false; $("col").scrollTop = 0;
+    }
+    function paint(){
+      const n = st.size, filled = st.cells.filter(Boolean).length;
+      const s = sel !== null ? byId(st.cells[sel]) : null;
+      $("col-in").innerHTML = `<div class="duel-top"><span class="step">${filled} из ${n * n}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>
+        <h3>Коллаж обложек</h3>
+        <div class="chipset">${[3, 4, 5].map(k => `<button type="button" data-size="${k}" aria-pressed="${k === n}">${k}×${k}</button>`).join("")}
+          <button type="button" data-x="names" aria-pressed="${st.names}">названия под обложками</button></div>
+        <div class="col-grid" style="grid-template-columns:repeat(${n},1fr)">${st.cells.map((id, i) => {
+          const a = byId(id);
+          return `<button type="button" class="col-cell${a ? " full" : ""}" data-i="${i}" aria-pressed="${sel === i}" aria-label="${a ? esc(a.title) : "Пустая клетка"}">${a ? (cover(a) ? `<img src="${cover(a)}" alt="">` : "") + (n < 5 ? `<small>${esc(a.title)}</small>` : "") : "+"}</button>`;
+        }).join("")}</div>
+        ${sel === null ? `<p>Нажми на клетку: на пустую — поставить альбом из поиска, на занятую — поменять местами или убрать.</p>`
+          : s ? `<div class="col-bar"><span>«${esc(s.title)}»: нажми другую клетку, чтобы поменять местами</span><button class="alt" data-x="rm">Убрать</button></div>`
+          : `<div class="col-bar"><span>Найди альбом ниже — он встанет в эту клетку</span><button class="alt" data-x="unsel">Отмена</button></div>`}
+        <input class="field" id="col-q" placeholder="Найти альбом в архиве" autocomplete="off">
+        <div id="col-found"></div>
+        <div class="pl-row"><button class="alt" data-x="liked">Добавить, что зашло</button><button class="alt" data-x="clear">Очистить</button></div>
+        <button class="go" data-x="send"${filled ? "" : " disabled"}>Отправить в чат</button>
+        <button class="alt" data-x="save"${filled ? "" : " disabled"}>Сохранить картинку</button>`;
+      $("col-q").addEventListener("input", search);
+    }
+    function search(){
+      const q = norm($("col-q").value.trim());
+      if (q.length < 2) { $("col-found").innerHTML = ""; return; }
+      $("col-found").innerHTML = all.filter(a => !st.cells.includes(a.id) && norm(a.title + " " + (a.artist || "")).includes(q)).slice(0, 8)
+        .map(a => `<div class="addrow">${cover(a) ? `<img src="${cover(a)}" alt="">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div><button type="button" data-add="${a.id}" aria-label="Поставить в коллаж">+</button></div>`).join("") || `<p>Ничего не нашлось</p>`;
+    }
+    function add(id){
+      let i = sel !== null && !st.cells[sel] ? sel : st.cells.indexOf(0);
+      if (i < 0) return toast(st.size < 5 ? "Сетка заполнена — убери альбом или сделай сетку больше" : "Сетка заполнена — убери какой-нибудь альбом");
+      st.cells[i] = id; sel = null; save(); paint();
+    }
+    function tap(i){
+      if (sel === null) { sel = i; paint(); if (!st.cells[i]) $("col-q").focus(); return; }
+      if (sel === i) { sel = null; return paint(); }
+      if (st.cells[sel] || st.cells[i]) [st.cells[sel], st.cells[i]] = [st.cells[i], st.cells[sel]];
+      sel = null; save(); paint();
+    }
+    // ---- картинка ----
+    const img = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+    function fit(ctx, text, max){
+      if (ctx.measureText(text).width <= max) return text;
+      while (text.length > 1 && ctx.measureText(text + "…").width > max) text = text.slice(0, -1);
+      return text.trimEnd() + "…";
+    }
+    async function draw(){
+      const n = st.size, cell = {3: 320, 4: 250, 5: 210}[n], gap = 10, pad = 32, lab = st.names ? Math.round(cell * 0.2) : 0, foot = 70;
+      // пустые ряды в конце не рисуем
+      let last = st.cells.length - 1; while (last > 0 && !st.cells[last]) last--;
+      const rows = Math.floor(last / n) + 1, cells = st.cells.slice(0, rows * n);
+      const W = pad * 2 + n * cell + (n - 1) * gap, H = pad * 2 + rows * (cell + lab) + (rows - 1) * gap + foot;
+      const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const ctx = cv.getContext("2d");
+      ctx.fillStyle = "#101114"; ctx.fillRect(0, 0, W, H);
+      const pics = await Promise.all(cells.map(id => cover(byId(id)) ? img(cover(byId(id))) : null));
+      const font = getComputedStyle(document.body).fontFamily;
+      cells.forEach((id, i) => {
+        const a = byId(id), x = pad + (i % n) * (cell + gap), y = pad + Math.floor(i / n) * (cell + lab + gap), p = pics[i];
+        ctx.fillStyle = "#1d1f24"; ctx.fillRect(x, y, cell, cell);
+        if (p) { const k = Math.min(p.width, p.height); ctx.drawImage(p, (p.width - k) / 2, (p.height - k) / 2, k, k, x, y, cell, cell); }
+        else if (a) { ctx.fillStyle = "#e9e9ee"; ctx.font = `700 ${Math.round(cell / 11)}px ${font}`; ctx.fillText(fit(ctx, a.title, cell - 24), x + 12, y + cell / 2); }
+        if (a && lab) {
+          ctx.fillStyle = "#f2f2f5"; ctx.font = `600 ${Math.round(lab * 0.32)}px ${font}`;
+          ctx.fillText(fit(ctx, a.title, cell - 4), x + 2, y + cell + lab * 0.42);
+          ctx.fillStyle = "#9a9ca6"; ctx.font = `400 ${Math.round(lab * 0.27)}px ${font}`;
+          ctx.fillText(fit(ctx, a.artist || "", cell - 4), x + 2, y + cell + lab * 0.8);
+        }
+      });
+      const fy = H - pad - 4;
+      ctx.fillStyle = "#f2f2f5"; ctx.font = `700 26px ${font}`; ctx.fillText("volodya music box", pad, fy);
+      ctx.fillStyle = "#9a9ca6"; ctx.font = `400 20px ${font}`; ctx.textAlign = "right";
+      ctx.fillText("собрано в архиве @volodyamusicbox_bot", W - pad, fy);
+      return cv;
+    }
+    async function upload(){
+      const key = JSON.stringify(st);
+      if (last && last.key === key) return last;
+      const data = (await draw()).toDataURL("image/jpeg", 0.88);
+      const r = await fetch("/api/collage", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({initData: tgApp.initData, img: data, size: st.size})}).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      return (last = {key, ...r});
+    }
+    async function run(fn){
+      if (busy) return; busy = true;
+      document.querySelectorAll('#col-in [data-x="send"], #col-in [data-x="save"]').forEach(b => { b.disabled = true; b.dataset.t = b.textContent; b.textContent = "Собираю картинку…"; });
+      try { await fn(); } catch (e) { toast(e.message && e.message.length < 80 ? e.message : "Не получилось. Проверь интернет и попробуй ещё раз"); }
+      busy = false;
+      document.querySelectorAll('#col-in [data-x="send"], #col-in [data-x="save"]').forEach(b => { b.disabled = false; b.textContent = b.dataset.t; });
+    }
+    const send = () => run(async () => {
+      if (!inTg) return toast("Отправлять можно, когда архив открыт в Telegram. Сохранить картинку можно и тут");
+      if (!canShare()) return toast("Обнови Telegram: отправка из мини-приложений есть с версии 8.0. Пока можно сохранить картинку");
+      const r = await upload();
+      if (!r.prepared) throw new Error("Telegram не принял картинку, попробуй ещё раз");
+      tgApp.shareMessage(r.prepared, ok => ok && toast("Отправлено"));
+    });
+    const download = () => run(async () => {
+      if (inTg && tgApp.downloadFile && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("8.0")) {
+        const r = await upload();
+        return tgApp.downloadFile({url: r.url, file_name: "volodya-collage.jpg"});
+      }
+      if (inTg) return toast("Обнови Telegram, чтобы сохранять картинки из мини-приложений");
+      const a = document.createElement("a"); a.href = (await draw()).toDataURL("image/jpeg", 0.9); a.download = "volodya-collage.jpg"; a.click();
+    });
+    $("col").addEventListener("click", e => {
+      const x = e.target.closest("[data-x],[data-size],[data-i],[data-add]"); if (!x) return;
+      if (x.dataset.size) { st.size = +x.dataset.size; fix(); sel = null; save(); return paint(); }
+      if (x.dataset.i !== undefined) return tap(+x.dataset.i);
+      if (x.dataset.add) return add(+x.dataset.add);
+      const k = x.dataset.x;
+      if (k === "close") $("col").hidden = true;
+      if (k === "names") { st.names = !st.names; save(); paint(); }
+      if (k === "rm") { st.cells[sel] = 0; sel = null; save(); paint(); }
+      if (k === "unsel") { sel = null; paint(); }
+      if (k === "liked") fillLiked();
+      if (k === "clear") { st.cells = st.cells.map(() => 0); sel = null; save(); paint(); }
+      if (k === "send") send();
+      if (k === "save") download();
+    });
+    return {open, draw, _st: () => st};
+  })();
+  window.__collage = Collage;   // для проверок в браузере
+
   // ---------- пожертвование звёздами ----------
   // Ссылка внизу страницы → окно с пояснением → сумма → окно оплаты Telegram. Случайно не нажать.
   async function donate(n){
@@ -1366,6 +1546,7 @@ textarea.field{min-height:90px;resize:vertical}
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("gate").hidden) gateRecheck(true); });
   if (tgApp && tgApp.onEvent) tgApp.onEvent("activated", () => { if (!$("gate").hidden) gateRecheck(true); });
   $("duel-entry").addEventListener("click", () => Duel.start());
+  $("col-entry").addEventListener("click", () => Collage.open());
   $("pl-official").addEventListener("click", () => Playlists.list("official"));
   $("pl-people").addEventListener("click", () => Playlists.list("people"));
   $("s-addpl").addEventListener("click", () => { if (openId) Playlists.addFromAlbum(openId); });

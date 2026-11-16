@@ -39,3 +39,6 @@ CREATE TABLE IF NOT EXISTS seen (day TEXT NOT NULL, kind TEXT NOT NULL, uid TEXT
 CREATE TABLE IF NOT EXISTS chats (id INTEGER PRIMARY KEY, type TEXT, title TEXT, username TEXT, status TEXT, at INTEGER);
 -- пожертвования звёздами (charge нужен, чтобы вернуть)
 CREATE TABLE IF NOT EXISTS donations (charge TEXT PRIMARY KEY, tg_id INTEGER NOT NULL, amount INTEGER NOT NULL, at INTEGER NOT NULL, refunded INTEGER NOT NULL DEFAULT 0);
+
+-- коллажи обложек: картинка живёт, пока Telegram её не заберёт при отправке; храним 14 дней
+CREATE TABLE IF NOT EXISTS collages (id TEXT PRIMARY KEY, uid TEXT NOT NULL, img BLOB NOT NULL, at INTEGER NOT NULL);

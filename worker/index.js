@@ -68,6 +68,14 @@ export default {
       return json(p && !p.hidden ? plView(p) : { error: "not found" });
     }
 
+    // ----- картинка коллажа: её забирает Telegram при отправке, потом она почти не нужна -----
+    const col = url.pathname.match(/^\/c\/([a-f0-9]{12})\.jpg$/);
+    if (col) {
+      const r = await env.DB.prepare("SELECT img FROM collages WHERE id = ?").bind(col[1]).first().catch(() => null);
+      if (!r) return new Response("not found", { status: 404 });
+      return new Response(new Uint8Array(r.img), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=1209600, immutable" } });
+    }
+
     // ----- мини-приложение: дуэли, оценки -----
     if (url.pathname.startsWith("/api/")) return api(req, url, env, ctx);
 
@@ -359,6 +367,7 @@ async function migrate(env) {
   if (migrated) return;
   await env.DB.prepare("ALTER TABLE duels ADD COLUMN claimed INTEGER").run().catch(() => {});
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS bans (uid TEXT PRIMARY KEY, author TEXT, at INTEGER NOT NULL)").run().catch(() => {});
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS collages (id TEXT PRIMARY KEY, uid TEXT NOT NULL, img BLOB NOT NULL, at INTEGER NOT NULL)").run().catch(() => {});
   migrated = true;
 }
 
@@ -392,6 +401,7 @@ async function api(req, url, env, ctx) {
     const r = await tgCall(env, "createInvoiceLink", invoice(amount));
     return json(r.ok ? { link: r.result } : { error: "tg" });
   }
+  if (url.pathname === "/api/collage" && req.method === "POST") return collageApi(env, ctx, user, me, body);
   // забаненный может смотреть, но не может ничего менять
   if (banned && req.method === "POST") return json({ error: "ban" });
 
@@ -748,10 +758,10 @@ async function statsText(env, days = 7) {
   const label = days === 1 ? "сегодня" : days === 7 ? "за 7 дней" : "за 30 дней";
   const prevLabel = days === 1 ? "вчера" : days === 7 ? "предыдущие 7 дней" : "предыдущие 30 дней";
   const where = { "iq:sender": "в личке с ботом", "iq:private": "в личных чатах", "iq:group": "в группах", "iq:supergroup": "в супергруппах", "iq:channel": "в каналах", "iq:unknown": "место неизвестно" };
-  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»" };
+  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»", "sent:collage": "коллаж обложек" };
   const open = { "open:plain": "просто открыли архив", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "из карточки альбома в группе",
     "open:album_p": "из карточки альбома в личном чате", "open:album_c": "из карточки альбома в канале", "open:album_s": "из карточки альбома в личке бота",
-    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту" };
+    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту", "open:collage": "по чужому коллажу" };
   const list = (obj, map) => Object.keys(map).filter(key => obj[key]).sort((x, y) => obj[y] - obj[x]).map(key => `   • ${map[key]}: ${obj[key]}`);
   const inl = sum(k, "iq:"), apps = sum(k, "open:"), sentN = sum(k, "sent:");
   const lines = [
@@ -779,6 +789,34 @@ async function statsText(env, days = 7) {
   if (chats.results.length) lines.push("", "<b>Бота добавили в чаты</b>", ...chats.results.map(c => `   • ${c.type === "channel" ? "канал" : "группа"} «${esc(c.title || "?")}»${c.username ? " @" + esc(c.username) : ""}`));
   lines.push("", `<i>В скобках — ${prevLabel}. Цифры включают и твои действия. Другой период: /stats 1 (сегодня), /stats 7, /stats 30.</i>`);
   return lines.join("\n");
+}
+
+// ---------------- коллаж обложек ----------------
+// Картинку рисует мини-приложение, сюда присылает готовый JPEG. Мы кладём его в D1, отдаём по /c/<id>.jpg
+// и готовим сообщение от имени бота (savePreparedInlineMessage): человек выбирает чат, и бот отправляет туда фото.
+const botName = env => ((env.MINIAPP || "").match(/t\.me\/([A-Za-z0-9_]+)/) || [])[1] || "volodyamusicbox_bot";
+async function collageApi(env, ctx, user, me, body) {
+  const b64 = String(body.img || "").replace(/^data:image\/jpeg;base64,/, "");
+  if (!b64 || b64.length > 2000000) return json({ error: "Картинка слишком большая" });
+  let bytes;
+  try { bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); } catch (e) { return json({ error: "bad" }); }
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return json({ error: "bad" });
+  // не больше 30 коллажей в сутки на человека — чтобы базу не забили картинками
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM collages WHERE uid = ? AND at > ?").bind(me, Date.now() - 86400000).first();
+  if (n && n.n >= 30) return json({ error: "На сегодня хватит коллажей — попробуй завтра" });
+  const id = [...crypto.getRandomValues(new Uint8Array(6))].map(x => x.toString(16).padStart(2, "0")).join("");
+  await env.DB.prepare("INSERT INTO collages (id, uid, img, at) VALUES (?, ?, ?, ?)").bind(id, me, bytes, Date.now()).run();
+  const url = `${(env.PAGES || "").replace(/\/$/, "")}/c/${id}.jpg`, bot = botName(env);
+  const size = /^[345]$/.test(String(body.size)) ? body.size : "";
+  const r = await tgCall(env, "savePreparedInlineMessage", {
+    user_id: user.id,
+    result: { type: "photo", id, photo_url: url, thumbnail_url: url,
+      caption: `${size ? size + "×" + size + " · " : ""}собрано в архиве @${bot}`,
+      reply_markup: { inline_keyboard: [[{ text: "Собрать свой", url: `${env.MINIAPP}?startapp=collage` }]] } },
+    allow_user_chats: true, allow_bot_chats: true, allow_group_chats: true, allow_channel_chats: true,
+  }).catch(() => ({}));
+  ctx.waitUntil(track(env, ["sent:collage"], [["inline", me]]).catch(() => {}));
+  return json({ ok: true, url, prepared: r && r.ok ? r.result.id : null });
 }
 
 // ---------------- личка: команды, оплата ----------------
@@ -1016,5 +1054,6 @@ async function cron(env) {
   if (hour === 3) await env.DB.batch([
     env.DB.prepare("DELETE FROM seen WHERE day < ?").bind(dayKey(Date.now() - 40 * 86400000)),
     env.DB.prepare("DELETE FROM stats WHERE day < ?").bind(dayKey(Date.now() - 400 * 86400000)),
+    env.DB.prepare("DELETE FROM collages WHERE at < ?").bind(Date.now() - 14 * 86400000),
   ]);
 }
