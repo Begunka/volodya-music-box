@@ -5831,7 +5831,7 @@
   "added": "2026-04-18T19:37:47",
   "post_url": "https://t.me/volodyamusicbox/3097",
   "cover_ext": "webp",
-  "year_tried": 1794553396,
+  "year_tried": 1794824295,
   "genres": [
    "Rock",
    "Latin",
@@ -5842,7 +5842,8 @@
    "Schlager",
    "Beat"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Tabou",
@@ -5901,15 +5902,17 @@
   "id": 288,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794553228,
+  "year_tried": 1794824295,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Vocal"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794767774
+  "genre_src": "artist",
+  "genre_tried": 1794767774,
+  "year_suspect": "1969",
+  "disco_v": 1
  },
  {
   "title": "Tamboo!",
