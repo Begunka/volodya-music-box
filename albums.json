@@ -4995,7 +4995,7 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2385",
   "cover_ext": "webp",
-  "year_tried": 1794553756,
+  "year_tried": 1794824558,
   "genres": [
    "Rock"
   ],
@@ -5003,7 +5003,9 @@
    "Beat",
    "Prog Rock"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_suspect": "1970",
+  "disco_v": 1
  },
  {
   "title": "Silversand",
@@ -5185,8 +5187,10 @@
   "id": 253,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794553756,
-  "genre_tried": 1794763870
+  "year_tried": 1794824558,
+  "genre_tried": 1794763870,
+  "year_suspect": "2009",
+  "disco_v": 1
  },
  {
   "title": "Hildegard von Bingen - Canticles Of Ecstasy",
