@@ -9784,15 +9784,16 @@
   "title_full": "log.3.cyber-rassismus (gold-edition)",
   "post_url": "https://t.me/volodyamusicbox/4846",
   "cover_ext": "webp",
-  "year_tried": 1794550873,
+  "year_tried": 1794822324,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Alternative Rock"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766695
+  "genre_src": "artist",
+  "genre_tried": 1794766695,
+  "disco_v": 1
  },
  {
   "title": "Evensong",
@@ -10136,7 +10137,7 @@
   "added": "2026-08-09T15:33:35",
   "post_url": "https://t.me/volodyamusicbox/4980",
   "cover_ext": "webp",
-  "year_tried": 1794550873,
+  "year_tried": 1794822324,
   "genres": [
    "Rock"
   ],
@@ -10144,7 +10145,8 @@
    "Art Rock",
    "Prog Rock"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "The Stars Are So Big The Earth Is So Small... Stay As You Are",
