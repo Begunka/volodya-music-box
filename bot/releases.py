@@ -96,7 +96,16 @@ def new_releases(mbid, since):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--minutes", type=float, default=10)
+    ap.add_argument("--probe", default="", help="проверка без воркера: «Исполнитель|ГГГГ-ММ-ДД» — что найдётся с этой даты")
     args = ap.parse_args()
+    if args.probe:
+        name, _, since = args.probe.partition("|")
+        albums = json.loads((ROOT / "albums.json").read_text(encoding="utf-8"))
+        mbid = find_mbid(name, [a for a in albums if E.norm(a.get("artist")) == E.norm(name)])
+        print("MusicBrainz:", mbid or "не найден")
+        for r in new_releases(mbid, since or "2020-01-01") if mbid else []:
+            print(" ", r["date"], r["type"], r["title"], "обложка" if has_cover(r["rid"]) else "без обложки")
+        return
     if not TOKEN or not WORKER_URL:
         print("Нет BOT_TOKEN или адреса воркера — выходим")
         return

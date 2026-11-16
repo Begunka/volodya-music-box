@@ -8,6 +8,9 @@ on:
       minutes:
         description: "Сколько минут работать"
         default: "10"
+      probe:
+        description: "Проверка без рассылки: Исполнитель|ГГГГ-ММ-ДД"
+        default: ""
 
 concurrency:
   group: releases
@@ -33,4 +36,5 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
           MINUTES: ${{ inputs.minutes || '10' }}
-        run: python bot/releases.py --minutes "$MINUTES"
+          PROBE: ${{ inputs.probe }}
+        run: python bot/releases.py --minutes "$MINUTES" ${PROBE:+--probe "$PROBE"}
