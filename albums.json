@@ -10208,6 +10208,7 @@
   "post_url": "https://t.me/volodyamusicbox/4980",
   "cover_ext": "webp",
   "year_tried": 1794822324,
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
@@ -10215,8 +10216,8 @@
    "Art Rock",
    "Prog Rock"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826831
  },
  {
   "title": "The Stars Are So Big The Earth Is So Small... Stay As You Are",
@@ -10945,6 +10946,8 @@
   "post_url": "https://t.me/volodyamusicbox/5250",
   "cover_ext": "webp",
   "year_tried": 1794822134,
+  "year_suspect": "1956",
+  "disco_v": 1,
   "genres": [
    "Electronic"
   ],
@@ -10952,9 +10955,8 @@
    "Experimental",
    "Electroacoustic"
   ],
-  "genre_src": "artist",
-  "year_suspect": "1956",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794826831
  },
  {
   "title": "God Save the Clientele",
