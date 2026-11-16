@@ -9877,7 +9877,7 @@
   "title_full": "log.3.cyber-rassismus (gold-edition)",
   "post_url": "https://t.me/volodyamusicbox/4846",
   "cover_ext": "webp",
-  "year_tried": 1794822324,
+  "year_tried": 1794847874,
   "genres": [
    "Rock"
   ],
@@ -9886,7 +9886,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794766695,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Evensong",
@@ -10230,8 +10230,8 @@
   "added": "2026-08-09T15:33:35",
   "post_url": "https://t.me/volodyamusicbox/4980",
   "cover_ext": "webp",
-  "year_tried": 1794822324,
-  "disco_v": 1,
+  "year_tried": 1794847874,
+  "disco_v": 2,
   "genres": [
    "Rock"
   ],
@@ -10239,7 +10239,7 @@
    "Art Rock",
    "Prog Rock"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794826831
  },
  {
