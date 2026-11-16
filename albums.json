@@ -10872,7 +10872,7 @@
   "added": "2026-09-02T14:17:47",
   "post_url": "https://t.me/volodyamusicbox/5250",
   "cover_ext": "webp",
-  "year_tried": 1794550521,
+  "year_tried": 1794822134,
   "genres": [
    "Electronic"
   ],
@@ -10880,7 +10880,9 @@
    "Experimental",
    "Electroacoustic"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_suspect": "1956",
+  "disco_v": 1
  },
  {
   "title": "God Save the Clientele",
@@ -11127,7 +11129,7 @@
   "title_full": "Fugu, Vol. 1 (Remastered Edition)",
   "post_url": "https://t.me/volodyamusicbox/5370",
   "cover_ext": "webp",
-  "year_tried": 1794550338,
+  "year_tried": 1794822134,
   "genres": [
    "Electronic",
    "Jazz"
@@ -11137,7 +11139,8 @@
    "Avantgarde",
    "Free Improvisation"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Health",
