@@ -11855,7 +11855,7 @@
   "added": "2026-10-08T12:04:34",
   "post_url": "https://t.me/volodyamusicbox/5799",
   "cover_ext": "webp",
-  "year_tried": 1794549974,
+  "year_tried": 1794821595,
   "genres": [
    "Stage & Screen"
   ],
@@ -11863,7 +11863,9 @@
    "Soundtrack",
    "Video Game Music"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "year_suspect": "0029",
+  "disco_v": 1
  },
  {
   "title": "Bad Piggies (Original Game Soundtrack)",
@@ -11876,7 +11878,7 @@
   "title_full": "Bad Piggies (Original Game Soundtrack) (Extended Edition)",
   "post_url": "https://t.me/volodyamusicbox/5828",
   "cover_ext": "webp",
-  "year_tried": 1794549793,
+  "year_tried": 1794821595,
   "genres": [
    "Stage & Screen"
   ],
@@ -11884,8 +11886,9 @@
    "Soundtrack",
    "Video Game Music"
   ],
-  "genre_src": "mb",
-  "genre_tried": 1794766501
+  "genre_src": "artist",
+  "genre_tried": 1794766501,
+  "disco_v": 1
  },
  {
   "title": "Angry Birds Space (Original Game Soundtrack), Pt. 2",
