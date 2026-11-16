@@ -106,6 +106,99 @@ def lookup_discogs(artist, title):
     return best
 
 
+try:
+    from unidecode import unidecode
+except ImportError:          # без библиотеки просто не будет транслитерации
+    def unidecode(x):
+        return x
+
+
+def latin(s):
+    """Латиница вместо любой письменности: «คนกับควาย» → «khnkabkhway», «Кино» → «kino»."""
+    return norm(unidecode(s or ""))
+
+
+def skeleton(s):
+    """Согласные без пробелов: разные латинские записи одного названия
+    («Kon Gub Kwai» и «Khon Kap Khwai») сходятся так лучше, чем целиком."""
+    x = re.sub(r"[aeiouyh\s]", "", latin(s)).translate(str.maketrans("gbdvzqc", "kptwskk"))
+    return re.sub(r"(.)\1+", r"\1", x)
+
+
+def title_match(ours, theirs):
+    """Насколько название из базы похоже на наше. У Discogs часто два написания:
+    «คนกับควาย = Kon Kab Kwai», поэтому сравниваем и с каждой частью."""
+    parts = [theirs] + [x for x in re.split(r"\s*=\s*|\s*[()\[\]]\s*", theirs or "") if x.strip()]
+    best = 0
+    for x in parts:
+        best = max(best, similar(x, ours), SequenceMatcher(None, latin(x), latin(ours)).ratio())
+        # совпали все согласные (с точностью до звонких/глухих) — то же название в другой записи
+        a, b = skeleton(x), skeleton(ours)
+        if len(a) >= 5 and a == b:
+            best = max(best, 0.9)
+    return best
+
+
+_disco = {}
+
+
+def discography(artist):
+    """Все альбомы исполнителя с годами: Discogs (основная роль) + MusicBrainz.
+    Список (название, год). Нужен, когда поиск по названию ничего не дал:
+    название в посте записано не так, как в базе (другая письменность, транслит)."""
+    key = norm(artist)
+    if key in _disco:
+        return _disco[key]
+    out = []
+    names = [first_artist(artist)] + artist_variants(artist)[:2]
+    if DISCOGS_TOKEN:
+        for name in names:
+            try:
+                q = urllib.parse.urlencode({"type": "artist", "q": name, "per_page": 5, "token": DISCOGS_TOKEN})
+                data = get_json("https://api.discogs.com/database/search?" + q)
+                time.sleep(1.1)
+                ids = [r["id"] for r in data.get("results", [])
+                       if similar(re.sub(r"\s*\(\d+\)", "", r.get("title", "")), name) >= 0.9][:2]
+                for aid in ids:
+                    q = urllib.parse.urlencode({"sort": "year", "sort_order": "asc", "per_page": 100, "token": DISCOGS_TOKEN})
+                    rel = get_json(f"https://api.discogs.com/artists/{aid}/releases?" + q)
+                    time.sleep(1.1)
+                    out += [(r.get("title", ""), str(r["year"])) for r in rel.get("releases", [])
+                            if r.get("role") == "Main" and re.fullmatch(r"\d{4}", str(r.get("year") or "")) and str(r["year"]) != "0"]
+                if ids:
+                    break
+            except Exception as e:
+                print("  Discogs (дискография):", e)
+    for name in names[:2]:
+        try:
+            time.sleep(1.1)
+            data = get_json("https://musicbrainz.org/ws/2/artist/?fmt=json&limit=2&query=" +
+                            urllib.parse.quote(f'artist:"{name}" OR alias:"{name}"'))
+            ar = [a for a in data.get("artists", []) if a.get("score", 0) >= 95][:1]
+            if not ar:
+                continue
+            time.sleep(1.1)
+            rg = get_json(f"https://musicbrainz.org/ws/2/release-group?fmt=json&limit=100&artist={ar[0]['id']}")
+            out += [(g.get("title", ""), g["first-release-date"][:4]) for g in rg.get("release-groups", [])
+                    if re.match(r"\d{4}", g.get("first-release-date") or "")]
+            break
+        except Exception as e:
+            print("  MusicBrainz (дискография):", e)
+    _disco[key] = out
+    return out
+
+
+def lookup_discography(artist, title):
+    """Альбом в дискографии исполнителя: (score, год, название) с самым ранним годом
+    среди уверенно похожих названий, или None."""
+    best = None
+    for t, y in discography(artist):
+        sc = title_match(title, t)
+        if sc >= 0.85 and (not best or y < best[1]):
+            best = (sc, y, t)
+    return best
+
+
 def spotify_title(url):
     data = get_json("https://open.spotify.com/oembed?url=" + urllib.parse.quote(url, safe=""))
     return data.get("title")
@@ -194,8 +287,26 @@ def enrich(album, discogs_token=None, albums=None):
         covers.append(f"https://coverartarchive.org/release-group/{mb[3]}/front-500")
     album["_cover_candidates"] = covers
     found = [f[1] for f in (dg, mb) if f]
+    album.pop("year_suspect", None)
     if not found:
-        return False
+        # сам альбом не нашёлся — ищем его в дискографии исполнителя
+        try:
+            ds = lookup_discography(artist, title)
+        except Exception as e:
+            ds = None
+            print("  дискография:", e)
+        if ds:
+            print(f"  нашлось в дискографии: «{ds[2]}», {ds[1]}")
+            album["year_src"] = "discography"
+            found = [ds[1]]
+        else:
+            # не нашёлся и там: если исполнитель выпускался задолго до года из поста,
+            # год из поста скорее всего от переиздания — отмечаем для владельца
+            years = [y for _, y in discography(artist)]
+            post = album.get("year")
+            if years and post and str(post).isdigit() and int(post) - int(min(years)) >= 15:
+                album["year_suspect"] = min(years)
+            return False
     post_year = album.get("year")
     year = min(found + ([post_year] if post_year else []))
     if post_year and int(post_year) > int(year):

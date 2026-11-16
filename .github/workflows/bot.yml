@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
 
       - name: Pillow для обложек
-        run: pip install pillow
+        run: pip install pillow unidecode
 
       - name: Забрать новое из Telegram
         env:

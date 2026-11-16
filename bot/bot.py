@@ -246,6 +246,7 @@ def export_site_data(albums):
 class Archive:
     def __init__(self):
         self.albums = load_json(ARCHIVE, [])
+        self.suspects = []   # год из поста под вопросом — показать владельцу в сводке
         self.by_key = {}
         self.by_link = {a["listen_url"]: a for a in self.albums if a.get("listen_url")}
         for a in self.albums:
@@ -298,14 +299,20 @@ class Archive:
           • год, который не нашёлся;
           • жанры: пустые, неполные или взятые из грубого источника (по исполнителю и т.п.)."""
         now = int(time.time())
+        # disco_v: альбом ещё не искали по дискографии исполнителя — проверяем без ожидания месяца
         todo = [a for a in self.albums if not a.get("year_checked") and a.get("artist")
-                and not a["title"].startswith("http") and now - a.get("year_tried", 0) > 30 * 86400]
+                and not a["title"].startswith("http")
+                and (now - a.get("year_tried", 0) > 30 * 86400 or a.get("disco_v") != 1)]
         todo.sort(key=lambda a: -a["id"])   # сначала свежие
         for a in todo[:limit]:
             before = (a.get("year"), a.get("genres"))
+            had = a.get("year_suspect")
             enrich(a, DISCOGS, self.albums)
             a.pop("_cover_candidates", None)
             a["year_tried"] = now
+            a["disco_v"] = 1
+            if a.get("year_suspect") and a.get("year_suspect") != had:
+                self.suspects.append(a)
             if a.get("year_checked"):
                 a.pop("year_tried", None)
                 print(f"Год найден: {a['artist']} — {a['title']}: {before[0]} → {a['year']}")
@@ -656,7 +663,9 @@ class Bot:
     def report(self):
         """Сводка владельцу в личку — только если случилось что-то важное."""
         s = self.summary
-        if not self.owner() or not any(s[k] for k in ("linked", "added", "failed", "foreign", "missing")):
+        sus = [a for a in self.archive.suspects if a not in s["added"]]
+        self.archive.suspects = []
+        if not self.owner() or not (sus or any(s[k] for k in ("linked", "added", "failed", "foreign", "missing"))):
             self.summary = self.empty_summary()
             return
         lines = [f"<b>Архив: {len(self.archive.albums)} альбомов</b>, "
@@ -669,8 +678,15 @@ class Bot:
                     mark += ", обложку не нашёл"
                 if not a.get("genres"):
                     mark += ", жанр не нашёл"
+                if a.get("year_suspect"):
+                    mark += f"; исполнитель выпускается с {a['year_suspect']} — проверь, не переиздание ли"
                 lines.append(f"  • {html.escape(a.get('artist') or '?')} — {html.escape(a['title'])} "
                              f"({a.get('year') or '?'}){mark}")
+        if sus:
+            lines.append("🧐 Год под вопросом: в базах альбома нет, а исполнитель выпускается намного раньше. "
+                         "Возможно, в посте год переиздания:")
+            lines += [f"  • №{a['id']} {html.escape(a.get('artist') or '?')} — {html.escape(a['title'])}: "
+                      f"в посте {a.get('year')}, первый релиз исполнителя {a['year_suspect']}" for a in sus[:15]]
         if s["linked"]:
             lines.append(f"👍 Привязал к постам: {s['linked']}")
         if s["known"]:
