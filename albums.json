@@ -5247,15 +5247,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2508",
   "cover_ext": "webp",
-  "year_tried": 1794824476,
-  "disco_v": 1,
+  "year_tried": 1794849034,
+  "disco_v": 2,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Medieval"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827728
  },
  {
@@ -5698,13 +5698,13 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2888",
   "cover_ext": "webp",
-  "year_tried": 1794824476,
+  "year_tried": 1794849034,
   "genres": [
    "Electronic"
   ],
   "genre_src": "artist",
   "genre_tried": 1794829397,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Sort Of",
