@@ -8122,7 +8122,7 @@
   "id": 391,
   "added": "2026-06-07T02:45:40",
   "cover_ext": "webp",
-  "year_tried": 1794823033,
+  "year_tried": 1794848429,
   "genres": [
    "Stage & Screen"
   ],
@@ -8131,8 +8131,8 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794767055,
-  "year_suspect": "1978",
-  "disco_v": 1
+  "disco_v": 2,
+  "year_suspect": "1978"
  },
  {
   "title": "Camoufleur",
@@ -8249,8 +8249,8 @@
   "added": "2026-06-10T23:25:20",
   "post_url": "https://t.me/volodyamusicbox/3955",
   "cover_ext": "webp",
-  "year_tried": 1794822854,
-  "disco_v": 1,
+  "year_tried": 1794848429,
+  "disco_v": 2,
   "genres": [
    "Electronic",
    "Rock",
@@ -8262,7 +8262,7 @@
    "New Age",
    "Modern Classical"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827190
  },
  {
