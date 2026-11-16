@@ -6294,7 +6294,7 @@
   "added": "2026-04-22T10:28:22",
   "post_url": "https://t.me/volodyamusicbox/2735",
   "cover_ext": "webp",
-  "year_tried": 1794553038,
+  "year_tried": 1794823948,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -6303,7 +6303,8 @@
    "Surf",
    "Beat"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "disco_v": 1
  },
  {
   "title": "Вокально-инструментальный ансамбль \"Иверия\"",
@@ -6361,7 +6362,7 @@
   "added": "2026-04-25T10:26:29",
   "post_url": "https://t.me/volodyamusicbox/3166",
   "cover_ext": "webp",
-  "year_tried": 1794552853,
+  "year_tried": 1794823948,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -6369,7 +6370,8 @@
   "styles": [
    "Folk"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Лирика",
