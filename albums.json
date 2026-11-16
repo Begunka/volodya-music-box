@@ -14103,5 +14103,24 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6363"
+ },
+ {
+  "title": "Kon Gub Kwai",
+  "artist": "คาราวาน",
+  "date": "2022-06-13",
+  "tracks": 9,
+  "year": "2022",
+  "id": 692,
+  "added": "2026-11-16T04:26:43",
+  "genres": [
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Phleng Phuea Chiwit",
+   "Folk"
+  ],
+  "genre_src": "artist",
+  "cover_ext": "webp",
+  "year_tried": 1794803253
  }
 ]
