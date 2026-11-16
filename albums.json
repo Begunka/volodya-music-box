@@ -13547,15 +13547,16 @@
   "added": "2026-01-25T12:10:45",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/1114",
-  "year_tried": 1794548356,
+  "year_tried": 1794820336,
   "genres": [
    "Stage & Screen"
   ],
   "styles": [
    "Soundtrack"
   ],
-  "genre_src": "title",
-  "genre_tried": 1794765884
+  "genre_src": "artist",
+  "genre_tried": 1794765884,
+  "disco_v": 1
  },
  {
   "title": "The Elder Scrolls V: Skyrim (Original Game Soundtrack)",
@@ -13716,7 +13717,7 @@
   "added": "2026-01-16T17:20:13",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/929",
-  "year_tried": 1794548175,
+  "year_tried": 1794820336,
   "genres": [
    "Rock"
   ],
@@ -13724,8 +13725,9 @@
    "Pop Rock",
    "Russian Pop"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794765436
+  "genre_src": "artist",
+  "genre_tried": 1794765436,
+  "disco_v": 1
  },
  {
   "title": "The Story of Moondog",
