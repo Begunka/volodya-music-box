@@ -12000,7 +12000,7 @@
   "id": 585,
   "added": "2026-10-10T20:28:26",
   "cover_ext": "webp",
-  "year_tried": 1794549793,
+  "year_tried": 1794821424,
   "genres": [
    "Electronic"
   ],
@@ -12009,8 +12009,10 @@
    "Downtempo",
    "Breakbeat"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766333
+  "genre_src": "artist",
+  "genre_tried": 1794766333,
+  "year_suspect": "1993",
+  "disco_v": 1
  },
  {
   "title": "Move Ever Onward",
@@ -12085,12 +12087,13 @@
   "added": "2026-10-13T23:59:21",
   "post_url": "https://t.me/volodyamusicbox/5918",
   "cover_ext": "webp",
-  "year_tried": 1794549629,
+  "year_tried": 1794821424,
   "genres": [
    "Electronic"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794765485
+  "genre_src": "artist",
+  "genre_tried": 1794765485,
+  "disco_v": 1
  },
  {
   "title": "The Lost Tapes",
