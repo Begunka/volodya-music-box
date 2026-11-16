@@ -1172,16 +1172,17 @@
   "title_full": "Stravinsky: Pétrouchka (2022 Remastered Version)",
   "post_url": "https://t.me/volodyamusicbox/446",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Modern"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828435
  },
  {
   "title": "Adventures In Utopia",
@@ -1646,16 +1647,17 @@
   "id": 79,
   "added": "2026-04-18T19:37:10",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Electronic"
   ],
   "styles": [
    "Disco"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828435
  },
  {
   "title": "Tales from Topographic Oceans",
