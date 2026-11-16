@@ -13524,7 +13524,7 @@
   "added": "2026-03-24T01:12:17",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2350",
-  "year_tried": 1794820694,
+  "year_tried": 1794846265,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -13534,7 +13534,7 @@
    "Beat"
   ],
   "genre_src": "manual",
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Cherry Viewing A Go Go (桜音頭a Gogo!)",
@@ -13547,8 +13547,8 @@
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2399",
   "title_full": "Spacemen, The 1966 - (ザ・スペイスメン) - Cherry Viewing A Go Go (桜音頭a Gogo!) (0000) () [Vinyl 0-44]",
-  "year_tried": 1794820522,
-  "disco_v": 1,
+  "year_tried": 1794846265,
+  "disco_v": 2,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -13558,7 +13558,7 @@
    "Folk Rock",
    "Surf"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794826453
  },
  {
