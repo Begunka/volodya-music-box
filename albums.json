@@ -186,20 +186,23 @@
   "artist": "SEGA",
   "date": "2018-01-17",
   "tracks": 47,
-  "year": "2018",
+  "year": "2014",
   "id": 9,
   "added": "2026-04-18T19:37:09",
   "title_full": "Sonic Mania Original Sound Track(Selected Edition)",
   "cover_ext": "webp",
-  "year_tried": 1794555559,
   "genres": [
    "Stage & Screen"
   ],
   "styles": [
    "Soundtrack"
   ],
-  "genre_src": "itunes",
-  "genre_tried": 1794768680
+  "genre_src": "artist",
+  "genre_tried": 1794768680,
+  "year_src": "discography",
+  "reissue_year": "2018",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "THRAK",
@@ -265,15 +268,16 @@
   "id": 13,
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
-  "year_tried": 1794555559,
+  "year_tried": 1794826280,
   "genres": [
    "Electronic"
   ],
   "styles": [
    "Techno"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768680
+  "genre_src": "artist",
+  "genre_tried": 1794768680,
+  "disco_v": 1
  },
  {
   "title": "The Dark Side of the Moon",
