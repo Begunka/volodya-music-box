@@ -5925,7 +5925,7 @@
   "added": "2026-04-18T19:39:30",
   "post_url": "https://t.me/volodyamusicbox/2472",
   "cover_ext": "webp",
-  "year_tried": 1794553228,
+  "year_tried": 1794824123,
   "genres": [
    "Pop"
   ],
@@ -5933,7 +5933,8 @@
    "Easy Listening",
    "Lounge"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "The In Sound From Way Out",
@@ -6110,7 +6111,7 @@
   "id": 297,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794553038,
+  "year_tried": 1794824123,
   "genres": [
    "Pop"
   ],
@@ -6119,8 +6120,9 @@
    "Schlager",
    "Beat"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794767774
+  "genre_src": "artist",
+  "genre_tried": 1794767774,
+  "disco_v": 1
  },
  {
   "title": "Begin",
