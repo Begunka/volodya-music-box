@@ -7752,7 +7752,6 @@
   "added": "2026-05-27T16:33:02",
   "post_url": "https://t.me/volodyamusicbox/3821",
   "cover_ext": "webp",
-  "year_tried": 1794551956,
   "genres": [
    "Jazz",
    "Funk / Soul"
@@ -7762,7 +7761,10 @@
    "Latin Jazz",
    "Jazz-Funk"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Mganga! The Primitive Sounds of Tak Shindo",
@@ -8043,15 +8045,17 @@
   "id": 391,
   "added": "2026-06-07T02:45:40",
   "cover_ext": "webp",
-  "year_tried": 1794551776,
+  "year_tried": 1794823033,
   "genres": [
    "Stage & Screen"
   ],
   "styles": [
    "Soundtrack"
   ],
-  "genre_src": "title",
-  "genre_tried": 1794767055
+  "genre_src": "artist",
+  "genre_tried": 1794767055,
+  "year_suspect": "1978",
+  "disco_v": 1
  },
  {
   "title": "Camoufleur",
