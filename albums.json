@@ -392,14 +392,15 @@
   "added": "2026-04-18T19:37:09",
   "cover_ext": "webp",
   "year_tried": 1794826095,
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Psychedelic Rock"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828625
  },
  {
   "title": "Wish You Were Here",
