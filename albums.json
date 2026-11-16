@@ -4909,11 +4909,10 @@
   "artist": "Jacks",
   "date": "2016-09-07",
   "tracks": 10,
-  "year": "2016",
+  "year": "1968",
   "id": 240,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794554120,
   "genres": [
    "Rock"
   ],
@@ -4921,19 +4920,22 @@
    "Psychedelic Rock",
    "Folk Rock"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_src": "discography",
+  "reissue_year": "2016",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Suring",
   "artist": "Takeshi Terauchi & Blue Jeans",
   "date": "1964",
   "tracks": 12,
-  "year": "1964",
+  "year": "1963",
   "id": 241,
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2319",
   "cover_ext": "webp",
-  "year_tried": 1794554120,
   "genres": [
    "Rock"
   ],
@@ -4942,7 +4944,11 @@
    "Psychedelic Rock"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794768003
+  "genre_tried": 1794768003,
+  "year_src": "discography",
+  "reissue_year": "1964",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Лабиринт. Джазовые композиции",
