@@ -9442,8 +9442,9 @@
   "id": 460,
   "added": "2026-07-09T03:18:18",
   "cover_ext": "webp",
-  "year_tried": 1794551062,
-  "genre_tried": 1794764659
+  "year_tried": 1794822496,
+  "genre_tried": 1794764659,
+  "disco_v": 1
  },
  {
   "title": "On the Shore",
@@ -9664,7 +9665,7 @@
   "id": 471,
   "added": "2026-07-15T23:36:19",
   "cover_ext": "webp",
-  "year_tried": 1794551062,
+  "year_tried": 1794822496,
   "genres": [
    "Rock"
   ],
@@ -9672,8 +9673,9 @@
    "Alternative Rock",
    "J Rock"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766695
+  "genre_src": "artist",
+  "genre_tried": 1794766695,
+  "disco_v": 1
  },
  {
   "title": "The Wild Man",
