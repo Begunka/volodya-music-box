@@ -2882,8 +2882,8 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1301",
   "cover_ext": "webp",
-  "year_tried": 1794825554,
-  "disco_v": 1,
+  "year_tried": 1794849674,
+  "disco_v": 2,
   "genres": [
    "Jazz",
    "Rock"
@@ -2891,7 +2891,7 @@
   "styles": [
    "Jazz-Rock"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794828255
  },
  {
@@ -2904,7 +2904,7 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1242",
   "cover_ext": "webp",
-  "year_tried": 1794825405,
+  "year_tried": 1794849674,
   "genres": [
    "Rock"
   ],
@@ -2913,7 +2913,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794768494,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Separation Anxieties",
