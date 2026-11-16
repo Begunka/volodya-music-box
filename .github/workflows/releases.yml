@@ -1,0 +1,36 @@
+name: Новые релизы
+
+on:
+  schedule:
+    - cron: "41 5 * * *"        # раз в сутки: новые релизы исполнителей, за которыми следят
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Сколько минут работать"
+        default: "10"
+
+concurrency:
+  group: releases
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install unidecode
+      - name: Проверить новые релизы
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+          MINUTES: ${{ inputs.minutes || '10' }}
+        run: python bot/releases.py --minutes "$MINUTES"

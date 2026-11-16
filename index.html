@@ -202,6 +202,12 @@ textarea.field{min-height:90px;resize:vertical}
 .addrow div span{color:var(--muted)}
 .addrow button{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:13px;max-width:90%}
+.follow{display:inline-flex;align-items:center;gap:6px;height:30px;margin:-2px 0 10px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:13px}
+.follow svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.follow[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.frow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.frow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow button{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:18px}
 .s-more{display:flex;gap:6px;margin:0 0 10px}
 .s-more .tag{flex:1;height:40px;border-radius:12px;font-size:14px;font-weight:500}
 .s-more #s-later[aria-pressed="false"]{border-color:var(--accent);color:var(--accent)}
@@ -411,6 +417,7 @@ textarea.field{min-height:90px;resize:vertical}
   <div class="cover" id="s-cover"></div>
   <h2 id="s-title"></h2>
   <p class="who" id="s-artist"></p>
+  <button class="follow" type="button" id="s-follow" aria-pressed="false" hidden></button>
   <dl class="facts" id="s-facts"></dl>
   <div class="tags" id="s-tags" hidden></div>
   <p class="author" id="s-author" hidden></p>
@@ -658,7 +665,7 @@ textarea.field{min-height:90px;resize:vertical}
     else if (a.unverified) notes.push("Год взят из поста, в базах не нашёлся");
     if (a.added) notes.push("Добавлен " + new Date(a.added).toLocaleDateString("ru-RU", {day:"numeric", month:"long", year:"numeric"}));
     $("s-note").textContent = notes.join(" · "); $("s-note").hidden = !notes.length;
-    openId = a.id; paintVote(); Later.paint();
+    openId = a.id; paintVote(); Later.paint(); Follow.paint();
     $("s-author").hidden = !a.author;
     if (a.author) $("s-author").innerHTML = a.author > 0 ? "♥ <b>Автору канала зашло</b>" : "Автору канала <b>не зашло</b>";
     $("s-actions").innerHTML =
@@ -813,6 +820,7 @@ textarea.field{min-height:90px;resize:vertical}
       const r = await fetch("/api/sub?initData=" + encodeURIComponent(tgApp.initData) + src).then(r => r.json());
       subscribed = r.sub !== false; banned = !!r.ban;
       if (r.later) Later.load(r.later);
+      if (r.follows) Follow.load(r.follows);
     } catch (e) { subscribed = true; }
     return subscribed;
   }
@@ -1441,6 +1449,7 @@ textarea.field{min-height:90px;resize:vertical}
       html += `<div class="label">В очереди: ${todo.length}</div>` + (todo.length ? `<div class="rows">${todo.map(a => row(a)).join("")}</div>`
         : `<p>Пусто. Открой любой альбом и нажми «Послушаю позже».</p>`);
       if (heard.length) html += `<div class="label">Послушано: ${heard.length}</div><div class="rows">${heard.map(a => row(a, true)).join("")}</div>`;
+      html += Follow.block();
       $("lt-in").innerHTML = html;
     }
     function openScreen(){ screen(); $("lt").hidden = false; $("lt").scrollTop = 0; }
@@ -1449,12 +1458,60 @@ textarea.field{min-height:90px;resize:vertical}
       const dn = e.target.closest("[data-done]"); if (dn) return setDone(+dn.dataset.done, true);
       const un = e.target.closest("[data-undo]"); if (un) return setDone(+un.dataset.undo, false);
       const rm = e.target.closest("[data-rm]"); if (rm) return toggle(+rm.dataset.rm);
+      const uf = e.target.closest("[data-unf]"); if (uf) return Follow.drop(uf.dataset.unf);
       const x = e.target.closest("[data-x]"); if (!x) return;
       if (x.dataset.x === "close") $("lt").hidden = true;
       if (x.dataset.x === "remind-off") setRemind(false);
       if (x.dataset.x === "remind-on") setRemind(true);
     });
-    return {load, paint, toggle, open: openScreen};
+    return {load, paint, toggle, open: openScreen, askDm, post};
+  })();
+
+  // ---------- слежение за исполнителями ----------
+  // Список хранится на сервере: бот пишет в личку, когда у исполнителя выходит новый релиз или его альбом появляется в архиве.
+  const Follow = (() => {
+    let list = new Map();   // ключ → имя
+    const BELL = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>`;
+    const keyOf = s => (s || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+    const various = k => /^(various( artists)?|va|v\/a|разные( исполнители)?|сборник|ost|soundtrack|саундтрек)$/.test(k);
+    function load(l){ list = new Map((l || []).map(x => [x.key, x.name])); paint(); }
+    function paint(){
+      const b = $("s-follow"), a = openId && all.find(x => x.id === openId), k = a ? keyOf(a.artist) : "";
+      b.hidden = !inTg || !k || various(k);
+      const on = list.has(k);
+      b.innerHTML = BELL + (on ? "Слежу за исполнителем ✓" : "Следить за исполнителем");
+      b.setAttribute("aria-pressed", on);
+      if (!$("lt").hidden) Later.paint();
+    }
+    async function toggle(){
+      const a = openId && all.find(x => x.id === openId); if (!a) return;
+      if (banned) return banNote();
+      const k = keyOf(a.artist);
+      if (list.has(k)) return drop(k);
+      const can = await Later.askDm();
+      list.set(k, a.artist); paint();
+      if (tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
+      try {
+        const r = await Later.post("/api/follow", {album: a.id, on: true, dm: can});
+        if (r.error === "full") { list.delete(k); paint(); return toast("Уже 50 исполнителей — сначала убери кого-нибудь в разделе «Позже»", 3500); }
+        if (r.error) throw 0;
+        toast(r.dm ? "Слежу. Бот напишет в личку о новом релизе или новом альбоме в архиве" : "Слежу, но бот не может тебе писать. Открой бота и нажми /start", 3500);
+      } catch (e) { list.delete(k); paint(); toast("Не получилось. Проверь интернет"); }
+    }
+    function drop(k){
+      if (!list.has(k)) return;
+      list.delete(k); paint();
+      Later.post("/api/follow", {key: k, on: false}).catch(() => {});
+      toast("Больше не слежу");
+    }
+    function block(){
+      if (!list.size) return `<div class="label">Слежу за исполнителями</div><p>Пока ни за кем. В карточке альбома есть кнопка «Следить за исполнителем»: бот напишет, когда у него выйдет новый релиз.</p>`;
+      const rows = [...list].sort((x, y) => x[1].localeCompare(y[1])).map(([k, name]) =>
+        `<div class="frow"><span>${esc(name)}</span><button type="button" data-unf="${esc(k)}" aria-label="Не следить">×</button></div>`).join("");
+      return `<div class="label">Слежу за исполнителями: ${list.size}</div><p>Бот пишет о новых релизах и новых альбомах в архиве. Не чаще одного сообщения в сутки.</p><div>${rows}</div>`;
+    }
+    $("s-follow").addEventListener("click", toggle);
+    return {load, paint, drop, block};
   })();
   function plural(n, one, few, many){ const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; }
 

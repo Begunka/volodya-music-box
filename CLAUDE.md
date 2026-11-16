@@ -6,6 +6,7 @@
 - Канал @volodyamusicbox (любимые альбомы автора), бот @volodyamusicbox_bot, мини-приложение «Volodya Music Archive».
 - Архив альбомов (~680) с годами первого выхода, жанрами/стилями Discogs, обложками, справкой (Википедия + состав из Discogs).
 - Интерактив: лайки/дизлайки (видны всем), «Сравнить вкусы» (дуэли через инлайн), плейлисты («от Володи» и «людей»), инлайн-режим, бан и модерация для владельца.
+- «Следить за исполнителем» (кнопка под именем в карточке альбома): бот пишет в личку о новом релизе (MusicBrainz) или о новом альбоме исполнителя в архиве. Список и отписка — в разделе «Позже» и командой `/artists`.
 - «Послушаю позже»: очередь человека + напоминания бота в личке; «Вышел в этот день» на главной; пожертвование звёздами; статистика для владельца (`/stats`); «Коллаж обложек» (сетка 3×3…5×5, картинка рисуется в браузере, отправка в чат от имени бота); «Мой вкус» (статистика оценок на устройстве, совпадение с автором, рекомендации, карточка-картинка).
 - Владелец: OWNER_ID в секретах. Репозиторий: Begunka/volodya-music-box, ветка main.
 
@@ -25,14 +26,14 @@
 - **Cloudflare Worker** `worker/index.js` (имя volodya-archive, https://volodya-archive.zaharmakaka.workers.dev/):
   - раздаёт мини-приложение как static assets (`worker/public`, собирается в Actions; статика бесплатна и не считается в квоту);
   - `POST /tg` — вебхук Telegram (секрет в заголовке): инлайн-запросы, chosen_inline_result, кнопки (callback_query), оплату (pre_checkout_query, successful_payment), my_chat_member и команды в личке (`/start`, `/donate`, `/paysupport`, `/terms`, `/forget`, владельцу `/stats`) отвечает сам, остальное кладёт в очередь D1 и будит GitHub (`wakeGithub`, не чаще раза в 30 с);
-  - `scheduled` (cron `17 * * * *`): напоминания «послушаю позже» (7–18 UTC, до 20 за запуск), по понедельникам сводка владельцу, раз в сутки чистка `seen`/`stats`;
-  - `/queue`, `/ack` — очередь для бота; `/health`;
+  - `scheduled` (cron `17 * * * *`): сначала новости о релизах (`sendReleases`), потом напоминания «послушаю позже» — общее правило «одно сообщение в личку в сутки» (`people.last_dm`) (7–18 UTC, до 20 за запуск), по понедельникам сводка владельцу, раз в сутки чистка `seen`/`stats`;
+  - `/queue`, `/ack` — очередь для бота; `/follow/list`, `/follow/found` — слежение за исполнителями (только имена, без людей); `/health`;
   - `/api/counts` (кэш 30 с), `/api/pl` (кэш 60 с), `/api/vote`, `/api/duel/*`, `/api/pl/*` (в т.ч. owner-only `/api/pl/admin`, `/api/pl/ban`), `/api/sub` (заодно отдаёт очередь «послушаю позже» и считает открытие: `?src=`), `/api/later`, `/api/later/done`, `/api/later/remind`, `/api/donate`, `/api/collage` (JPEG из мини-аппа → D1 `collages` → `savePreparedInlineMessage`, клиент вызывает `shareMessage`; картинка отдаётся по `/c/<id>.jpg`, хранится 14 дней, до 30 в сутки на человека).
-  - Авторизация мини-аппа — проверка initData (HMAC "WebAppData"). uid в оценках/плейлистах/статистике = hmacHex(BOT_TOKEN, user.id, 16). Настоящий id хранится только там, где без него нельзя: `duels`, `later`, `people` (кому можно писать), `donations` (для возврата).
+  - Авторизация мини-аппа — проверка initData (HMAC "WebAppData"). uid в оценках/плейлистах/статистике = hmacHex(BOT_TOKEN, user.id, 16). Настоящий id хранится только там, где без него нельзя: `duels`, `later`, `follows`, `people` (кому можно писать), `donations` (для возврата).
   - Дуэли: вызов можно отправить прямо из инлайн-списка (карточка `dnew-<id>`): строка в `duels` создаётся в `chosen()` с `a_ans = '[]'`, автор отвечает по той же кнопке; итог — когда ответили оба. Старый путь (15 альбомов в архиве → карточка `duel-<id>`) тоже работает.
   - Статистика: `track()` пишет счётчики в `stats` (iq:<тип чата>, sent:<что>, open:<откуда>, start, later:add, dm:*) и уникальных в `seen`. Ссылки на альбом из инлайн-карточек помечены типом чата (`album_12_g`/`_p`/`_c`/`_s`, из напоминаний `_r`). Упоминания бота в чужих чатах Telegram ботам не отдаёт — только тип чата инлайн-запроса и чаты, куда бота добавили (`chats`).
   - `isSub` — getChatMember по каналу, fail-open; владелец всегда «подписан».
-- **D1** база archive-queue, схема `worker/schema.sql` (queue, meta, duels, votes, counts, playlists, playlist_likes, bans, later, people, stats, seen, chats, donations, collages). Миграции также в `migrate()` в index.js. Проверка без персданных: workflow d1-check.yml + `worker/check.sql`.
+- **D1** база archive-queue, схема `worker/schema.sql` (queue, meta, duels, votes, counts, playlists, playlist_likes, bans, later, people, stats, seen, chats, donations, collages, follows, artists, releases). Миграции также в `migrate()` в index.js. Проверка без персданных: workflow d1-check.yml + `worker/check.sql`.
 - **GitHub Actions** — тяжёлая работа:
   - `bot.yml` — запуск `bot/bot.py`: забирает очередь из воркера, обрабатывает посты, добавляет альбомы, комментарии под постами, коммитит albums.json/data.json/covers/bot_state.json, деплоит воркер при изменениях. Будится воркером, cron-job.org (основной будильник «Бот архива», сейчас стоит каждые 3 мин) и запасным cron.
   - `worker.yml` — на push в worker/**, index.html, _headers: собирает public (index.html, data.json, _headers, covers, wiki без state.json/tr.json), применяет schema.sql (`npx --yes wrangler@4`), деплоит.
@@ -41,6 +42,7 @@
 - **Запасной режим**: если воркер недоступен, бот снимает вебхук, переходит на getUpdates и включает «быстрый» job на cron-job.org (каждые 3 мин) через API; когда воркер оживает — возвращает всё назад. Код: `ensure_mode` в bot.py.
   - В основном режиме бот раз в час подтверждает, что «быстрый» job выключен (`fast_off_at` в bot_state.json) — раньше он залипал включённым.
   - Сбои Telegram: `tg()` повторяет 5xx (и обрыв связи для get*-методов) до 3 раз; если Telegram недоступен, запуск завершается без ошибки (`TgDown`), очередь ждёт в D1. Так GitHub не шлёт владельцу письма о падениях.
+  - `releases.yml` — раз в сутки `bot/releases.py`: берёт у воркера список исполнителей, ищет их в MusicBrainz (номер — через их альбом из архива), приносит альбомы/EP с датой не старше 45 дней (без сборников и чужих релизов) и новые альбомы этих исполнителей в архиве. Ничего не коммитит, всё в D1 (`follows`, `artists`, `releases`).
   - `cron-check.yml` — ручная проверка: список заданий cron-job.org (без ключей) и отвечает ли Telegram раннерам.
 - GitHub Pages — старая копия, только редиректит на воркер.
 

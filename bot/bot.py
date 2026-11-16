@@ -795,11 +795,12 @@ class Bot:
                 try:
                     tg("setMyCommands", scope={"type": "all_private_chats"}, commands=[
                         {"command": "start", "description": "Открыть архив"},
+                        {"command": "artists", "description": "Исполнители, за которыми слежу"},
                         {"command": "donate", "description": "Поддержать архив звёздами"},
                         {"command": "paysupport", "description": "Вернуть звёзды"},
                         {"command": "terms", "description": "Условия и что хранит бот"},
                         {"command": "forget", "description": "Удалить мои данные"}])
-                    self.state["commands_v"] = 1
+                    self.state["commands_v"] = 2
                 except Exception as e:
                     print("  меню команд не поставилось:", e)
             if mode != "worker":

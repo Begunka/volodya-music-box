@@ -96,6 +96,19 @@ export default {
       await env.DB.prepare("DELETE FROM queue WHERE update_id <= ?").bind(max_id).run();
       return json({ ok: true });
     }
+    // ----- слежение за исполнителями: бот на GitHub берёт список имён и приносит найденные релизы (без чьих-либо ID) -----
+    if (url.pathname === "/follow/list") {
+      if (!authed(req, secret)) return new Response("no", { status: 403 });
+      await migrate(env);
+      const { results } = await env.DB.prepare(
+        "SELECT f.key, MIN(f.name) AS name, MIN(f.since) AS since, a.mbid, a.checked FROM follows f LEFT JOIN artists a ON a.key = f.key GROUP BY f.key LIMIT 2000").all();
+      return json({ artists: results });
+    }
+    if (url.pathname === "/follow/found" && req.method === "POST") {
+      if (!authed(req, secret)) return new Response("no", { status: 403 });
+      await migrate(env);
+      return json(await followFound(env, await req.json().catch(() => ({}))));
+    }
     return new Response("Volodya Music Box", { status: 200 });
   },
 
@@ -373,6 +386,7 @@ async function migrate(env) {
   await env.DB.prepare("ALTER TABLE duels ADD COLUMN claimed INTEGER").run().catch(() => {});
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS bans (uid TEXT PRIMARY KEY, author TEXT, at INTEGER NOT NULL)").run().catch(() => {});
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS collages (id TEXT PRIMARY KEY, uid TEXT NOT NULL, img BLOB NOT NULL, at INTEGER NOT NULL)").run().catch(() => {});
+  for (const sql of FOLLOW_SCHEMA) await env.DB.prepare(sql).run().catch(() => {});
   migrated = true;
 }
 
@@ -389,7 +403,8 @@ async function api(req, url, env, ctx) {
     const src = (url.searchParams.get("src") || "plain").replace(/[^a-z_]/g, "").slice(0, 16) || "plain";
     if (url.searchParams.get("src")) ctx.waitUntil(track(env, ["open:" + src], [["app", me]]).catch(() => {}));
     // очередь «послушаю позже» отдаём тут же, чтобы не тратить на неё отдельный запрос
-    let later = { items: [], dm: false, remind: true };
+    let later = { items: [], dm: false, remind: true }, follows = [];
+    try { follows = (await env.DB.prepare("SELECT key, name FROM follows WHERE tg_id = ? ORDER BY added DESC").bind(user.id).all()).results; } catch (e) {}
     try {
       const [items, person] = await env.DB.batch([
         env.DB.prepare("SELECT album, added, done FROM later WHERE tg_id = ? ORDER BY added DESC LIMIT 300").bind(user.id),
@@ -397,9 +412,10 @@ async function api(req, url, env, ctx) {
       const p = person.results[0];
       later = { items: items.results, dm: !!(user.allows_write_to_pm || (p && p.dm && !p.blocked)), remind: !p || !!p.remind };
     } catch (e) {}
-    return json({ sub: await isSub(env, user.id), ban: banned, later });
+    return json({ sub: await isSub(env, user.id), ban: banned, later, follows });
   }
   if (url.pathname === "/api/later" || url.pathname.startsWith("/api/later/")) return laterApi(req, url, env, user, body);
+  if (url.pathname === "/api/follow" && req.method === "POST") return followApi(env, user, body);
   if (url.pathname === "/api/donate" && req.method === "POST") {
     const amount = Math.floor(Number(body.amount));
     if (!(amount >= 1 && amount <= 2500)) return json({ error: "bad" });
@@ -780,7 +796,8 @@ async function statsText(env, days = 7) {
       (SELECT COUNT(DISTINCT tg_id) FROM later) AS later_people, (SELECT COALESCE(SUM(amount), 0) FROM donations WHERE refunded = 0) AS stars,
       (SELECT COUNT(DISTINCT uid) FROM votes) AS voters, (SELECT COUNT(*) FROM votes) AS votes,
       (SELECT COUNT(*) FROM duels) AS duels, (SELECT COUNT(*) FROM duels WHERE b_ans IS NOT NULL) AS duels_done,
-      (SELECT COUNT(*) FROM playlists) AS playlists`),
+      (SELECT COUNT(*) FROM playlists) AS playlists,
+      (SELECT COUNT(*) FROM follows) AS follows, (SELECT COUNT(DISTINCT tg_id) FROM follows) AS follow_people, (SELECT COUNT(DISTINCT key) FROM follows) AS follow_artists`),
     env.DB.prepare("SELECT type, title, username FROM chats WHERE status IN ('member', 'administrator') ORDER BY at DESC LIMIT 12"),
   ]);
   const k = {}, u = {}, pk = {}, pu = {};
@@ -795,7 +812,7 @@ async function statsText(env, days = 7) {
   const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»", "sent:collage": "коллаж обложек", "sent:taste": "карточку вкуса" };
   const open = { "open:plain": "просто открыли архив", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "из карточки альбома в группе",
     "open:album_p": "из карточки альбома в личном чате", "open:album_c": "из карточки альбома в канале", "open:album_s": "из карточки альбома в личке бота",
-    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту", "open:collage": "по чужому коллажу", "open:taste": "по чужой карточке вкуса" };
+    "open:album_r": "из напоминания «послушаю позже»", "open:album_f": "из сообщения о новом релизе", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту", "open:collage": "по чужому коллажу", "open:taste": "по чужой карточке вкуса" };
   const list = (obj, map) => Object.keys(map).filter(key => obj[key]).sort((x, y) => obj[y] - obj[x]).map(key => `   • ${map[key]}: ${obj[key]}`);
   const inl = sum(k, "iq:"), apps = sum(k, "open:"), sentN = sum(k, "sent:");
   const lines = [
@@ -814,6 +831,9 @@ async function statsText(env, days = 7) {
     `• Добавили альбомов ${label}: ${NUM(k["later:add"])}`,
     `• Бот напомнил: ${NUM(k["dm:remind"])}, ответили «послушал»: ${NUM(k["dm:done"])}`,
     `• Сейчас в очередях: ${NUM(m.later)} ${pl(m.later || 0, "альбом", "альбома", "альбомов")} у ${NUM(m.later_people)} ${pl(m.later_people || 0, "человека", "человек", "человек")}, уже послушано ${NUM(m.listened)}`, "",
+    "<b>Слежение за исполнителями</b>",
+    `• Подписались ${label}: ${NUM(k["follow:add"])}, бот сообщил о релизах: ${NUM(k["dm:release"])}`,
+    `• Сейчас следят: ${NUM(m.follow_people)} ${pl(m.follow_people || 0, "человек", "человека", "человек")} за ${NUM(m.follow_artists)} ${pl(m.follow_artists || 0, "исполнителем", "исполнителями", "исполнителями")}`, "",
     "<b>За всё время</b>",
     `• Людей в базе бота: ${NUM(m.people)}, из них можно писать в личку: ${NUM(m.dm)}`,
     `• Оценок: ${NUM(m.votes)} от ${NUM(m.voters)} ${pl(m.voters || 0, "человека", "человек", "человек")}`,
@@ -859,7 +879,8 @@ const START_TEXT = "📀 Архив альбомов канала @volodyamusicb
 const TERMS_TEXT = "<b>Условия</b>\nБот и архив бесплатные, платных функций нет. Пожертвование звёздами добровольное: оно ничего не открывает, не ускоряет и не даёт взамен.\n" +
   "Вернуть звёзды можно самому в течение 21 дня — команда /paysupport.\n\n" +
   "<b>Что хранит бот</b>\nТвой Telegram ID и имя — если ты нажал /start, добавил альбом в «послушаю позже», отправил вызов или пожертвование. Оценки и плейлисты хранятся под зашифрованным ID. " +
-  "Напоминания приходят только про альбомы, которые ты сам отложил; отключаются в архиве, в разделе «Послушаю позже». Данные никому не передаются.\n" +
+  "Напоминания приходят только про альбомы, которые ты сам отложил; отключаются в архиве, в разделе «Послушаю позже». " +
+  "Если ты следишь за исполнителями, бот хранит их список и пишет о новых релизах; список и отписка — команда /artists. Данные никому не передаются.\n" +
   "Удалить всё, что бот о тебе хранит, — команда /forget.";
 
 function invoice(amount) {
@@ -909,8 +930,14 @@ async function onPrivate(m, env) {
     return true;
   }
   if (c === "/forget") {
-    await say(env, uid, "Удалить всё, что бот о тебе хранит: очередь «послушаю позже», оценки, плейлисты, вызовы и разрешение писать в личку? Вернуть будет нельзя.",
+    await say(env, uid, "Удалить всё, что бот о тебе хранит: очередь «послушаю позже», список исполнителей, оценки, плейлисты, вызовы и разрешение писать в личку? Вернуть будет нельзя.",
       { reply_markup: { inline_keyboard: [[{ text: "Удалить всё", callback_data: "fg" }]] } });
+    return true;
+  }
+  if (c === "/artists" || c === "/following") {
+    await knowPerson(env, m.from).catch(() => {});
+    const v = await followList(env, uid);
+    await say(env, uid, v.text, { reply_markup: { inline_keyboard: v.keyboard } });
     return true;
   }
   if (c === "/stats" && owner) { await say(env, uid, await statsText(env, +arg || 7)); return true; }
@@ -1005,6 +1032,135 @@ async function sendReminders(env) {
   if (ops.length) await env.DB.batch(ops);
 }
 
+// ---------------- слежение за исполнителями ----------------
+// Человек нажимает «Следить» в карточке альбома. Раз в сутки бот на GitHub спрашивает у MusicBrainz, не вышло ли у этих
+// исполнителей нового, и не появился ли их альбом в архиве; находки приносит сюда. Мы пишем в личку — одним сообщением в сутки.
+const FOLLOW = { max: 50, window: 45 * 86400000, perRun: 20, show: 8 };
+const FOLLOW_SCHEMA = [
+  "CREATE TABLE IF NOT EXISTS follows (tg_id INTEGER NOT NULL, key TEXT NOT NULL, name TEXT NOT NULL, h TEXT NOT NULL, added INTEGER NOT NULL, since TEXT NOT NULL, sent INTEGER, PRIMARY KEY (tg_id, key))",
+  "CREATE INDEX IF NOT EXISTS follows_key ON follows (key)",
+  "CREATE TABLE IF NOT EXISTS artists (key TEXT PRIMARY KEY, mbid TEXT, checked INTEGER)",
+  "CREATE TABLE IF NOT EXISTS releases (key TEXT NOT NULL, rid TEXT NOT NULL, title TEXT NOT NULL, date TEXT NOT NULL, type TEXT, cover INTEGER NOT NULL DEFAULT 0, album INTEGER, at INTEGER, found INTEGER NOT NULL, PRIMARY KEY (key, rid))",
+];
+const artistKey = s => norm(s).replace(/\s+/g, " ").trim();
+const VARIOUS_RE = /^(various( artists)?|va|v\/a|разные( исполнители)?|сборник|ost|soundtrack|саундтрек)$/i;
+
+async function followApi(env, user, body) {
+  const now = Date.now();
+  if (!body.on) {
+    const key = String(body.key || "").slice(0, 200);
+    await env.DB.prepare("DELETE FROM follows WHERE tg_id = ? AND key = ?").bind(user.id, key).run();
+    return json({ ok: true });
+  }
+  // следить можно только за исполнителем из архива — берём имя по номеру альбома, а не из запроса
+  const a = (await archive(env)).find(x => x.id === Number(body.album));
+  const name = a && (a.artist || "").trim(), key = artistKey(name || "");
+  if (!key || VARIOUS_RE.test(key)) return json({ error: "bad" });
+  const [n, person] = await env.DB.batch([
+    env.DB.prepare("SELECT COUNT(*) AS n FROM follows WHERE tg_id = ?").bind(user.id),
+    env.DB.prepare("SELECT dm, blocked FROM people WHERE tg_id = ?").bind(user.id)]);
+  if (n.results[0].n >= FOLLOW.max) return json({ error: "full" });
+  const p = person.results[0];
+  const dm = !!(user.allows_write_to_pm || body.dm || (p && p.dm && !p.blocked));
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO people (tg_id, name, first, dm) VALUES (?, ?, ?, ?) ON CONFLICT(tg_id) DO UPDATE SET name = excluded.name, dm = MAX(dm, excluded.dm), blocked = CASE WHEN excluded.dm = 1 THEN 0 ELSE blocked END")
+      .bind(user.id, handle(user), now, dm ? 1 : 0),
+    env.DB.prepare("INSERT OR IGNORE INTO follows (tg_id, key, name, h, added, since) VALUES (?, ?, ?, ?, ?, ?)")
+      .bind(user.id, key, name.slice(0, 120), await hmacHex(env.BOT_TOKEN, "artist:" + key, 10), now, dayKey(now - FOLLOW.window)),
+  ]);
+  await track(env, ["follow:add"]).catch(() => {});
+  return json({ ok: true, dm, key, name });
+}
+
+// находки бота: {artists: [{key, mbid}], releases: [{key, rid, title, date, type, cover, album, at}]}
+async function followFound(env, body) {
+  const now = Date.now(), ops = [];
+  for (const a of (body.artists || []).slice(0, 2000)) {
+    if (typeof a.key !== "string") continue;
+    ops.push(env.DB.prepare("INSERT INTO artists (key, mbid, checked) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET mbid = excluded.mbid, checked = excluded.checked")
+      .bind(a.key, String(a.mbid || ""), now));
+  }
+  for (const r of (body.releases || []).slice(0, 500)) {
+    if (typeof r.key !== "string" || !/^[a-z0-9-]{2,40}$/.test(r.rid || "") || !r.title || !/^\d{4}(-\d\d){0,2}$/.test(r.date || "")) continue;
+    ops.push(env.DB.prepare("INSERT OR IGNORE INTO releases (key, rid, title, date, type, cover, album, at, found) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(r.key, r.rid, String(r.title).slice(0, 200), r.date, String(r.type || "album").slice(0, 12), r.cover ? 1 : 0, Number(r.album) || null, Number(r.at) || null, now));
+  }
+  for (let i = 0; i < ops.length; i += 50) await env.DB.batch(ops.slice(i, i + 50));
+  return { ok: true, saved: ops.length };
+}
+
+const MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const MONTHS_NOM = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+const REL_TYPE = { album: "альбом", ep: "EP", live: "концертный альбом", soundtrack: "саундтрек" };
+// «альбом · вышел 14 ноября 2026» / «EP · выйдет 12 декабря 2026» / «альбом · ноябрь 2026»
+function releaseWhen(r) {
+  const [y, mo, d] = r.date.split("-"), kind = REL_TYPE[r.type] || "альбом";
+  if (!mo) return `${kind} · ${y}`;
+  if (!d) return `${kind} · ${MONTHS_NOM[+mo - 1] || mo} ${y}`;
+  return `${kind} · ${r.date > dayKey() ? "выйдет" : "вышел"} ${+d} ${MONTHS_GEN[+mo - 1] || mo} ${y}`;
+}
+const findLinks = (artist, title) => {
+  const q = encodeURIComponent(`${artist} ${title}`);
+  return [["YouTube", "https://www.youtube.com/results?search_query=" + q], ["Яндекс Музыка", "https://music.yandex.ru/search?text=" + q], ["Spotify", "https://open.spotify.com/search/" + q]];
+};
+
+async function followList(env, uid) {
+  const { results } = await env.DB.prepare("SELECT name, h FROM follows WHERE tg_id = ? ORDER BY name COLLATE NOCASE LIMIT ?").bind(uid, FOLLOW.max).all();
+  if (!results.length) return { text: "Ты пока ни за кем не следишь.\nОткрой альбом в архиве и нажми «Следить за исполнителем» — бот напишет, когда у него выйдет новый релиз или его альбом появится в архиве.",
+    keyboard: [[{ text: "🗄 Открыть архив", url: env.MINIAPP }]] };
+  const n = results.length;
+  return { text: `🔔 Ты следишь за ${n} ${pl(n, "исполнителем", "исполнителями", "исполнителями")}.\nБот пишет о новых релизах и о новых альбомах в архиве — не чаще одного сообщения в сутки.\n\nНажми на имя, чтобы перестать следить.`,
+    keyboard: results.map(r => [{ text: "✕ " + r.name.slice(0, 40), callback_data: "fx:" + r.h }]) };
+}
+
+async function sendReleases(env) {
+  const now = Date.now();
+  await migrate(env);
+  const { results } = await env.DB.prepare(
+    `SELECT f.tg_id, f.name, f.h, r.rid, r.title, r.date, r.type, r.cover, r.album FROM follows f
+     JOIN releases r ON r.key = f.key JOIN people p ON p.tg_id = f.tg_id
+     WHERE r.found > COALESCE(f.sent, 0) AND ((r.album IS NULL AND r.date >= f.since) OR (r.album IS NOT NULL AND r.at > f.added))
+       AND p.dm = 1 AND p.blocked = 0 AND (p.last_dm IS NULL OR p.last_dm < ?) ORDER BY f.tg_id, r.date DESC LIMIT 600`).bind(now - LATER.quiet).all();
+  if (!results.length) return;
+  const by = new Map();
+  for (const r of results) { if (!by.has(r.tg_id)) by.set(r.tg_id, []); by.get(r.tg_id).push(r); }
+  const ops = [];
+  let sent = 0;
+  for (const [tg_id, list] of by) {
+    if (sent >= FOLLOW.perRun) break;
+    const link = r => `${env.MINIAPP}?startapp=album_${r.album}_f`;
+    let res;
+    if (list.length === 1) {
+      const r = list[0];
+      const text = r.album
+        ? `🔔 В архиве новый альбом исполнителя, за которым ты следишь\n\n💽 <b>${esc(r.title)}</b> — ${esc(r.name)}${/^\d{4}/.test(r.date) ? ` (${r.date.slice(0, 4)})` : ""}`
+        : `🔔 Новый релиз\n\n💽 <b>${esc(r.title)}</b> — ${esc(r.name)}\n${releaseWhen(r)}`;
+      const reply_markup = { inline_keyboard: [
+        r.album ? [{ text: "Открыть в архиве", url: link(r) }, { text: "Послушаю позже", callback_data: "la:" + r.album }]
+          : findLinks(r.name, r.title).map(([t, url]) => ({ text: t, url })),
+        [{ text: "Не следить", callback_data: "fu:" + r.h }, { text: "Мои исполнители", callback_data: "fl" }]] };
+      const photo = r.album ? `${env.PAGES}covers/jpg/${r.album}.jpg` : r.cover ? `https://coverartarchive.org/release-group/${r.rid}/front-500` : "";
+      if (photo) res = await tgCall(env, "sendPhoto", { chat_id: tg_id, photo, caption: text, parse_mode: "HTML", reply_markup });
+      if (!photo || (!res.ok && res.error_code === 400)) res = await say(env, tg_id, text, { reply_markup });   // обложка не скачалась — шлём без неё
+    } else {
+      const rows = list.slice(0, FOLLOW.show).map(r => `💽 <b>${esc(r.title)}</b> — ${esc(r.name)}\n` + (r.album
+        ? `в архиве · <a href="${link(r)}">открыть</a>`
+        : `${releaseWhen(r)}\n${findLinks(r.name, r.title).map(([t, url]) => `<a href="${url}">${t}</a>`).join(" · ")}`));
+      const more = list.length - FOLLOW.show;
+      res = await say(env, tg_id, `🔔 Новое у тех, за кем ты следишь\n\n${rows.join("\n\n")}${more > 0 ? `\n\nИ ещё ${more}.` : ""}`,
+        { reply_markup: { inline_keyboard: [[{ text: "Мои исполнители", callback_data: "fl" }]] } });
+    }
+    if (res.ok) {
+      sent++;
+      ops.push(env.DB.prepare("UPDATE follows SET sent = ? WHERE tg_id = ?").bind(now, tg_id), env.DB.prepare("UPDATE people SET last_dm = ? WHERE tg_id = ?").bind(now, tg_id));
+    } else if (res.error_code === 403) {
+      ops.push(env.DB.prepare("UPDATE people SET blocked = 1 WHERE tg_id = ?").bind(tg_id));
+    } else if (res.error_code === 429) break;
+  }
+  if (sent) ops.push(env.DB.prepare("INSERT INTO stats (day, key, n) VALUES (?, 'dm:release', ?) ON CONFLICT(day, key) DO UPDATE SET n = n + excluded.n").bind(dayKey(), sent));
+  if (ops.length) await env.DB.batch(ops);
+}
+
 // кнопки под сообщениями бота в личке
 async function onCallback(cq, env) {
   const uid = cq.from.id, data = cq.data || "", msg = cq.message;
@@ -1037,6 +1193,36 @@ async function onCallback(cq, env) {
     await track(env, ["dm:drop"]);
     return answer("Убрал");
   }
+  if ((m = data.match(/^f([ux]):([a-f0-9]{10})$/))) {   // перестать следить: u — из сообщения о релизе, x — из списка
+    const f = await env.DB.prepare("SELECT key, name FROM follows WHERE tg_id = ? AND h = ?").bind(uid, m[2]).first();
+    if (f) await env.DB.prepare("DELETE FROM follows WHERE tg_id = ? AND key = ?").bind(uid, f.key).run();
+    if (m[1] === "x") {
+      const v = await followList(env, uid);
+      await edit(v.text, v.keyboard);
+    } else if (msg && msg.reply_markup) {   // убираем только эту кнопку, остальное сообщение не трогаем
+      const keyboard = msg.reply_markup.inline_keyboard.map(row => row.filter(b => b.callback_data !== data)).filter(row => row.length);
+      await tgCall(env, "editMessageReplyMarkup", { chat_id: msg.chat.id, message_id: msg.message_id, reply_markup: { inline_keyboard: keyboard } });
+    }
+    return answer(f ? `Больше не слежу: ${f.name}`.slice(0, 190) : "Уже не слежу");
+  }
+  if (data === "fl") {   // «Мои исполнители» — отдельным сообщением, чтобы не затирать новость
+    const v = await followList(env, uid);
+    await say(env, uid, v.text, { reply_markup: { inline_keyboard: v.keyboard } });
+    return answer();
+  }
+  if ((m = data.match(/^la:(\d+)$/))) {   // «Послушаю позже» прямо из сообщения о новом альбоме в архиве
+    const album = Number(m[1]), now = Date.now();
+    if (!(await archive(env)).some(x => x.id === album)) return answer("Этого альбома в архиве уже нет", true);
+    const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM later WHERE tg_id = ? AND done IS NULL").bind(uid).first();
+    if (n && n.n >= LATER.max) return answer("В очереди уже 100 альбомов", true);
+    await env.DB.prepare("INSERT INTO later (tg_id, album, added, remind_at) VALUES (?, ?, ?, ?) ON CONFLICT(tg_id, album) DO NOTHING").bind(uid, album, now, now + LATER.first).run();
+    await track(env, ["later:add"]).catch(() => {});
+    if (msg && msg.reply_markup) {
+      const keyboard = msg.reply_markup.inline_keyboard.map(row => row.map(b => b.callback_data === data ? { text: "В очереди ✓", callback_data: "noop" } : b));
+      await tgCall(env, "editMessageReplyMarkup", { chat_id: msg.chat.id, message_id: msg.message_id, reply_markup: { inline_keyboard: keyboard } });
+    }
+    return answer("Добавил в «Послушаю позже»");
+  }
   if (data === "fg") {   // человек просит удалить его данные
     const h = await hmacHex(env.BOT_TOKEN, String(uid), 16);
     const [votes, likes] = await env.DB.batch([
@@ -1051,6 +1237,7 @@ async function onCallback(cq, env) {
       env.DB.prepare("DELETE FROM playlists WHERE uid = ?").bind(h),
       env.DB.prepare("DELETE FROM duels WHERE a_id = ? OR b_id = ?").bind(uid, uid),
       env.DB.prepare("DELETE FROM later WHERE tg_id = ?").bind(uid), env.DB.prepare("DELETE FROM people WHERE tg_id = ?").bind(uid),
+      env.DB.prepare("DELETE FROM follows WHERE tg_id = ?").bind(uid),
       env.DB.prepare("DELETE FROM collages WHERE uid = ?").bind(h));
     await env.DB.batch(ops);
     await edit("Удалил. Оценки в самом приложении хранит Telegram — они сотрутся, если очистить данные мини-приложения.");
@@ -1077,6 +1264,8 @@ async function onCallback(cq, env) {
 async function cron(env) {
   const now = new Date(), hour = now.getUTCHours();
   // напоминания — только днём по Москве (10:00–22:00), чтобы не будить
+  // сначала новости о релизах: они важнее, а правило «одно сообщение в сутки» общее
+  if (hour >= 7 && hour <= 18) await sendReleases(env).catch(e => console.log("releases", e));
   if (hour >= 7 && hour <= 18) await sendReminders(env).catch(e => console.log("remind", e));
   // по понедельникам утром — сводка владельцу
   if (now.getUTCDay() === 1 && hour === 7 && env.OWNER_ID) {
@@ -1091,5 +1280,7 @@ async function cron(env) {
     env.DB.prepare("DELETE FROM seen WHERE day < ?").bind(dayKey(Date.now() - 40 * 86400000)),
     env.DB.prepare("DELETE FROM stats WHERE day < ?").bind(dayKey(Date.now() - 400 * 86400000)),
     env.DB.prepare("DELETE FROM collages WHERE at < ?").bind(Date.now() - 14 * 86400000),
-  ]);
+    env.DB.prepare("DELETE FROM releases WHERE date < ? AND found < ?").bind(dayKey(Date.now() - 120 * 86400000), Date.now() - 60 * 86400000),
+    env.DB.prepare("DELETE FROM artists WHERE key NOT IN (SELECT key FROM follows)"),
+  ]).catch(e => console.log("clean", e));
 }

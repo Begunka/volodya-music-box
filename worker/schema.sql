@@ -42,3 +42,18 @@ CREATE TABLE IF NOT EXISTS donations (charge TEXT PRIMARY KEY, tg_id INTEGER NOT
 
 -- коллажи обложек: картинка живёт, пока Telegram её не заберёт при отправке; храним 14 дней
 CREATE TABLE IF NOT EXISTS collages (id TEXT PRIMARY KEY, uid TEXT NOT NULL, img BLOB NOT NULL, at INTEGER NOT NULL);
+
+-- слежение за исполнителями. follows: кто и за кем (настоящий Telegram ID — иначе боту некуда писать о новом релизе);
+-- since — с какой даты выхода релиз считается новым для этого человека, sent — когда ему последний раз писали
+CREATE TABLE IF NOT EXISTS follows (
+  tg_id INTEGER NOT NULL, key TEXT NOT NULL, name TEXT NOT NULL, h TEXT NOT NULL,
+  added INTEGER NOT NULL, since TEXT NOT NULL, sent INTEGER, PRIMARY KEY (tg_id, key)
+);
+CREATE INDEX IF NOT EXISTS follows_key ON follows (key);
+-- исполнители, за которыми кто-то следит: их номер в MusicBrainz (ищет бот на GitHub) и когда проверяли
+CREATE TABLE IF NOT EXISTS artists (key TEXT PRIMARY KEY, mbid TEXT, checked INTEGER);
+-- найденные релизы: rid — release group из MusicBrainz или «a<номер>» для альбома, который появился в архиве (at — когда)
+CREATE TABLE IF NOT EXISTS releases (
+  key TEXT NOT NULL, rid TEXT NOT NULL, title TEXT NOT NULL, date TEXT NOT NULL, type TEXT,
+  cover INTEGER NOT NULL DEFAULT 0, album INTEGER, at INTEGER, found INTEGER NOT NULL, PRIMARY KEY (key, rid)
+);
