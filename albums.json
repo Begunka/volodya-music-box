@@ -5883,8 +5883,8 @@
   "added": "2026-04-18T19:37:47",
   "post_url": "https://t.me/volodyamusicbox/3097",
   "cover_ext": "webp",
-  "year_tried": 1794824295,
-  "disco_v": 1,
+  "year_tried": 1794848964,
+  "disco_v": 2,
   "genres": [
    "Rock",
    "Latin",
@@ -5895,7 +5895,7 @@
    "Schlager",
    "Beat"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827728
  },
  {
@@ -5955,7 +5955,7 @@
   "id": 288,
   "added": "2026-04-18T19:39:30",
   "cover_ext": "webp",
-  "year_tried": 1794824295,
+  "year_tried": 1794848964,
   "genres": [
    "Rock"
   ],
@@ -5964,8 +5964,8 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794767774,
-  "year_suspect": "1969",
-  "disco_v": 1
+  "disco_v": 2,
+  "year_suspect": "1969"
  },
  {
   "title": "Tamboo!",
