@@ -12749,12 +12749,13 @@
   "added": "2026-11-06T04:08:22",
   "post_url": "https://t.me/volodyamusicbox/6235",
   "cover_ext": "webp",
-  "year_tried": 1794549254,
+  "year_tried": 1794821054,
   "genres": [
    "Electronic"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794765485
+  "genre_src": "artist",
+  "genre_tried": 1794765485,
+  "disco_v": 1
  },
  {
   "title": "Shut Down, Vol. 2",
@@ -12888,7 +12889,7 @@
   "added": "2026-09-24T16:53:52",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/5541",
-  "year_tried": 1794549073,
+  "year_tried": 1794821054,
   "genres": [
    "Jazz",
    "Non-Music"
@@ -12897,7 +12898,8 @@
    "Easy Listening",
    "Spoken Word"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Sallies Fforth",
