@@ -14112,6 +14112,8 @@
   "year": "2022",
   "id": 692,
   "added": "2026-11-16T04:26:43",
+  "cover_ext": "webp",
+  "year_tried": 1794803253,
   "genres": [
    "Folk, World, & Country"
   ],
@@ -14120,7 +14122,6 @@
    "Folk"
   ],
   "genre_src": "artist",
-  "cover_ext": "webp",
-  "year_tried": 1794803253
+  "genre_tried": 1794803309
  }
 ]
