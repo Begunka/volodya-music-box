@@ -71,9 +71,14 @@ export default {
     // ----- картинка коллажа: её забирает Telegram при отправке, потом она почти не нужна -----
     const col = url.pathname.match(/^\/c\/([a-f0-9]{12})\.jpg$/);
     if (col) {
+      const cache = caches.default, key = new Request(url.origin + url.pathname);
+      const hit = await cache.match(key);
+      if (hit) return hit;
       const r = await env.DB.prepare("SELECT img FROM collages WHERE id = ?").bind(col[1]).first().catch(() => null);
       if (!r) return new Response("not found", { status: 404 });
-      return new Response(new Uint8Array(r.img), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=1209600, immutable" } });
+      const res = new Response(new Uint8Array(r.img), { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=1209600, immutable" } });
+      ctx.waitUntil(cache.put(key, res.clone()));
+      return res;
     }
 
     // ----- мини-приложение: дуэли, оценки -----
@@ -401,9 +406,9 @@ async function api(req, url, env, ctx) {
     const r = await tgCall(env, "createInvoiceLink", invoice(amount));
     return json(r.ok ? { link: r.result } : { error: "tg" });
   }
-  if (url.pathname === "/api/collage" && req.method === "POST") return collageApi(env, ctx, user, me, body);
   // забаненный может смотреть, но не может ничего менять
   if (banned && req.method === "POST") return json({ error: "ban" });
+  if (url.pathname === "/api/collage" && req.method === "POST") return collageApi(env, ctx, user, me, body);
 
   if (url.pathname.startsWith("/api/pl/")) return playlistApi(req, url, env, user, body);
 
@@ -439,8 +444,10 @@ async function api(req, url, env, ctx) {
   // создать дуэль: 15 альбомов и ответы автора
   if (url.pathname === "/api/duel/new" && req.method === "POST") {
     if (!(await isSub(env, user.id))) return json({ error: "sub" });
-    const ids = (body.ids || []).slice(0, 20).map(Number), ans = (body.answers || []).slice(0, 20).map(Number);
-    if (ids.length < 5 || ids.length !== ans.length) return json({ error: "bad" });
+    const ids = (Array.isArray(body.ids) ? body.ids : []).slice(0, 20).map(Number);
+    if (ids.length < 5 || new Set(ids).size !== ids.length || ids.some(n => !(Number.isInteger(n) && n > 0))
+      || !Array.isArray(body.answers) || body.answers.length !== ids.length) return json({ error: "bad" });
+    const ans = cleanAns(body.answers, ids.length);
     // не больше 10 вызовов в сутки с одного человека — чтобы никто не завалил базу
     const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM duels WHERE a_id = ? AND created > ?")
       .bind(user.id, Date.now() - 86400000).first();
@@ -484,8 +491,9 @@ async function api(req, url, env, ctx) {
   // принять вызов: закрепить за собой и показать это в чате
   if (m[2] === "/claim") {
     if (!free) return json(duelView(d, user.id));
-    await env.DB.prepare("UPDATE duels SET b_id = ?, b_name = ?, claimed = ? WHERE id = ? AND b_ans IS NULL")
-      .bind(user.id, handle(user), Date.now(), d.id).run();
+    // условие повторяем в самом запросе: если двое нажали разом, вызов получит только первый
+    await env.DB.prepare("UPDATE duels SET b_id = ?1, b_name = ?2, claimed = ?3 WHERE id = ?4 AND b_ans IS NULL AND (b_id IS NULL OR b_id = ?1 OR claimed IS NULL OR claimed < ?5)")
+      .bind(user.id, handle(user), Date.now(), d.id, Date.now() - CLAIM_TTL).run();
     const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
     if (d.b_id !== user.id) ctx.waitUntil(editDuelMessage(fresh, env).catch(e => console.log("edit", e)));
     return json(duelView(fresh, user.id));
@@ -496,8 +504,8 @@ async function api(req, url, env, ctx) {
   const ans = cleanAns(body.answers, JSON.parse(d.ids).length);
   const r = aDone(d) ? duelMatch(JSON.parse(d.a_ans), ans) : { pct: null };
   const upd = await env.DB.prepare(
-    "UPDATE duels SET b_id = ?, b_name = ?, b_ans = ?, pct = ? WHERE id = ? AND b_ans IS NULL")
-    .bind(user.id, handle(user), JSON.stringify(ans), r.pct, d.id).run();
+    "UPDATE duels SET b_id = ?1, b_name = ?2, b_ans = ?3, pct = ?4 WHERE id = ?5 AND b_ans IS NULL AND (b_id IS NULL OR b_id = ?1 OR claimed IS NULL OR claimed < ?6)")
+    .bind(user.id, handle(user), JSON.stringify(ans), r.pct, d.id, Date.now() - CLAIM_TTL).run();
   const fresh = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(d.id).first();
   if (upd.meta && upd.meta.changes) ctx.waitUntil(editDuelMessage(fresh, env).catch(e => console.log("edit", e)));
   return json(duelView(fresh, user.id));
@@ -523,16 +531,39 @@ async function editDuelMessage(d, env) {
   });
 }
 
-// 15 альбомов для вызова: с обложкой и исполнителем, поровну из разных десятилетий
-function pickDuel(all, n = 15) {
-  const shuffle = l => l.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
-  const byDec = {};
-  all.filter(a => a.has_cover && a.artist).forEach(a => { const k = a.year ? a.year.slice(0, 3) : "?"; (byDec[k] = byDec[k] || []).push(a); });
-  Object.keys(byDec).forEach(k => byDec[k] = shuffle(byDec[k]));
-  const decs = shuffle(Object.keys(byDec)), out = [];
-  while (out.length < n && decs.some(k => byDec[k].length))
-    for (const k of decs) if (byDec[k].length && out.length < n) out.push(byDec[k].pop());
-  return shuffle(out).map(a => a.id);
+// 15 альбомов для вызова. Раньше брали поровну из каждого десятилетия — и единственный альбом 40-х
+// попадал в каждый вызов, а 50-е (26 альбомов) повторялись через раз. Теперь взвешенный выбор без возврата:
+// редкие десятилетия слегка подняты (вес 1/√размера, но не выше, чем у десятилетия из 20 альбомов),
+// один исполнитель — один альбом, а то, что было в последних вызовах человека (skip), не берём.
+function pickDuel(all, n = 15, skip = []) {
+  const size = {}, dec = a => a.year ? String(a.year).slice(0, 3) : "?";
+  let pool = all.filter(a => a.has_cover && a.artist);
+  pool.forEach(a => size[dec(a)] = (size[dec(a)] || 0) + 1);
+  const skipped = new Set(skip.map(Number));
+  if (pool.length - skipped.size >= n * 3) pool = pool.filter(a => !skipped.has(a.id));
+  // Efraimidis–Spirakis: ключ = случайное^(1/вес), берём наибольшие
+  const keyed = pool.map(a => [Math.pow(Math.random(), Math.sqrt(Math.max(size[dec(a)], 20))), a]).sort((x, y) => y[0] - x[0]);
+  const out = [], artists = new Set();
+  for (const [, a] of keyed) {
+    const who = norm(a.artist);
+    if (artists.has(who)) continue;
+    artists.add(who); out.push(a.id);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+
+// случайный альбом в инлайне без повторов: у каждого человека своя перетасовка архива, по ней идём
+// шагом в 5 секунд (столько Telegram держит ответ в кэше). Пока не пройдёт весь круг — альбом не повторится.
+// В базу ничего не пишем.
+function rollAlbum(all, seed) {
+  const slot = Math.floor(Date.now() / 5000), n = all.length, round = Math.floor(slot / n);
+  let h = 2166136261;
+  for (const c of seed + ":" + round) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+  const order = all.map((_, i) => i);
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  return all[order[slot % n]];
 }
 
 // Telegram сообщает, что человек выбрал карточку из инлайн-списка
@@ -552,7 +583,10 @@ async function chosen(c, env) {
   // вызов прямо из списка: дуэль создаётся в момент отправки, автор ответит по кнопке
   const n = rid.match(/^dnew-([a-f0-9]{10})$/);
   if (n) {
-    const ids = pickDuel(await archive(env));
+    // не повторяем альбомы из последних вызовов этого человека
+    const past = await env.DB.prepare("SELECT ids FROM duels WHERE a_id = ?1 OR b_id = ?1 ORDER BY created DESC LIMIT 8").bind(c.from.id).all();
+    const skip = past.results.flatMap(r => { try { return JSON.parse(r.ids); } catch (e) { return []; } });
+    const ids = pickDuel(await archive(env), 15, skip);
     await env.DB.prepare("INSERT OR IGNORE INTO duels (id, created, a_id, a_name, ids, a_ans, msg) VALUES (?, ?, ?, ?, ?, '[]', ?)")
       .bind(n[1], Date.now(), c.from.id, handle(c.from), JSON.stringify(ids), c.inline_message_id).run();
   }
@@ -646,7 +680,7 @@ async function inline(q, env) {
       results = [duelArticle(duel[1], who, env, true)];
     } else results = [];
   } else if (/^вызов$/.test(raw) || !query) {
-    const rnd = all[Math.floor(Math.random() * all.length)];
+    const rnd = rollAlbum(all, q.from ? String(q.from.id) : "anon");
     const fresh = [...all].sort((x, y) => (y.added || "").localeCompare(x.added || "")).slice(0, 8);
     const thumb = `${env.PAGES}covers/jpg/${fresh[1].id}.jpg`;
     // вызов — одной карточкой: готовый (ответы уже сохранены в архиве) или новый, создаётся при отправке
@@ -758,10 +792,10 @@ async function statsText(env, days = 7) {
   const label = days === 1 ? "сегодня" : days === 7 ? "за 7 дней" : "за 30 дней";
   const prevLabel = days === 1 ? "вчера" : days === 7 ? "предыдущие 7 дней" : "предыдущие 30 дней";
   const where = { "iq:sender": "в личке с ботом", "iq:private": "в личных чатах", "iq:group": "в группах", "iq:supergroup": "в супергруппах", "iq:channel": "в каналах", "iq:unknown": "место неизвестно" };
-  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»", "sent:collage": "коллаж обложек" };
+  const sent = { "sent:album": "альбом из поиска", "sent:random": "случайный альбом", "sent:duel": "вызов на сравнение вкусов", "sent:playlist": "плейлист", "sent:open": "кнопку «открыть архив»", "sent:collage": "коллаж обложек", "sent:taste": "карточку вкуса" };
   const open = { "open:plain": "просто открыли архив", "open:album": "по ссылке на альбом (комментарии, пересылки)", "open:album_g": "из карточки альбома в группе",
     "open:album_p": "из карточки альбома в личном чате", "open:album_c": "из карточки альбома в канале", "open:album_s": "из карточки альбома в личке бота",
-    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту", "open:collage": "по чужому коллажу" };
+    "open:album_r": "из напоминания «послушаю позже»", "open:duel": "по вызову на сравнение вкусов", "open:pl": "по плейлисту", "open:collage": "по чужому коллажу", "open:taste": "по чужой карточке вкуса" };
   const list = (obj, map) => Object.keys(map).filter(key => obj[key]).sort((x, y) => obj[y] - obj[x]).map(key => `   • ${map[key]}: ${obj[key]}`);
   const inl = sum(k, "iq:"), apps = sum(k, "open:"), sentN = sum(k, "sent:");
   const lines = [
@@ -807,15 +841,16 @@ async function collageApi(env, ctx, user, me, body) {
   const id = [...crypto.getRandomValues(new Uint8Array(6))].map(x => x.toString(16).padStart(2, "0")).join("");
   await env.DB.prepare("INSERT INTO collages (id, uid, img, at) VALUES (?, ?, ?, ?)").bind(id, me, bytes, Date.now()).run();
   const url = `${(env.PAGES || "").replace(/\/$/, "")}/c/${id}.jpg`, bot = botName(env);
-  const size = /^[345]$/.test(String(body.size)) ? body.size : "";
+  const size = /^[345]$/.test(String(body.size)) ? body.size : "", taste = body.kind === "taste";
   const r = await tgCall(env, "savePreparedInlineMessage", {
     user_id: user.id,
     result: { type: "photo", id, photo_url: url, thumbnail_url: url,
-      caption: `${size ? size + "×" + size + " · " : ""}собрано в архиве @${bot}`,
-      reply_markup: { inline_keyboard: [[{ text: "Собрать свой", url: `${env.MINIAPP}?startapp=collage` }]] } },
+      caption: taste ? `мой вкус · собрано в архиве @${bot}` : `${size ? size + "×" + size + " · " : ""}собрано в архиве @${bot}`,
+      reply_markup: { inline_keyboard: [[taste ? { text: "Узнать свой", url: `${env.MINIAPP}?startapp=taste` }
+                                               : { text: "Собрать свой", url: `${env.MINIAPP}?startapp=collage` }]] } },
     allow_user_chats: true, allow_bot_chats: true, allow_group_chats: true, allow_channel_chats: true,
   }).catch(() => ({}));
-  ctx.waitUntil(track(env, ["sent:collage"], [["inline", me]]).catch(() => {}));
+  ctx.waitUntil(track(env, [taste ? "sent:taste" : "sent:collage"], [["inline", me]]).catch(() => {}));
   return json({ ok: true, url, prepared: r && r.ok ? r.result.id : null });
 }
 
@@ -1015,7 +1050,8 @@ async function onCallback(cq, env) {
       env.DB.prepare("DELETE FROM playlist_likes WHERE pid IN (SELECT id FROM playlists WHERE uid = ?)").bind(h),
       env.DB.prepare("DELETE FROM playlists WHERE uid = ?").bind(h),
       env.DB.prepare("DELETE FROM duels WHERE a_id = ? OR b_id = ?").bind(uid, uid),
-      env.DB.prepare("DELETE FROM later WHERE tg_id = ?").bind(uid), env.DB.prepare("DELETE FROM people WHERE tg_id = ?").bind(uid));
+      env.DB.prepare("DELETE FROM later WHERE tg_id = ?").bind(uid), env.DB.prepare("DELETE FROM people WHERE tg_id = ?").bind(uid),
+      env.DB.prepare("DELETE FROM collages WHERE uid = ?").bind(h));
     await env.DB.batch(ops);
     await edit("Удалил. Оценки в самом приложении хранит Telegram — они сотрутся, если очистить данные мини-приложения.");
     return answer("Удалено");

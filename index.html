@@ -8,6 +8,13 @@
   // Если открыли её (например, старой кнопкой в боте) — переносим на основной адрес, сохраняя данные Telegram в #.
   if (/github\.io$/.test(location.hostname)) location.replace("https://volodya-archive.zaharmakaka.workers.dev/" + location.search + location.hash);
 </script>
+<script>
+  // тема и оформление — до первой отрисовки, чтобы страница не мигала
+  (function(){ var r = document.documentElement, skin = "";
+    try { skin = localStorage.getItem("skin") || ""; } catch (e) {}
+    r.setAttribute("data-theme", window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    if (/^(indigo|moss)$/.test(skin)) r.setAttribute("data-skin", skin); })();
+</script>
 <title>Volodya Music Box</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -22,34 +29,56 @@ img{max-width:100%}
 [hidden]{display:none!important}
 /* Layout: a record crate — sticky search bar, a dense wall of sleeves, a sheet that slides up for one record. */
 :root{
-  --bg:#f3f4f7; --surface:#ffffff; --ink:#14161c; --muted:#646a7a; --line:#dfe2ea;
-  --accent:#2a44e6; --accent-ink:#ffffff; --chip:#e7e9f1; --shade:rgba(10,12,20,.45);
+  --bg:#f5f1ea; --surface:#fffdf9; --ink:#1c1915; --muted:#6f675b; --line:#e3dccf;
+  --accent:#b8500f; --accent-ink:#ffffff; --chip:#ece5d9; --shade:rgba(24,18,10,.45);
   --display:"Unbounded","Golos Text",system-ui,sans-serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1116; --surface:#181b23; --ink:#eceef4; --muted:#9097a8; --line:#272b36;
-  --accent:#8c9cff; --accent-ink:#0f1116; --chip:#20242e; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+/* «Винил» (по умолчанию): тёплая бумага и янтарь */
 :root[data-theme="dark"]{
+  --bg:#121110; --surface:#1b1917; --ink:#f2ede6; --muted:#a39a8b; --line:#2c2925;
+  --accent:#f0a23b; --accent-ink:#1a1206; --chip:#262320; --shade:rgba(0,0,0,.62); color-scheme:dark}
+/* «Индиго»: прежнее холодное оформление */
+:root[data-skin="indigo"]{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#14161c; --muted:#646a7a; --line:#dfe2ea;
+  --accent:#2a44e6; --accent-ink:#ffffff; --chip:#e7e9f1; --shade:rgba(10,12,20,.45)}
+:root[data-skin="indigo"][data-theme="dark"]{
   --bg:#0f1116; --surface:#181b23; --ink:#eceef4; --muted:#9097a8; --line:#272b36;
-  --accent:#8c9cff; --accent-ink:#0f1116; --chip:#20242e; --shade:rgba(0,0,0,.6); color-scheme:dark}
+  --accent:#8c9cff; --accent-ink:#0f1116; --chip:#20242e; --shade:rgba(0,0,0,.6)}
+/* «Мох»: зелёное */
+:root[data-skin="moss"]{
+  --bg:#f1f5f1; --surface:#ffffff; --ink:#131a16; --muted:#5d6b63; --line:#dbe4dd;
+  --accent:#1f7a4d; --accent-ink:#ffffff; --chip:#e4ece6; --shade:rgba(8,16,12,.45)}
+:root[data-skin="moss"][data-theme="dark"]{
+  --bg:#0e1311; --surface:#161d1a; --ink:#e9efe9; --muted:#8f9c94; --line:#25312b;
+  --accent:#6fd39a; --accent-ink:#08130d; --chip:#1d2723; --shade:rgba(0,0,0,.6)}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
-header.top{padding-block:22px 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header.top{padding-block:22px 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .brand h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,5vw,30px);letter-spacing:-.01em;margin:0;line-height:1.05;text-wrap:balance}
 .brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .count{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.top-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.top-btns{display:flex;gap:6px}
-@media (max-width:600px){.top-r{width:100%;flex-direction:row-reverse;justify-content:space-between;align-items:center}}
-.top-btns button{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.top-btns button b{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;line-height:18px;text-align:center;font-variant-numeric:tabular-nums}
-.top-btns button b:empty{display:none}
+/* разделы: шесть плиток под «в этот день» */
+.hub{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 22px}
+@media (min-width:720px){.hub{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
+.hub button{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:11px 12px 10px;border-radius:14px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;transition:border-color .15s,transform .1s}
+.hub button:hover{border-color:var(--accent)}
+.hub button:active{transform:scale(.97)}
+.hub button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hub svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px}
+.hub b{font-weight:600;font-size:14px;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub span{color:var(--muted);font-size:11.5px;line-height:1.25;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hub i{position:absolute;right:9px;top:9px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:var(--accent-ink);
+  font:700 11px/20px var(--mono);text-align:center;font-style:normal}
+.hub i:empty{display:none}
+.sec{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 12px}
+.sec b{font-family:var(--display);font-weight:700;font-size:15px}
 
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
 .row{display:flex;gap:8px;align-items:center;min-width:0}
@@ -60,7 +89,8 @@ header.top{padding-block:22px 6px;display:flex;align-items:flex-end;justify-cont
 .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted)}
 button{font:inherit;cursor:pointer}
 .btn{height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500;white-space:nowrap}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn:active,.duel .go:active,.duel .alt:active,.vote button:active{transform:scale(.98)}
 .btn:focus-visible,.chip:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 select.btn{appearance:none;padding-right:14px}
 .chips{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
@@ -72,7 +102,8 @@ main{padding-block:16px 40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 14px}
 @media (max-width:420px){.grid{grid-template-columns:repeat(2,1fr);gap:16px 12px}}
 .tile{display:flex;flex-direction:column;gap:7px;background:none;border:0;padding:0;text-align:left;color:inherit;min-width:0}
-.sleeve{position:relative;aspect-ratio:1;max-width:100%;border-radius:6px;overflow:hidden;background:var(--chip);box-shadow:0 1px 0 var(--line)}
+.tile:active .sleeve{transform:scale(.98)}
+.sleeve{position:relative;aspect-ratio:1;max-width:100%;border-radius:8px;overflow:hidden;background:var(--chip);box-shadow:0 1px 0 var(--line),0 6px 16px -10px rgba(0,0,0,.45);transition:transform .1s}
 .sleeve img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
 .tile:hover .sleeve img{transform:scale(1.03)}
 .cat{position:absolute;left:6px;top:6px;font-family:var(--mono);font-size:10px;padding:2px 5px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-variant-numeric:tabular-nums}
@@ -117,11 +148,10 @@ main{padding-block:16px 40px}
 .actions .alt{background:var(--chip);color:var(--ink)}
 .actions .off{background:var(--chip);color:var(--muted);border:0;cursor:default;font-size:13px;font-weight:500;text-align:center;line-height:1.2;padding:0 8px}
 .close{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;width:34px;height:34px;border-radius:50%;border:0;background:var(--chip);color:var(--ink);font-size:18px;line-height:1}
-.proto{font-size:12px;color:var(--muted);text-align:center;padding-top:28px}
 .vote{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
 .vote button{height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600}
 .vote button b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.vote button[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);color:var(--accent)}
+.vote button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface));color:var(--accent)}
 .vote button[aria-pressed="true"] b{color:var(--accent)}
 .info{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:10px}
 .info h4{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0}
@@ -137,10 +167,6 @@ main{padding-block:16px 40px}
 .author b{color:var(--ink);font-weight:600}
 .y .heart{color:var(--accent)}
 .scrim.top{z-index:35}.sheet.top{z-index:36}
-.pl-entries{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 16px}
-.pl-entries button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;min-width:0}
-.pl-entries b{font-weight:600}
-.pl-entries span{color:var(--muted);font-size:12px}
 .mosaic{display:grid;grid-template-columns:1fr 1fr;width:64px;height:64px;border-radius:6px;overflow:hidden;flex:none;background:var(--chip)}
 .mosaic img{width:32px;height:32px;object-fit:cover;display:block}
 .mosaic.big{width:120px;height:120px}.mosaic.big img{width:60px;height:60px}
@@ -187,9 +213,6 @@ textarea.field{min-height:90px;resize:vertical}
 .gate-card button{height:46px;border-radius:12px;font-weight:600;width:100%}
 .gate-card .go{border:0;background:var(--accent);color:var(--accent-ink)}
 .gate-card .alt{border:1px solid var(--line);background:none;color:var(--ink);font-weight:500}
-.duel-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:14px 0 2px;padding:12px 14px;border-radius:12px;
-  border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
-.duel-entry b{font-weight:600}
 .col-grid{display:grid;gap:4px}
 .col-cell{aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--surface);padding:0;overflow:hidden;color:var(--muted);font-size:20px;position:relative}
 .col-cell.full{border-style:solid}
@@ -199,7 +222,6 @@ textarea.field{min-height:90px;resize:vertical}
 .col-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
 .col-bar button{flex:none;width:auto!important;height:34px!important;padding:0 14px}
 .duel .pl-row .alt{flex:1;width:auto}
-.duel-entry span{color:var(--muted);font-size:13px}
 .duel{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;
   padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .duel-in{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
@@ -231,7 +253,7 @@ textarea.field{min-height:90px;resize:vertical}
 .cmp .h span{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cmp .r{border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;color:var(--ink);text-align:left;width:100%;font:inherit}
 .cmp .r:first-of-type{border-top:0}
-.cmp .r.same{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.cmp .r.same{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .cmp .al{display:flex;gap:8px;align-items:center;min-width:0}
 .cmp .al img,.cmp .al .ph{width:36px;height:36px;border-radius:4px;object-fit:cover;flex:none;background:var(--chip)}
 .cmp .al div{min-width:0;font-size:12px;line-height:1.25}
@@ -243,17 +265,13 @@ textarea.field{min-height:90px;resize:vertical}
 .cmp .v.o{color:var(--muted);font-weight:400}
 .duel .alt{height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500;width:100%}
 /* «в этот день»: маленькая обложка и одна кнопка */
-.today{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 2px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
+.today{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
 .today img,.today .ph{width:52px;height:52px;border-radius:6px;object-fit:cover;flex:none;background:var(--chip)}
 .today div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .today small{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .today b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today em{flex:none;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
-.later-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:10px 0 12px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
-.later-entry b{font-weight:600}
-.later-entry span{color:var(--muted);font-size:13px}
-.pl-entries{margin-bottom:8px}
 .tag[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--chip)}
 .lrow{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px}
 .lrow .op{display:flex;gap:10px;align-items:center;flex:1;min-width:0;background:none;border:0;padding:0;color:var(--ink);text-align:left}
@@ -263,7 +281,37 @@ textarea.field{min-height:90px;resize:vertical}
 .lrow .op span{color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lrow .act{flex:none;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font-size:12px}
 .lrow .act.x{width:34px;padding:0;font-size:16px;color:var(--muted)}
-.foot-link{display:block;margin:10px auto 0;background:none;border:0;padding:4px 8px;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:2px}
+/* низ страницы: оформление и поддержка */
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted);font-size:12px;text-align:center}
+.foot p{margin:0}
+.skins{display:flex;align-items:center;gap:2px;margin-bottom:-4px}
+.skins button{width:30px;height:30px;border-radius:50%;border:0;background:none;padding:0;display:grid;place-items:center}
+.skins button::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:0 0 0 2px var(--bg),0 0 0 3px transparent;transition:box-shadow .15s}
+.skins button[aria-pressed="true"]::before{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.foot .support{height:36px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:500}
+/* карточка альбома: где послушать и похожие */
+.find{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted);margin:12px 0 0}
+.find a{color:var(--accent);text-decoration:none}
+.sim{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+.sim h4{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 10px}
+.sim div{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 2px}
+.sim div::-webkit-scrollbar{display:none}
+.sim button{flex:none;width:104px;background:none;border:0;padding:0;color:var(--ink);text-align:left}
+.sim img,.sim .ph{width:104px;height:104px;border-radius:6px;object-fit:cover;display:block;background:var(--chip)}
+.sim b{display:block;font-size:12px;font-weight:600;line-height:1.25;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sim span{display:block;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* «мой вкус» */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.kpis div{background:var(--surface);padding:12px;min-width:0}
+.kpis b{display:block;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpis span{font-size:12px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bars div{display:grid;grid-template-columns:44px 1fr 28px;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bars i{display:block;height:10px;border-radius:5px;background:var(--accent);min-width:2px}
+.bars em{font-style:normal;text-align:right;color:var(--ink)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--chip)}
+.tabs button{height:36px;border-radius:9px;border:0;background:none;color:var(--muted);font-weight:500}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .don-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .don-row button{height:46px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 </style>
@@ -274,14 +322,12 @@ textarea.field{min-height:90px;resize:vertical}
   <header class="top">
     <div class="brand">
       <h1>volodya music box</h1>
-      <p>Архив всех альбомов из канала</p>
+      <p>Архив канала @volodyamusicbox</p>
     </div>
-    <div class="top-r">
-      <div class="count" id="count">…</div>
-      <div class="top-btns">
-        <button type="button" id="later-top" hidden title="Отложенные альбомы">🎧 Позже <b id="later-badge"></b></button>
-        <button type="button" id="don-top" hidden title="Пожертвовать звёзды">★ Поддержать</button>
-      </div>
+    <div class="skins" id="skins" role="group" aria-label="Оформление">
+      <button type="button" data-skin="" style="--sw:#e08a2c" title="Оформление «Винил»" aria-label="Оформление «Винил»"></button>
+      <button type="button" data-skin="indigo" style="--sw:#6f80f5" title="Оформление «Индиго»" aria-label="Оформление «Индиго»"></button>
+      <button type="button" data-skin="moss" style="--sw:#3fae78" title="Оформление «Мох»" aria-label="Оформление «Мох»"></button>
     </div>
   </header>
 
@@ -311,27 +357,22 @@ textarea.field{min-height:90px;resize:vertical}
 
   <main>
     <button class="today" id="today" type="button" hidden></button>
-    <button class="later-entry" id="later-entry" type="button" hidden>
-      <div><b>Послушаю позже</b><br><span id="later-count">Откладывай альбомы — бот напомнит в личке</span></div>
-      <span aria-hidden="true">→</span>
-    </button>
-    <button class="duel-entry" id="duel-entry" type="button">
-      <div><b>Сравнить вкусы</b><br><span>15 альбомов, потом отправь другу и посмотри процент совпадения</span></div>
-      <span aria-hidden="true">→</span>
-    </button>
-    <button class="duel-entry" id="col-entry" type="button">
-      <div><b>Коллаж обложек</b><br><span>Сетка из любимых альбомов архива — сохрани картинкой или отправь в чат</span></div>
-      <span aria-hidden="true">→</span>
-    </button>
-    <div class="pl-entries">
-      <button type="button" id="pl-official"><b>Плейлисты от Володи</b><span>подборки автора канала</span></button>
-      <button type="button" id="pl-people"><b>Плейлисты людей</b><span>собери свой и поделись</span></button>
-    </div>
+    <nav class="hub" aria-label="Разделы">
+      <button type="button" id="hub-later" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Позже</b><span id="later-count">бот напомнит</span><i id="later-badge"></i></button>
+      <button type="button" id="hub-duel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 12l4 4-4 4M21 16H8"/></svg><b>Дуэль</b><span>сравнить вкусы</span></button>
+      <button type="button" id="hub-col"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><b>Коллаж</b><span>сетка обложек</span></button>
+      <button type="button" id="hub-pl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7"/><circle cx="17" cy="17" r="2.5"/><path d="M19.5 17V8l-3 1"/></svg><b>Плейлисты</b><span>подборки</span></button>
+      <button type="button" id="hub-taste"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-7M21 20H3"/></svg><b>Мой вкус</b><span>по оценкам</span></button>
+      <button type="button" id="hub-don" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/></svg><b>Звёзды</b><span>поддержать архив</span></button>
+    </nav>
+    <div class="sec"><b>Все альбомы</b><span class="count" id="count">…</span></div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Ничего не нашлось. Попробуй другое слово.</div>
     <div class="more"><button class="btn" id="more" type="button" hidden>Показать ещё</button></div>
-    <p class="proto">Годы и жанры — из Discogs и MusicBrainz. Пополняется ботом @volodyamusicbox_bot.</p>
-    <button class="foot-link" id="don-open" type="button" hidden>поддержать архив звёздами</button>
+    <footer class="foot">
+      <button class="support" id="don-open" type="button" hidden>★ Поддержать архив звёздами</button>
+      <p>Годы и жанры — из Discogs и MusicBrainz. Пополняется ботом @volodyamusicbox_bot.</p>
+    </footer>
   </main>
 </div>
 
@@ -352,7 +393,9 @@ textarea.field{min-height:90px;resize:vertical}
   <p class="note" id="s-note" hidden></p>
   <div class="s-more"><button class="tag" type="button" id="s-later" aria-pressed="false">Послушаю позже</button><button class="tag" type="button" id="s-addpl">+ в плейлист</button></div>
   <div class="actions" id="s-actions"></div>
+  <p class="find" id="s-find"></p>
   <div class="info" id="s-info" hidden></div>
+  <div class="sim" id="s-sim" hidden></div>
 </section>
 
 <section class="duel" id="duel" hidden aria-live="polite"><div class="duel-in" id="duel-in"></div></section>
@@ -361,6 +404,7 @@ textarea.field{min-height:90px;resize:vertical}
 <section class="duel" id="pl" hidden><div class="duel-in" id="pl-in"></div></section>
 <section class="duel" id="col" hidden><div class="duel-in" id="col-in"></div></section>
 <section class="duel" id="lt" hidden><div class="duel-in" id="lt-in"></div></section>
+<section class="duel" id="ts" hidden><div class="duel-in" id="ts-in"></div></section>
 <div class="toast" id="toast" hidden></div>
 
 <div class="gate" id="don" hidden role="dialog" aria-modal="true" aria-labelledby="don-title">
@@ -402,14 +446,28 @@ textarea.field{min-height:90px;resize:vertical}
     return `<div class="blank" style="background:linear-gradient(150deg,hsl(${h} 45% 34%),hsl(${(h+40)%360} 50% 18%))">
       <span>№${a.id}</span><b>${esc(a.title)}</b><span>${esc(a.artist || "исполнитель?")}</span></div>`;
   }
-  // Обложки, которых нет отдельным файлом, лежат пачками по 50 (covers/pack-N.json).
-  const packs = {};
-  window.coverFallback = img => {
-    const id = +img.dataset.id; img.onerror = null;
-    const k = Math.floor(id / 50);
-    packs[k] = packs[k] || fetch(`covers/pack-${k}.json`).then(r => r.json()).catch(() => ({}));
-    packs[k].then(p => { if (p[id]) img.src = p[id]; });
-  };
+  function toast(text, ms){ const t = $("toast"); t.textContent = text; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, ms || 2800); }
+  // честная перетасовка (sort со случайным сравнением тасует неравномерно)
+  function shuffle(list){ const l = list.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; }
+  // короткая память «что уже показывали» — чтобы случайный выбор не повторялся
+  const recent = (key, max) => ({
+    get(){ try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { return []; } },
+    set(l){ try { localStorage.setItem(key, JSON.stringify(l.slice(-max))); } catch (e) {} },
+    add(ids){ this.set(this.get().filter(x => !ids.includes(x)).concat(ids)); },
+  });
+  const rndSeen = recent("rndSeen", 3000), duelSeen = recent("duelSeen", 180);
+  // «Наугад»: пока не показаны все альбомы из текущего списка, ни один не повторится
+  function randomAlbum(){
+    const pool = view.length ? view : all; if (!pool.length) return;
+    let seen = new Set(rndSeen.get()), fresh = pool.filter(a => !seen.has(a.id));
+    if (!fresh.length) {   // круг пройден — начинаем новый
+      const ids = new Set(pool.map(a => a.id));
+      rndSeen.set(rndSeen.get().filter(id => !ids.has(id)));
+      fresh = pool.length > 1 ? pool.filter(a => a.id !== randomAlbum.last) : pool;
+    }
+    const a = fresh[Math.floor(Math.random() * fresh.length)];
+    randomAlbum.last = a.id; rndSeen.add([a.id]); open(a.id);
+  }
   const decadeOf = a => a.year ? a.year.slice(0,3) + "0" : null;
 
   // ---------- жанры и стили ----------
@@ -518,7 +576,7 @@ textarea.field{min-height:90px;resize:vertical}
     view.sort(by);
     shown = 0; $("grid").innerHTML = "";
     $("empty").hidden = view.length > 0;
-    $("count").textContent = view.length === all.length ? `${all.length} альбомов` : `${view.length} из ${all.length}`;
+    $("count").textContent = view.length === all.length ? `${all.length}` : `${view.length} из ${all.length}`;
     more();
   }
 
@@ -571,7 +629,12 @@ textarea.field{min-height:90px;resize:vertical}
       (a.listen_url ? `<a class="${a.post_url ? "alt" : "go"}" href="${esc(a.listen_url)}" target="_blank" rel="noopener">Слушать</a>` : "");
     $("s-actions").hidden = !a.listen_url && !a.post_url;
     $("s-actions").style.gridTemplateColumns = a.listen_url && a.post_url ? "1fr 1fr" : "1fr";
-    const over = !$("duel").hidden || !$("pl").hidden || !$("lt").hidden;
+    const q = encodeURIComponent(`${a.artist || ""} ${a.title}`.trim());
+    $("s-find").innerHTML = `Найти: <a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">YouTube</a>
+      <a href="https://music.yandex.ru/search?text=${q}" target="_blank" rel="noopener">Яндекс Музыка</a>
+      <a href="https://open.spotify.com/search/${q}" target="_blank" rel="noopener">Spotify</a>`;
+    paintSimilar(a);
+    const over = ["duel", "pl", "lt", "ts", "col"].some(id => !$(id).hidden);
     $("scrim").classList.toggle("top", over); $("sheet").classList.toggle("top", over);
     $("scrim").hidden = false; $("sheet").hidden = false;
     requestAnimationFrame(() => { $("scrim").classList.add("on"); $("sheet").classList.add("on"); });
@@ -579,6 +642,27 @@ textarea.field{min-height:90px;resize:vertical}
     if (location.hash !== "#album-" + id) history.replaceState(null, "", "#album-" + id);
     showInfo(a.id);
   }
+
+  // похожее: другие альбомы исполнителя, потом общие стили (редкий стиль весит больше частого)
+  let styleFreq = null;
+  function similar(a, n){
+    if (!styleFreq) { styleFreq = {}; all.forEach(x => (x.styles || []).forEach(st => styleFreq[st] = (styleFreq[st] || 0) + 1)); }
+    const st = new Set(a.styles || []), gn = new Set(a.genres || []), who = norm(a.artist || "");
+    return all.filter(x => x.id !== a.id).map(x => {
+      let sc = who && norm(x.artist || "") === who ? 6 : 0;
+      (x.styles || []).forEach(t => { if (st.has(t)) sc += 1 + 2 / Math.sqrt(styleFreq[t]); });
+      if (sc && (x.genres || []).some(g => gn.has(g))) sc += .3;
+      if (sc && a.year && x.year && Math.abs(a.year - x.year) <= 5) sc += .5;
+      return [sc, x];
+    }).filter(x => x[0] >= 1.5).sort((x, y) => y[0] - x[0] || y[1].id - x[1].id).slice(0, n || 8).map(x => x[1]);
+  }
+  function paintSimilar(a){
+    const list = similar(a);
+    $("s-sim").hidden = !list.length;
+    $("s-sim").innerHTML = list.length ? `<h4>Похожее в архиве</h4><div>${list.map(x =>
+      `<button type="button" data-id="${x.id}">${x.has_cover ? `<img src="covers/${x.id}.${x.cover_ext || "webp"}" alt="" loading="lazy">` : `<div class="ph"></div>`}<b>${esc(x.title)}</b><span>${esc(x.artist || "")}</span></button>`).join("")}</div>` : "";
+  }
+  $("s-sim").addEventListener("click", e => { const b = e.target.closest("[data-id]"); if (b) open(+b.dataset.id); });
 
   // справка: Википедия + состав из Discogs, по 50 альбомов в файле, грузится при открытии
   const infoPacks = {};
@@ -626,6 +710,7 @@ textarea.field{min-height:90px;resize:vertical}
     if (m) open(+m[1]);
     else if (sp === "later") Later.open();
     else if (sp === "collage") Collage.open();
+    else if (sp === "taste") Taste.open();
     else if (sp === "duel") Duel.start();
     else if (/^p[a-f0-9]{8}$/.test(sp)) Playlists.openById(sp.slice(1));
     else if (/^[dex][A-Za-z0-9_-]+$/.test(sp)) Duel.accept(sp);
@@ -675,13 +760,13 @@ textarea.field{min-height:90px;resize:vertical}
   // ---------- подписка: лайки и дуэли — только подписчикам канала ----------
   let subscribed = null, gateAction = null, banned = false;
   const BAN_TEXT = "Администратор закрыл тебе оценки, сравнения и плейлисты";
-  function banNote(){ const t = $("toast"); t.textContent = BAN_TEXT; t.hidden = false; clearTimeout(banNote._t); banNote._t = setTimeout(() => t.hidden = true, 3500); }
+  function banNote(){ toast(BAN_TEXT, 3500); }
   // откуда открыли приложение — для статистики владельца (только вид ссылки, без личных данных)
   function openSource(){
     const sp = (tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param) || "";
     const m = sp.match(/^album_\d+(?:_([a-z]))?$/);
     return m ? "album" + (m[1] ? "_" + m[1] : "") : /^p[a-f0-9]{8}$/.test(sp) ? "pl" : sp === "duel" || /^x[a-f0-9]{10}$/.test(sp) ? "duel"
-      : sp === "later" ? "later" : sp === "collage" ? "collage" : /from=kb/.test(location.search) ? "kb" : "plain";
+      : sp === "later" ? "later" : sp === "collage" ? "collage" : sp === "taste" ? "taste" : /from=kb/.test(location.search) ? "kb" : "plain";
   }
   let subAsked = false;
   async function checkSub(){
@@ -737,24 +822,30 @@ textarea.field{min-height:90px;resize:vertical}
     const diff = pending(); if (!Object.keys(diff).length) return;
     try { navigator.sendBeacon("/api/vote", new Blob([JSON.stringify({initData: tgApp.initData, r: diff})], {type: "text/plain"})); } catch (e) {}
   }
+  let flushFails = 0;
   async function flush(){
     if (!inTg || flushing || subscribed === false || banned) return;
     const diff = pending(), ids = Object.keys(diff).slice(0, 300);
     if (!ids.length) return;
     const batch = {}; ids.forEach(id => batch[id] = diff[id]);
     flushing = true;
+    let r = null;
     try {
-      const r = await fetch("/api/vote", {method: "POST", headers: {"Content-Type": "application/json"},
+      r = await fetch("/api/vote", {method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({initData: tgApp.initData, r: batch})}).then(r => r.json());
       if (r.error === "ban") { banned = true; banNote(); }
+      if (r.error === "sub") subscribed = false;   // отписался — оценки подождут у него, при следующем нажатии спросим подписку
       if (r.ok) {
+        flushFails = 0;
         ids.forEach(id => { if (batch[id] === 0) delete sent[id]; else sent[id] = batch[id]; });
         Object.entries(r.counts || {}).forEach(([id, [l, d]]) => { const a = all.find(x => x.id === +id); if (a) { a.likes = l; a.dislikes = d; } });
         saveVotes(); paintVote();
       }
-    } catch (e) {}
+    } catch (e) { r = null; }
     flushing = false;
-    if (Object.keys(pending()).length) paintSendbar();   // что-то нажали, пока отправляли
+    // повторяем, только если сервер принял пачку и накопилось новое; при обрыве связи — три попытки с паузой, не по кругу
+    if (r && r.ok) { if (Object.keys(pending()).length) paintSendbar(); }
+    else if (!r && ++flushFails <= 3) { clearTimeout(flushTimer); flushTimer = setTimeout(flush, 15000 * flushFails); }
   }
   // общий счёт лайков и оценки автора — с сервера (кэш 30 секунд)
   async function loadCounts(){
@@ -783,14 +874,25 @@ textarea.field{min-height:90px;resize:vertical}
         : await fetch(path + "?initData=" + encodeURIComponent(init));
       return r.json();
     }
+    // Раньше из каждого десятилетия бралось поровну — единственный альбом 40-х был в каждом вызове.
+    // Теперь взвешенный выбор без возврата (как на сервере): редкие десятилетия слегка подняты,
+    // один исполнитель — один альбом, и не берём то, что было в последних вызовах на этом устройстве.
     function pick(){
-      const pool = all.filter(a => a.has_cover && a.artist), byDec = {};
-      pool.forEach(a => (byDec[decadeOf(a) || "?"] = byDec[decadeOf(a) || "?"] || []).push(a));
-      Object.values(byDec).forEach(l => l.sort(() => Math.random() - .5));
-      const decs = Object.keys(byDec).sort(() => Math.random() - .5), out = [];
-      while (out.length < N && decs.some(k => byDec[k].length))
-        for (const k of decs) if (byDec[k].length && out.length < N) out.push(byDec[k].pop());
-      return out.sort(() => Math.random() - .5).map(a => a.id);
+      const size = {}, dec = a => decadeOf(a) || "?";
+      let pool = all.filter(a => a.has_cover && a.artist);
+      pool.forEach(a => size[dec(a)] = (size[dec(a)] || 0) + 1);
+      const skip = new Set(duelSeen.get());
+      if (pool.length - skip.size >= N * 3) pool = pool.filter(a => !skip.has(a.id));
+      const keyed = pool.map(a => [Math.pow(Math.random(), Math.sqrt(Math.max(size[dec(a)], 20))), a]).sort((x, y) => y[0] - x[0]);
+      const out = [], artists = new Set();
+      for (const [, a] of keyed) {
+        const who = norm(a.artist);
+        if (artists.has(who)) continue;
+        artists.add(who); out.push(a.id);
+        if (out.length >= N) break;
+      }
+      duelSeen.add(out);
+      return out;
     }
     function match(a, b){
       let both = 0, same = 0;
@@ -861,7 +963,7 @@ textarea.field{min-height:90px;resize:vertical}
 
     // что показать по текущему состоянию дуэли
     function view(){
-      set = d.ids; idx = 0;
+      set = d.ids; idx = 0; duelSeen.add(set);
       if (d.role === "author" && !d.a_done) {
         // вызов отправлен прямо из списка бота — автор ещё не отвечал
         mine = [];
@@ -932,10 +1034,14 @@ textarea.field{min-height:90px;resize:vertical}
         <div class="dcover">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : ""}</div>
         <div class="dmeta"><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}</span></div>
         <div class="answers"><button data-a="1">Зашло</button><button data-a="2">Не зашло</button>
-          <button class="wide" data-a="0">Не слышал</button></div>`);
+          <button class="wide" data-a="0">Не слышал</button></div>
+        ${idx > 0 ? `<button class="alt" data-x="prev">← К предыдущему</button>` : ""}`);
+      askedAt = Date.now();
     }
     function next(){ idx++; idx < set.length ? ask() : done(); }
+    let askedAt = 0;
     function answer(v){
+      if (Date.now() - askedAt < 300) return;   // двойное нажатие не должно отвечать за следующий альбом
       mine[idx] = v;
       if (v) { cur[String(set[idx])] = v === 1 ? 1 : -1; saveVotes(); paintSendbar(); }   // заодно в обычные оценки
       if (tgApp && tgApp.HapticFeedback) tgApp.HapticFeedback.selectionChanged();
@@ -984,13 +1090,14 @@ textarea.field{min-height:90px;resize:vertical}
       if (x.dataset.x === "fresh") fresh();
       if (x.dataset.x === "claim") claim();
       if (x.dataset.x === "self" && d) { mine = []; idx = 0; ask(); }
+      if (x.dataset.x === "prev" && idx > 0) { idx--; ask(); }
       if (x.dataset.x === "send" && d) {
         // пустой запрос: бот сам первой строкой предложит этот вызов
         try { tgApp.switchInlineQuery("", ["users", "groups"]); }
         catch (err) { fail("Обнови Telegram: эта версия не умеет отправлять вызовы из мини-приложения."); }
       }
     });
-    return {start, accept};
+    return {start, accept, _pick: pick};
   })();
 
   // ---------- плейлисты ----------
@@ -1002,7 +1109,6 @@ textarea.field{min-height:90px;resize:vertical}
     const top = (label, withBack) => `<div class="duel-top"><span class="step">${withBack ? `<button class="alt" style="width:auto;height:32px;padding:0 10px" data-x="back">← Назад</button>` : esc(label)}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>`;
     function show(html){ $("pl-in").innerHTML = html; $("pl").hidden = false; $("pl").scrollTop = 0; }
     function hide(){ $("pl").hidden = true; }
-    function toast(t){ $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => $("toast").hidden = true, 2600); }
     const mosaic = (ids, big) => `<div class="mosaic${big ? " big" : ""}">${ids.slice(0, 4).map(byId).filter(Boolean).map(a => a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<i></i>`).join("")}</div>`;
     async function api(path, body){
       const init = inTg ? tgApp.initData : "";
@@ -1047,13 +1153,13 @@ textarea.field{min-height:90px;resize:vertical}
     }
     async function list(kind){
       back = () => list(kind);
-      show(`${top(kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей")}<p>Загружаю…</p>`);
+      show(`${top("Плейлисты")}<p>Загружаю…</p>`);
       let l, m;
       try { [l, m] = await Promise.all([loadLists(), loadMine()]); } catch (e) { return show(`${top("Плейлисты")}<h3>Не получилось загрузить. Проверь интернет.</h3>`); }
       Playlists._cache = [...l.official, ...l.people, ...(m.playlists || [])];
       const items = kind === "official" ? l.official : l.people;
-      let html = top(kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей");
-      html += `<h3>${kind === "official" ? "Плейлисты от Володи" : "Плейлисты людей"}</h3>`;
+      let html = top("Плейлисты");
+      html += `<div class="tabs"><button type="button" data-x="official" aria-pressed="${kind === "official"}">От Володи</button><button type="button" data-x="people" aria-pressed="${kind === "people"}">От людей</button></div>`;
       if (kind === "people" || m.owner) html += `<div class="pl-row"><button class="go" data-x="new">Новый плейлист</button>${kind === "people" ? `<button class="alt" data-x="mine">Мои плейлисты</button>` : ""}</div>`;
       if (kind === "people" && m.owner) html += `<button class="alt" data-x="mod">Модерация</button>`;
       html += items.length ? `<div class="rows">${items.map(card).join("")}</div>`
@@ -1182,6 +1288,7 @@ textarea.field{min-height:90px;resize:vertical}
       if (x.dataset.x === "mine") myList();
       if (x.dataset.x === "mod") mod();
       if (x.dataset.x === "people") list("people");
+      if (x.dataset.x === "official") list("official");
       if (x.dataset.x === "ban") {
         // второе нажатие подтверждает — чтобы не забанить случайно
         if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = "Точно забанить?"; x.className = "go"; return; }
@@ -1194,7 +1301,9 @@ textarea.field{min-height:90px;resize:vertical}
       if (x.dataset.x === "publish") publish();
       if (x.dataset.x === "drop") { clearDraft(); toast("Черновик удалён"); myList(); }
       if (x.dataset.x === "editpub") { const pl = (mine.playlists || []).find(p => p.id === id); draft = {id: pl.id, title: pl.title, descr: pl.descr, tags: pl.tags, albums: pl.albums}; saveDraft(); edit(); }
-      if (x.dataset.x === "del") { const r = await api("/api/pl/delete", {id}); if (r.ok) { mine = null; lists = null; toast("Плейлист удалён"); myList(); } }
+      if (x.dataset.x === "del") {
+        if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = "Точно удалить?"; x.className = "go"; return; }
+        const r = await api("/api/pl/delete", {id}); if (r.ok) { mine = null; lists = null; toast("Плейлист удалён"); myList(); } }
       if (x.dataset.x === "hide") { const r = await api("/api/pl/hide", {id, hidden: x.dataset.on === "1"}); if (r.ok) { lists = null; toast(x.dataset.on === "1" ? "Скрыт из общего списка" : "Возвращён"); back ? back() : hide(); } }
       if (x.dataset.x === "like") {
         const go = async () => { const r = await api("/api/pl/like", {id, on: x.dataset.on === "1"});
@@ -1212,7 +1321,13 @@ textarea.field{min-height:90px;resize:vertical}
         inTg ? tgApp.openTelegramLink(url) : window.open(url, "_blank");
       }
     });
-    return {list, openById, addFromAlbum, myList};
+    // вход с главной: если подборок автора ещё нет — сразу плейлисты людей
+    async function home(){
+      show(`${top("Плейлисты")}<p>Загружаю…</p>`);
+      let l = null; try { l = await loadLists(); } catch (e) {}
+      list(l && l.official && !l.official.length && l.people.length ? "people" : "official");
+    }
+    return {list, home, openById, addFromAlbum, myList};
   })();
 
   // ---------- «послушаю позже» ----------
@@ -1220,7 +1335,6 @@ textarea.field{min-height:90px;resize:vertical}
   const Later = (() => {
     let items = {}, dm = false, remind = true, loaded = false;
     const byId = id => all.find(a => a.id === id);
-    const toast = t => { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 3200); };
     const post = (path, body) => fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({...body, initData: tgApp.initData})}).then(r => r.json());
     const active = () => Object.keys(items).filter(id => !items[id].done);
     function load(l){
@@ -1229,10 +1343,9 @@ textarea.field{min-height:90px;resize:vertical}
     }
     function paint(){
       const n = active().length;
-      $("later-entry").hidden = !inTg;
-      $("later-top").hidden = !inTg;
+      $("hub-later").hidden = !inTg;
       $("later-badge").textContent = n || "";
-      $("later-count").textContent = n ? `${n} ${plural(n, "альбом", "альбома", "альбомов")} в очереди` : "Откладывай альбомы — бот напомнит в личке";
+      $("later-count").textContent = n ? "в очереди" : "бот напомнит";
       const b = $("s-later"), it = openId && items[openId];
       b.hidden = !inTg;
       b.textContent = it ? (it.done ? "Послушано ✓" : "В очереди ✓") : "Послушаю позже";
@@ -1330,15 +1443,64 @@ textarea.field{min-height:90px;resize:vertical}
   }
 
 
+  // ---------- картинки для чата ----------
+  // Картинку рисуем на canvas. Чтобы отправить её в чат, она уходит в воркер, тот готовит сообщение
+  // от имени бота, и Telegram сам предлагает выбрать чат (shareMessage). Нужен Telegram 8.0+.
+  const Pic = (() => {
+    const C = {bg: "#121110", cell: "#262320", ink: "#f2ede6", muted: "#a39a8b", accent: "#f0a23b"};
+    const cache = {}; let busy = false;
+    const modern = () => inTg && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("8.0");
+    const img = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+    function fit(ctx, text, max){
+      if (ctx.measureText(text).width <= max) return text;
+      while (text.length > 1 && ctx.measureText(text + "…").width > max) text = text.slice(0, -1);
+      return text.trimEnd() + "…";
+    }
+    function square(ctx, p, x, y, size){ const k = Math.min(p.width, p.height); ctx.drawImage(p, (p.width - k) / 2, (p.height - k) / 2, k, k, x, y, size, size); }
+    async function upload(kind, key, draw, extra){
+      if (cache[kind] && cache[kind].key === key) return cache[kind];
+      const data = (await draw()).toDataURL("image/jpeg", 0.88);
+      const r = await fetch("/api/collage", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({initData: tgApp.initData, img: data, kind, ...(extra || {})})}).then(r => r.json());
+      if (r.error) throw new Error(r.error === "ban" ? BAN_TEXT : r.error);
+      return (cache[kind] = {key, ...r});
+    }
+    // кнопки внутри root на время работы показывают, что идёт сборка
+    async function run(root, fn){
+      if (busy) return; busy = true;
+      const btns = [...root.querySelectorAll('[data-x="send"], [data-x="save"]')];
+      btns.forEach(b => { b.disabled = true; b.dataset.t = b.textContent; b.textContent = "Собираю картинку…"; });
+      try { await fn(); } catch (e) { toast(e && e.message && e.message.length < 80 ? e.message : "Не получилось. Проверь интернет и попробуй ещё раз"); }
+      busy = false;
+      btns.forEach(b => { if (b.isConnected) { b.disabled = false; b.textContent = b.dataset.t; } });
+    }
+    async function send(kind, key, draw, extra){
+      if (!inTg) return toast("Отправлять можно, когда архив открыт в Telegram. Сохранить картинку можно и тут");
+      if (!modern() || !tgApp.shareMessage) return toast("Обнови Telegram: отправка из мини-приложений есть с версии 8.0. Пока можно сохранить картинку", 4000);
+      const r = await upload(kind, key, draw, extra);
+      if (!r.prepared) throw new Error("Telegram не принял картинку, попробуй ещё раз");
+      tgApp.shareMessage(r.prepared, ok => ok && toast("Отправлено"));
+    }
+    async function save(kind, key, draw, extra, name){
+      if (modern() && tgApp.downloadFile) { const r = await upload(kind, key, draw, extra); return tgApp.downloadFile({url: r.url, file_name: name}); }
+      if (inTg) return toast("Обнови Telegram, чтобы сохранять картинки из мини-приложений");
+      const a = document.createElement("a"); a.href = (await draw()).toDataURL("image/jpeg", 0.9); a.download = name; a.click();
+    }
+    function footer(ctx, W, y, pad, font){
+      ctx.textAlign = "left"; ctx.fillStyle = C.ink; ctx.font = `700 26px ${font}`; ctx.fillText("volodya music box", pad, y);
+      ctx.fillStyle = C.muted; ctx.font = `400 20px ${font}`; ctx.textAlign = "right";
+      ctx.fillText("собрано в архиве @volodyamusicbox_bot", W - pad, y); ctx.textAlign = "left";
+    }
+    return {C, img, fit, square, run, send, save, footer};
+  })();
+
   // ---------- коллаж обложек ----------
   // Сетка 3×3…5×5. Картинку рисуем тут же на canvas; для отправки в чат она уходит в воркер,
   // тот готовит сообщение от имени бота, и Telegram сам предлагает выбрать чат (shareMessage).
   const Collage = (() => {
     const KEY = "collage", byId = id => all.find(a => a.id === id);
-    let st = {size: 3, names: true, cells: []}, sel = null, busy = false, last = null;
+    let st = {size: 3, names: true, cells: []}, sel = null;
     const cover = a => a && a.has_cover ? `covers/${a.id}.${a.cover_ext || "webp"}` : "";
-    const toast = t => { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => $("toast").hidden = true, 2800); };
-    const canShare = () => inTg && tgApp.shareMessage && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("8.0");
     function fix(){
       const n = st.size * st.size, ids = (st.cells || []).filter(id => byId(id));
       // при смене размера порядок сохраняется, лишнее отрезается
@@ -1409,72 +1571,34 @@ textarea.field{min-height:90px;resize:vertical}
       sel = null; save(); paint();
     }
     // ---- картинка ----
-    const img = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
-    function fit(ctx, text, max){
-      if (ctx.measureText(text).width <= max) return text;
-      while (text.length > 1 && ctx.measureText(text + "…").width > max) text = text.slice(0, -1);
-      return text.trimEnd() + "…";
-    }
     async function draw(){
-      const n = st.size, cell = {3: 320, 4: 250, 5: 210}[n], gap = 10, pad = 32, lab = st.names ? Math.round(cell * 0.2) : 0, foot = 70;
+      const C = Pic.C, n = st.size, cell = {3: 320, 4: 250, 5: 210}[n], gap = 10, pad = 32, lab = st.names ? Math.round(cell * 0.2) : 0, foot = 70;
       // пустые ряды в конце не рисуем
-      let last = st.cells.length - 1; while (last > 0 && !st.cells[last]) last--;
-      const rows = Math.floor(last / n) + 1, cells = st.cells.slice(0, rows * n);
+      let end = st.cells.length - 1; while (end > 0 && !st.cells[end]) end--;
+      const rows = Math.floor(end / n) + 1, cells = st.cells.slice(0, rows * n);
       const W = pad * 2 + n * cell + (n - 1) * gap, H = pad * 2 + rows * (cell + lab) + (rows - 1) * gap + foot;
       const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
       const ctx = cv.getContext("2d");
-      ctx.fillStyle = "#101114"; ctx.fillRect(0, 0, W, H);
-      const pics = await Promise.all(cells.map(id => cover(byId(id)) ? img(cover(byId(id))) : null));
+      ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+      const pics = await Promise.all(cells.map(id => cover(byId(id)) ? Pic.img(cover(byId(id))) : null));
       const font = getComputedStyle(document.body).fontFamily;
       cells.forEach((id, i) => {
         const a = byId(id), x = pad + (i % n) * (cell + gap), y = pad + Math.floor(i / n) * (cell + lab + gap), p = pics[i];
-        ctx.fillStyle = "#1d1f24"; ctx.fillRect(x, y, cell, cell);
-        if (p) { const k = Math.min(p.width, p.height); ctx.drawImage(p, (p.width - k) / 2, (p.height - k) / 2, k, k, x, y, cell, cell); }
-        else if (a) { ctx.fillStyle = "#e9e9ee"; ctx.font = `700 ${Math.round(cell / 11)}px ${font}`; ctx.fillText(fit(ctx, a.title, cell - 24), x + 12, y + cell / 2); }
+        ctx.fillStyle = C.cell; ctx.fillRect(x, y, cell, cell);
+        if (p) Pic.square(ctx, p, x, y, cell);
+        else if (a) { ctx.fillStyle = C.ink; ctx.font = `700 ${Math.round(cell / 11)}px ${font}`; ctx.fillText(Pic.fit(ctx, a.title, cell - 24), x + 12, y + cell / 2); }
         if (a && lab) {
-          ctx.fillStyle = "#f2f2f5"; ctx.font = `600 ${Math.round(lab * 0.32)}px ${font}`;
-          ctx.fillText(fit(ctx, a.title, cell - 4), x + 2, y + cell + lab * 0.42);
-          ctx.fillStyle = "#9a9ca6"; ctx.font = `400 ${Math.round(lab * 0.27)}px ${font}`;
-          ctx.fillText(fit(ctx, a.artist || "", cell - 4), x + 2, y + cell + lab * 0.8);
+          ctx.fillStyle = C.ink; ctx.font = `600 ${Math.round(lab * 0.32)}px ${font}`;
+          ctx.fillText(Pic.fit(ctx, a.title, cell - 4), x + 2, y + cell + lab * 0.42);
+          ctx.fillStyle = C.muted; ctx.font = `400 ${Math.round(lab * 0.27)}px ${font}`;
+          ctx.fillText(Pic.fit(ctx, a.artist || "", cell - 4), x + 2, y + cell + lab * 0.8);
         }
       });
-      const fy = H - pad - 4;
-      ctx.fillStyle = "#f2f2f5"; ctx.font = `700 26px ${font}`; ctx.fillText("volodya music box", pad, fy);
-      ctx.fillStyle = "#9a9ca6"; ctx.font = `400 20px ${font}`; ctx.textAlign = "right";
-      ctx.fillText("собрано в архиве @volodyamusicbox_bot", W - pad, fy);
+      Pic.footer(ctx, W, H - pad - 4, pad, font);
       return cv;
     }
-    async function upload(){
-      const key = JSON.stringify(st);
-      if (last && last.key === key) return last;
-      const data = (await draw()).toDataURL("image/jpeg", 0.88);
-      const r = await fetch("/api/collage", {method: "POST", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({initData: tgApp.initData, img: data, size: st.size})}).then(r => r.json());
-      if (r.error) throw new Error(r.error);
-      return (last = {key, ...r});
-    }
-    async function run(fn){
-      if (busy) return; busy = true;
-      document.querySelectorAll('#col-in [data-x="send"], #col-in [data-x="save"]').forEach(b => { b.disabled = true; b.dataset.t = b.textContent; b.textContent = "Собираю картинку…"; });
-      try { await fn(); } catch (e) { toast(e.message && e.message.length < 80 ? e.message : "Не получилось. Проверь интернет и попробуй ещё раз"); }
-      busy = false;
-      document.querySelectorAll('#col-in [data-x="send"], #col-in [data-x="save"]').forEach(b => { b.disabled = false; b.textContent = b.dataset.t; });
-    }
-    const send = () => run(async () => {
-      if (!inTg) return toast("Отправлять можно, когда архив открыт в Telegram. Сохранить картинку можно и тут");
-      if (!canShare()) return toast("Обнови Telegram: отправка из мини-приложений есть с версии 8.0. Пока можно сохранить картинку");
-      const r = await upload();
-      if (!r.prepared) throw new Error("Telegram не принял картинку, попробуй ещё раз");
-      tgApp.shareMessage(r.prepared, ok => ok && toast("Отправлено"));
-    });
-    const download = () => run(async () => {
-      if (inTg && tgApp.downloadFile && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("8.0")) {
-        const r = await upload();
-        return tgApp.downloadFile({url: r.url, file_name: "volodya-collage.jpg"});
-      }
-      if (inTg) return toast("Обнови Telegram, чтобы сохранять картинки из мини-приложений");
-      const a = document.createElement("a"); a.href = (await draw()).toDataURL("image/jpeg", 0.9); a.download = "volodya-collage.jpg"; a.click();
-    });
+    const send = () => Pic.run($("col-in"), () => Pic.send("collage", JSON.stringify(st), draw, {size: st.size}));
+    const download = () => Pic.run($("col-in"), () => Pic.save("collage", JSON.stringify(st), draw, {size: st.size}, "volodya-collage.jpg"));
     $("col").addEventListener("click", e => {
       const x = e.target.closest("[data-x],[data-size],[data-i],[data-add]"); if (!x) return;
       if (x.dataset.size) { st.size = +x.dataset.size; fix(); sel = null; save(); return paint(); }
@@ -1494,6 +1618,110 @@ textarea.field{min-height:90px;resize:vertical}
   })();
   window.__collage = Collage;   // для проверок в браузере
 
+  // ---------- мой вкус ----------
+  // Всё считается на устройстве из оценок человека: запросов к серверу нет.
+  const Taste = (() => {
+    const byId = id => all.find(a => a.id === id);
+    let recSeed = 0;
+    function stats(){
+      const rated = Object.keys(cur).map(id => [byId(+id), cur[id]]).filter(x => x[0]);
+      const liked = rated.filter(x => x[1] === 1).map(x => x[0]), disliked = rated.filter(x => x[1] === -1).map(x => x[0]);
+      let both = 0, same = 0;
+      rated.forEach(([a, v]) => { if (a.author) { both++; if ((a.author > 0) === (v === 1)) same++; } });
+      const st = {}, dec = {};
+      liked.forEach(a => { (a.styles || []).forEach(x => st[x] = (st[x] || 0) + 1); const d = decadeOf(a); if (d) dec[d] = (dec[d] || 0) + 1; });
+      const styles = Object.entries(st).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]));
+      return {rated: rated.length, liked, disliked, both, same, pct: both >= 5 ? Math.round(same / both * 100) : null, st, styles, dec};
+    }
+    // что послушать: неоценённые альбомы с любимыми стилями; то, что зашло автору, чуть выше
+    function recs(s, n){
+      const scored = all.filter(a => !cur[String(a.id)] && a.has_cover).map(a => [
+        (a.styles || []).reduce((t, x) => t + Math.sqrt(s.st[x] || 0), 0) + (a.author > 0 ? .7 : 0), a]).filter(x => x[0] >= 1).sort((x, y) => y[0] - x[0]);
+      const top = scored.slice(0, 40).map(x => x[1]);
+      return top.length <= n ? top : Array.from({length: n}, (_, i) => top[(recSeed * n + i) % top.length]);
+    }
+    const row = a => `<button class="row" data-open="${a.id}">${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="" loading="lazy">` : `<div class="ph"></div>`}<div><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${a.year ? " · " + a.year : ""}${a.styles ? " · " + esc(a.styles[0]) : ""}</span></div></button>`;
+    function paint(){
+      const s = stats(), top = `<div class="duel-top"><span class="step">Мой вкус</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>`;
+      if (s.rated < 5) {
+        $("ts-in").innerHTML = `${top}<h3>Пока мало оценок</h3>
+          <p>Оценено ${s.rated} из ${all.length}. Нужно хотя бы пять — «Зашло» или «Не зашло» в карточке альбома. Быстрее всего через «Сравнить вкусы»: 15 альбомов за минуту.</p>
+          <button class="go" data-x="duel">Оценить 15 альбомов</button><button class="alt" data-x="close">Вернуться в архив</button>`;
+        return;
+      }
+      const max = Math.max(1, ...Object.values(s.dec)), rc = recs(s, 5);
+      $("ts-in").innerHTML = `${top}<h3>Мой вкус</h3>
+        <div class="kpis"><div><b>${s.rated}</b><span>оценено из ${all.length}</span></div><div><b>${s.liked.length}</b><span>зашло</span></div>
+          <div><b>${s.pct === null ? "—" : s.pct + "%"}</b><span>с автором</span></div></div>
+        <p>${s.pct === null ? `Совпадение с автором канала появится, когда наберётся пять общих оценок: сейчас ${s.both}.` : `С автором канала одинаково оценили ${s.same} из ${s.both} общих альбомов.`}</p>
+        ${s.styles.length ? `<div class="label">Любимые стили</div><div class="chipset">${s.styles.slice(0, 10).map(([x, n]) => `<button type="button" data-st="${esc(x)}">${esc(x)}<i>${n}</i></button>`).join("")}</div>` : ""}
+        ${Object.keys(s.dec).length ? `<div class="label">Что зашло по десятилетиям</div><div class="bars">${Object.keys(s.dec).sort().map(d => `<div><span>${d.slice(2)}-е</span><i style="width:${s.dec[d] / max * 100}%"></i><em>${s.dec[d]}</em></div>`).join("")}</div>` : ""}
+        ${rc.length ? `<div class="label">Что послушать дальше</div><div class="rows">${rc.map(row).join("")}</div><button class="alt" data-x="more">Показать другие</button>` : ""}
+        <button class="go" data-x="send">Отправить в чат</button><button class="alt" data-x="save">Сохранить картинку</button>`;
+    }
+    function open_(){ recSeed = 0; paint(); $("ts").hidden = false; $("ts").scrollTop = 0; }
+    // ---- картинка-карточка ----
+    async function draw(){
+      const C = Pic.C, s = stats(), W = 1080, H = 1200, pad = 64;
+      const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const ctx = cv.getContext("2d"), font = getComputedStyle(document.body).fontFamily, disp = getComputedStyle(document.querySelector("h1")).fontFamily;
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.ink; ctx.font = `700 68px ${disp}`; ctx.fillText("мой вкус", pad, 150);
+      ctx.fillStyle = C.muted; ctx.font = `400 28px ${font}`; ctx.fillText("по оценкам в архиве канала @volodyamusicbox", pad, 204);
+      const col = (W - pad * 2) / 3;
+      [[String(s.rated), "оценено"], [String(s.liked.length), "зашло"], [s.pct === null ? "—" : s.pct + "%", "с автором канала"]].forEach(([n, l], i) => {
+        ctx.fillStyle = C.accent; ctx.font = `700 80px ${disp}`; ctx.fillText(n, pad + col * i, 350);
+        ctx.fillStyle = C.muted; ctx.font = `400 26px ${font}`; ctx.fillText(l, pad + col * i, 396);
+      });
+      const top = s.styles.slice(0, 5), max = top.length ? top[0][1] : 1;
+      ctx.fillStyle = C.muted; ctx.font = `500 24px ${font}`; ctx.fillText("ЛЮБИМЫЕ СТИЛИ", pad, 486);
+      top.forEach(([name, n], i) => {
+        const y = 520 + i * 60;
+        ctx.fillStyle = C.ink; ctx.font = `600 30px ${font}`; ctx.fillText(Pic.fit(ctx, name, 330), pad, y + 30);
+        ctx.fillStyle = C.cell; ctx.fillRect(pad + 360, y + 6, 500, 26);
+        ctx.fillStyle = C.accent; ctx.fillRect(pad + 360, y + 6, Math.max(8, 500 * n / max), 26);
+        ctx.fillStyle = C.muted; ctx.font = `400 26px ${font}`; ctx.textAlign = "right"; ctx.fillText(String(n), W - pad, y + 30); ctx.textAlign = "left";
+      });
+      // четыре обложки из того, что зашло: сначала альбомы с самыми любимыми стилями
+      const fav = s.liked.filter(a => a.has_cover).map(a => [(a.styles || []).reduce((t, x) => t + (s.st[x] || 0), 0), a]).sort((x, y) => y[0] - x[0] || y[1].id - x[1].id).slice(0, 4).map(x => x[1]);
+      const size = (W - pad * 2 - 3 * 16) / 4, pics = await Promise.all(fav.map(a => Pic.img(`covers/${a.id}.${a.cover_ext || "webp"}`)));
+      pics.forEach((p, i) => { const x = pad + i * (size + 16); ctx.fillStyle = C.cell; ctx.fillRect(x, 850, size, size); if (p) Pic.square(ctx, p, x, 850, size); });
+      Pic.footer(ctx, W, H - pad + 6, pad, font);
+      return cv;
+    }
+    const key = () => JSON.stringify(cur);
+    $("ts").addEventListener("click", e => {
+      const o = e.target.closest("[data-open]"); if (o) return open(+o.dataset.open);
+      const st = e.target.closest("[data-st]"); if (st) { $("ts").hidden = true; setStyle(st.dataset.st); return window.scrollTo({top: 0}); }
+      const x = e.target.closest("[data-x]"); if (!x) return;
+      const k = x.dataset.x;
+      if (k === "close") $("ts").hidden = true;
+      if (k === "duel") { $("ts").hidden = true; Duel.start(); }
+      if (k === "more") { recSeed++; const y = $("ts").scrollTop; paint(); $("ts").scrollTop = y; }
+      if (k === "send") Pic.run($("ts-in"), () => Pic.send("taste", key(), draw));
+      if (k === "save") Pic.run($("ts-in"), () => Pic.save("taste", key(), draw, null, "volodya-taste.jpg"));
+    });
+    return {open: open_, paint, draw, stats};
+  })();
+  window.__taste = Taste;   // для проверок в браузере
+
+  // ---------- оформление ----------
+  const root = document.documentElement;
+  function tgColors(){   // шапка и фон окна Telegram — в цвет страницы
+    if (!inTg || !tgApp.isVersionAtLeast || !tgApp.isVersionAtLeast("6.1")) return;
+    const bg = getComputedStyle(root).getPropertyValue("--bg").trim();
+    try { tgApp.setHeaderColor(bg); tgApp.setBackgroundColor(bg); if (tgApp.setBottomBarColor && tgApp.isVersionAtLeast("7.10")) tgApp.setBottomBarColor(bg); } catch (e) {}
+  }
+  function setSkin(k, keep){
+    k = /^(indigo|moss)$/.test(k) ? k : "";
+    k ? root.setAttribute("data-skin", k) : root.removeAttribute("data-skin");
+    document.querySelectorAll("#skins button").forEach(b => b.setAttribute("aria-pressed", b.dataset.skin === k));
+    if (keep) { try { localStorage.setItem("skin", k); } catch (e) {} if (cloud) cloud.setItem("skin", k || "vinyl", () => {}); }
+    tgColors();
+  }
+  $("skins").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setSkin(b.dataset.skin, true); });
+
   // ---------- пожертвование звёздами ----------
   // Ссылка внизу страницы → окно с пояснением → сумма → окно оплаты Telegram. Случайно не нажать.
   async function donate(n){
@@ -1501,15 +1729,33 @@ textarea.field{min-height:90px;resize:vertical}
     try {
       const r = await fetch("/api/donate", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({amount: n, initData: tgApp.initData})}).then(r => r.json());
       if (!r.link) throw 0;
-      tgApp.openInvoice(r.link, st => { if (st === "paid") { const t = $("toast"); t.textContent = "Спасибо. Звёзды дошли"; t.hidden = false; setTimeout(() => t.hidden = true, 3200); } });
-    } catch (e) { const t = $("toast"); t.textContent = "Не получилось открыть оплату. Попробуй позже"; t.hidden = false; setTimeout(() => t.hidden = true, 3200); }
+      tgApp.openInvoice(r.link, st => { if (st === "paid") toast("Спасибо. Звёзды дошли", 3200); });
+    } catch (e) { toast("Не получилось открыть оплату. Попробуй позже", 3200); }
   }
 
-  if (tgApp && tgApp.initData) {
+  const setTheme = dark => { root.setAttribute("data-theme", dark ? "dark" : "light"); tgColors(); };
+  if (inTg) {
     tgApp.ready(); tgApp.expand();
-    document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light");
-    tgApp.onEvent("themeChanged", () =>
-      document.documentElement.setAttribute("data-theme", tgApp.colorScheme === "dark" ? "dark" : "light"));
+    setTheme(tgApp.colorScheme === "dark");
+    tgApp.onEvent("themeChanged", () => setTheme(tgApp.colorScheme === "dark"));
+  } else if (window.matchMedia) {
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", e => setTheme(e.matches));
+  }
+  setSkin(root.getAttribute("data-skin") || "");
+  // оформление, выбранное на другом устройстве
+  if (cloud) cloud.getItem("skin", (err, v) => { if (!err && v && (v === "vinyl" ? "" : v) !== (root.getAttribute("data-skin") || "")) setSkin(v === "vinyl" ? "" : v, false); });
+
+  // Кнопка «Назад» в шапке Telegram закрывает верхнее окно
+  const layers = ["gate", "don", "sheet", "gp", "ts", "col", "lt", "pl", "duel"];
+  function closeTop(){
+    const id = layers.find(l => !$(l).hidden); if (!id) return;
+    if (id === "sheet") close(); else if (id === "gate") closeGate(); else $(id).hidden = true;
+  }
+  if (inTg && tgApp.BackButton && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.1")) {
+    const sync = () => layers.some(l => !$(l).hidden) ? tgApp.BackButton.show() : tgApp.BackButton.hide();
+    const mo = new MutationObserver(sync);
+    layers.forEach(l => mo.observe($(l), {attributes: true, attributeFilter: ["hidden"]}));
+    tgApp.BackButton.onClick(closeTop);
   }
 
   $("grid").addEventListener("click", e => { const t = e.target.closest(".tile"); if (t) open(+t.dataset.id); });
@@ -1545,36 +1791,45 @@ textarea.field{min-height:90px;resize:vertical}
   // вернулся из канала — проверим сами, без нажатия «Я подписался»
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("gate").hidden) gateRecheck(true); });
   if (tgApp && tgApp.onEvent) tgApp.onEvent("activated", () => { if (!$("gate").hidden) gateRecheck(true); });
-  $("duel-entry").addEventListener("click", () => Duel.start());
-  $("col-entry").addEventListener("click", () => Collage.open());
-  $("pl-official").addEventListener("click", () => Playlists.list("official"));
-  $("pl-people").addEventListener("click", () => Playlists.list("people"));
+  $("hub-duel").addEventListener("click", () => Duel.start());
+  $("hub-col").addEventListener("click", () => Collage.open());
+  $("hub-pl").addEventListener("click", () => Playlists.home());
+  $("hub-taste").addEventListener("click", () => Taste.open());
+  $("hub-later").addEventListener("click", () => Later.open());
   $("s-addpl").addEventListener("click", () => { if (openId) Playlists.addFromAlbum(openId); });
   $("s-later").addEventListener("click", () => { if (openId) Later.toggle(openId); });
-  $("later-entry").addEventListener("click", () => Later.open());
   $("today").addEventListener("click", () => open(+$("today").dataset.id));
   $("don-open").hidden = !(inTg && tgApp.openInvoice && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.1"));
-  $("don-top").hidden = $("don-open").hidden;
+  $("hub-don").hidden = $("don-open").hidden;
   $("don-open").addEventListener("click", () => { $("don").hidden = false; });
-  $("don-top").addEventListener("click", () => { $("don").hidden = false; });
-  $("later-top").addEventListener("click", () => Later.open());
+  $("hub-don").addEventListener("click", () => { $("don").hidden = false; });
   $("don-close").addEventListener("click", () => { $("don").hidden = true; });
   $("don-row").addEventListener("click", e => { const b = e.target.closest("button"); if (b) donate(+b.dataset.n); });
   $("s-vote").addEventListener("click", e => { const b = e.target.closest("button"); if (b && openId) vote(openId, +b.dataset.v); });
   // закрывают приложение — дошлём оценки сразу
   document.addEventListener("visibilitychange", () => { if (document.hidden) flushOnClose(); });
   window.addEventListener("pagehide", flushOnClose);
-  $("rnd").addEventListener("click", () => { const pool = view.length ? view : all; open(pool[Math.floor(Math.random() * pool.length)].id); });
+  $("rnd").addEventListener("click", randomAlbum);
   $("scrim").addEventListener("click", close);
   $("close").addEventListener("click", close);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("sheet").hidden) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeTop(); });
+  // список догружается сам, когда долистали до конца; кнопка остаётся на случай старых браузеров
+  if ("IntersectionObserver" in window) new IntersectionObserver(es => { if (es[0].isIntersecting && !$("more").hidden) more(); }, {rootMargin: "600px"}).observe($("more"));
   window.addEventListener("hashchange", fromHash);
 
+  // после загрузки оценок и счётчиков подписи под обложками обновляются на месте, без перерисовки списка
+  function refreshMeta(){
+    if ($("sort").value === "top") return apply();
+    document.querySelectorAll("#grid .tile").forEach(t => { const a = all.find(x => x.id === +t.dataset.id); if (a) t.querySelector(".y").innerHTML = tileY(a); });
+    paintVote();
+  }
   fetch("data.json").then(r => r.json()).then(d => {
     all = d; buildGenres(); buildDecades(); paintToday(); Later.paint();
+    apply();                // архив показываем сразу, не дожидаясь оценок
     if (inTg) checkSub();   // заранее, чтобы кнопки не ждали
-    Promise.all([loadVotes(), loadCounts()]).then(() => { apply(); paintSendbar(); fromHash(); fromTelegram(); });
-  }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив."; });
+    loadCounts().then(refreshMeta);
+    loadVotes().then(() => { refreshMeta(); paintSendbar(); fromHash(); fromTelegram(); });
+  }).catch(() => { $("empty").hidden = false; $("empty").textContent = "Не удалось загрузить архив. Проверь интернет и открой ещё раз."; });
 })();
 </script>
 
