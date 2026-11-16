@@ -13325,8 +13325,9 @@
   "added": "2026-03-10T18:56:46",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2073",
-  "year_tried": 1794548893,
-  "genre_tried": 1794765485
+  "year_tried": 1794820694,
+  "genre_tried": 1794765485,
+  "disco_v": 1
  },
  {
   "title": "Elpmas",
@@ -13399,7 +13400,7 @@
   "added": "2026-03-24T01:12:17",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/2350",
-  "year_tried": 1794548719,
+  "year_tried": 1794820694,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -13408,7 +13409,8 @@
    "Surf",
    "Beat"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "disco_v": 1
  },
  {
   "title": "Cherry Viewing A Go Go (桜音頭a Gogo!)",
