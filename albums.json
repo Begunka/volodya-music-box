@@ -6877,8 +6877,8 @@
   "added": "2026-05-02T14:39:50",
   "post_url": "https://t.me/volodyamusicbox/3370",
   "cover_ext": "webp",
-  "year_tried": 1794823394,
-  "disco_v": 1,
+  "year_tried": 1794848604,
+  "disco_v": 2,
   "genres": [
    "Rock"
   ],
@@ -6887,7 +6887,7 @@
    "Psychedelic Rock",
    "Experimental"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794827248
  },
  {
@@ -6962,9 +6962,8 @@
   "added": "2026-05-04T11:45:30",
   "post_url": "https://t.me/volodyamusicbox/4914",
   "cover_ext": "webp",
-  "year_tried": 1794823394,
-  "year_suspect": "1981",
-  "disco_v": 1,
+  "year_tried": 1794848604,
+  "disco_v": 2,
   "genres": [
    "Electronic"
   ],
@@ -6972,8 +6971,9 @@
    "Modern Classical",
    "Experimental"
   ],
-  "genre_src": "discogs",
-  "genre_tried": 1794827248
+  "genre_src": "artist",
+  "genre_tried": 1794827248,
+  "year_suspect": "1981"
  },
  {
   "title": "Old Boot Wine",
