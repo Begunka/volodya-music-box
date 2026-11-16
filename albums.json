@@ -14123,5 +14123,26 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794803309
+ },
+ {
+  "title": "Surfin' USA",
+  "artist": "The Beach Boys",
+  "date": "2014-01-01",
+  "tracks": 12,
+  "year": "1963",
+  "title_full": "Surfin' USA (Remastered)",
+  "id": 693,
+  "added": "2026-11-16T06:23:58",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Classic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2014",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
