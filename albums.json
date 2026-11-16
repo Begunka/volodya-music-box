@@ -5198,14 +5198,15 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2508",
   "cover_ext": "webp",
-  "year_tried": 1794553575,
+  "year_tried": 1794824476,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Medieval"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Spinoza",
@@ -5647,12 +5648,13 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/2888",
   "cover_ext": "webp",
-  "year_tried": 1794553396,
+  "year_tried": 1794824476,
   "genres": [
    "Electronic"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794763870
+  "genre_src": "artist",
+  "genre_tried": 1794763870,
+  "disco_v": 1
  },
  {
   "title": "Sort Of",
