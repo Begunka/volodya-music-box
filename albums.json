@@ -4201,7 +4201,7 @@
   "id": 206,
   "added": "2026-04-18T19:37:41",
   "cover_ext": "webp",
-  "year_tried": 1794554294,
+  "year_tried": 1794825036,
   "genres": [
    "Rock",
    "Blues"
@@ -4210,7 +4210,8 @@
    "Rock & Roll"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794768134
+  "genre_tried": 1794768134,
+  "disco_v": 1
  },
  {
   "title": "Lord of the Rings",
@@ -4875,7 +4876,7 @@
   "added": "2026-04-18T19:37:41",
   "post_url": "https://t.me/volodyamusicbox/3742",
   "cover_ext": "webp",
-  "year_tried": 1794554294,
+  "year_tried": 1794825036,
   "genres": [
    "Rock"
   ],
@@ -4883,8 +4884,10 @@
    "Fusion",
    "Psychedelic Rock"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768003
+  "genre_src": "artist",
+  "genre_tried": 1794768003,
+  "year_suspect": "1972",
+  "disco_v": 1
  },
  {
   "title": "The Shadows",
