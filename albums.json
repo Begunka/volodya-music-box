@@ -5971,15 +5971,18 @@
   "post_url": "https://t.me/volodyamusicbox/2472",
   "cover_ext": "webp",
   "year_tried": 1794824123,
+  "disco_v": 1,
   "genres": [
-   "Pop"
+   "Pop",
+   "Folk, World, & Country"
   ],
   "styles": [
    "Easy Listening",
-   "Lounge"
+   "Lounge",
+   "Exotica"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827534
  },
  {
   "title": "The In Sound From Way Out",
@@ -6410,6 +6413,7 @@
   "post_url": "https://t.me/volodyamusicbox/3166",
   "cover_ext": "webp",
   "year_tried": 1794823948,
+  "disco_v": 1,
   "genres": [
    "Rock",
    "Folk, World, & Country"
@@ -6417,8 +6421,8 @@
   "styles": [
    "Folk"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794827534
  },
  {
   "title": "Лирика",
