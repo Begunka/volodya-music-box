@@ -11454,14 +11454,15 @@
   "added": "2026-09-25T23:32:17",
   "post_url": "https://t.me/volodyamusicbox/5569",
   "cover_ext": "webp",
-  "year_tried": 1794550338,
+  "year_tried": 1794821953,
   "genres": [
    "Jazz"
   ],
   "styles": [
    "Big Band"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "disco_v": 1
  },
  {
   "title": "The Albemarle Sound",
@@ -11733,15 +11734,17 @@
   "id": 572,
   "added": "2026-10-04T17:15:00",
   "cover_ext": "webp",
-  "year_tried": 1794550153,
+  "year_tried": 1794821953,
   "genres": [
    "Electronic"
   ],
   "styles": [
    "Techno"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766580
+  "genre_src": "artist",
+  "genre_tried": 1794766580,
+  "year_suspect": "1995",
+  "disco_v": 1
  },
  {
   "title": "Wagner: Overtures and Preludes from the Operas",
