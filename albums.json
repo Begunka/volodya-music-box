@@ -12948,7 +12948,7 @@
   "added": "2026-10-30T02:04:46",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6163",
-  "year_tried": 1794549073,
+  "year_tried": 1794820875,
   "genres": [
    "Rock",
    "Pop"
@@ -12957,7 +12957,9 @@
    "Art Rock",
    "Pop Rock"
   ],
-  "genre_src": "manual"
+  "genre_src": "manual",
+  "year_suspect": "0029",
+  "disco_v": 1
  },
  {
   "title": "Flamingo Serenade",
@@ -13090,15 +13092,16 @@
   "added": "2026-07-12T12:28:54",
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/4707",
-  "year_tried": 1794548893,
+  "year_tried": 1794820875,
   "genres": [
    "Classical"
   ],
   "styles": [
    "Psychedelic"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794765975
+  "genre_src": "artist",
+  "genre_tried": 1794765975,
+  "disco_v": 1
  },
  {
   "title": "The Man In The Bowler Hat",
