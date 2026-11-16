@@ -6808,7 +6808,7 @@
   "added": "2026-05-02T14:39:50",
   "post_url": "https://t.me/volodyamusicbox/3370",
   "cover_ext": "webp",
-  "year_tried": 1794552675,
+  "year_tried": 1794823394,
   "genres": [
    "Rock"
   ],
@@ -6817,7 +6817,8 @@
    "Psychedelic Rock",
    "Experimental"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Saravah!",
@@ -6891,7 +6892,7 @@
   "added": "2026-05-04T11:45:30",
   "post_url": "https://t.me/volodyamusicbox/4914",
   "cover_ext": "webp",
-  "year_tried": 1794552505,
+  "year_tried": 1794823394,
   "genres": [
    "Electronic"
   ],
@@ -6899,7 +6900,9 @@
    "Modern Classical",
    "Experimental"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "year_suspect": "1981",
+  "disco_v": 1
  },
  {
   "title": "Old Boot Wine",
