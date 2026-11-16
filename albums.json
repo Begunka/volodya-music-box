@@ -2885,15 +2885,16 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1242",
   "cover_ext": "webp",
-  "year_tried": 1794554834,
+  "year_tried": 1794825405,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Jazz-Rock"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794768494
+  "genre_src": "artist",
+  "genre_tried": 1794768494,
+  "disco_v": 1
  },
  {
   "title": "Separation Anxieties",
@@ -3108,7 +3109,7 @@
   "id": 152,
   "added": "2026-04-18T19:37:16",
   "cover_ext": "webp",
-  "year_tried": 1794554732,
+  "year_tried": 1794825405,
   "genres": [
    "Jazz",
    "Rock",
@@ -3118,7 +3119,8 @@
    "Blues Rock",
    "Neofolk"
   ],
-  "genre_src": "discogs"
+  "genre_src": "artist",
+  "disco_v": 1
  },
  {
   "title": "Heavy Weather",
