@@ -14319,5 +14319,23 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6374"
+ },
+ {
+  "title": "Intuition",
+  "artist": "Lennie Tristano",
+  "date": "1996-10-03",
+  "tracks": 19,
+  "year": "1996",
+  "id": 696,
+  "added": "2026-11-16T13:48:30",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Bop"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
