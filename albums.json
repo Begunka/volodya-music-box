@@ -3128,8 +3128,8 @@
   "id": 152,
   "added": "2026-04-18T19:37:16",
   "cover_ext": "webp",
-  "year_tried": 1794825405,
-  "disco_v": 1,
+  "year_tried": 1794849502,
+  "disco_v": 2,
   "genres": [
    "Jazz",
    "Rock",
@@ -3139,7 +3139,7 @@
    "Blues Rock",
    "Neofolk"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794828076
  },
  {
@@ -3754,7 +3754,7 @@
   "added": "2026-04-18T19:37:17",
   "post_url": "https://t.me/volodyamusicbox/1651",
   "cover_ext": "webp",
-  "year_tried": 1794825310,
+  "year_tried": 1794849502,
   "genres": [
    "Jazz"
   ],
@@ -3764,7 +3764,7 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794768321,
-  "disco_v": 1
+  "disco_v": 2
  },
  {
   "title": "Metal Machine Music",
