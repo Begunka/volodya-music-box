@@ -14075,15 +14075,16 @@
   "id": 690,
   "added": "2026-11-15T09:38:27",
   "cover_ext": "webp",
-  "year_tried": 1794735533,
+  "year_tried": 1794820155,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Prog Rock"
   ],
-  "genre_src": "discogs",
-  "genre_tried": 1794764621
+  "genre_src": "artist",
+  "genre_tried": 1794764621,
+  "disco_v": 1
  },
  {
   "title": "In The Region Of The Summer Stars",
@@ -14109,11 +14110,10 @@
   "artist": "คาราวาน",
   "date": "2022-06-13",
   "tracks": 9,
-  "year": "2022",
+  "year": "1975",
   "id": 692,
   "added": "2026-11-16T04:26:43",
   "cover_ext": "webp",
-  "year_tried": 1794803253,
   "genres": [
    "Folk, World, & Country"
   ],
@@ -14122,7 +14122,11 @@
    "Folk"
   ],
   "genre_src": "artist",
-  "genre_tried": 1794803309
+  "genre_tried": 1794803309,
+  "year_src": "discography",
+  "reissue_year": "2022",
+  "year_checked": true,
+  "disco_v": 1
  },
  {
   "title": "Surfin' USA",
