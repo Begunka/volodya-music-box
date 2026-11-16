@@ -11753,14 +11753,15 @@
   "added": "2026-10-04T23:45:58",
   "post_url": "https://t.me/volodyamusicbox/5750",
   "cover_ext": "webp",
-  "year_tried": 1794550153,
+  "year_tried": 1794821782,
   "genres": [
    "Classical"
   ],
   "genre_src": "manual",
   "styles": [
    "Romantic"
-  ]
+  ],
+  "disco_v": 1
  },
  {
   "title": "Revolutionary Pekinese Opera",
@@ -11833,7 +11834,7 @@
   "title_full": "Angry Birds (Original Game Soundtrack) [Extended Edition]",
   "post_url": "https://t.me/volodyamusicbox/5795",
   "cover_ext": "webp",
-  "year_tried": 1794549974,
+  "year_tried": 1794821782,
   "genres": [
    "Stage & Screen"
   ],
@@ -11842,8 +11843,10 @@
    "Score",
    "Video Game Music"
   ],
-  "genre_src": "deezer",
-  "genre_tried": 1794766501
+  "genre_src": "artist",
+  "genre_tried": 1794766501,
+  "year_suspect": "2005",
+  "disco_v": 1
  },
  {
   "title": "Angry Birds Seasons (Original Game Soundtrack)",
