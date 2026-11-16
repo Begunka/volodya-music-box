@@ -2647,16 +2647,17 @@
   "added": "2026-04-18T19:37:16",
   "post_url": "https://t.me/volodyamusicbox/1133",
   "cover_ext": "webp",
+  "year_src": "discography",
+  "year_checked": true,
+  "disco_v": 1,
   "genres": [
    "Rock"
   ],
   "styles": [
    "Soft Rock"
   ],
-  "genre_src": "artist",
-  "year_src": "discography",
-  "year_checked": true,
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828255
  },
  {
   "title": "Sgt. Pepper's Lonely Hearts Club Band",
@@ -2879,6 +2880,7 @@
   "post_url": "https://t.me/volodyamusicbox/1301",
   "cover_ext": "webp",
   "year_tried": 1794825554,
+  "disco_v": 1,
   "genres": [
    "Jazz",
    "Rock"
@@ -2886,8 +2888,8 @@
   "styles": [
    "Jazz-Rock"
   ],
-  "genre_src": "artist",
-  "disco_v": 1
+  "genre_src": "discogs",
+  "genre_tried": 1794828255
  },
  {
   "title": "Ethnic Experiences",
