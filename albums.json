@@ -8926,8 +8926,8 @@
   "added": "2026-06-25T02:10:09",
   "post_url": "https://t.me/volodyamusicbox/4357",
   "cover_ext": "webp",
-  "year_tried": 1794822674,
-  "disco_v": 1,
+  "year_tried": 1794848234,
+  "disco_v": 2,
   "genres": [
    "Electronic"
   ],
@@ -8936,7 +8936,7 @@
    "Experimental",
    "Musique Concrète"
   ],
-  "genre_src": "discogs",
+  "genre_src": "artist",
   "genre_tried": 1794826996
  },
  {
@@ -9251,7 +9251,7 @@
   "id": 445,
   "added": "2026-07-02T01:52:11",
   "cover_ext": "webp",
-  "year_tried": 1794822674,
+  "year_tried": 1794848234,
   "genres": [
    "Pop"
   ],
@@ -9261,8 +9261,8 @@
   ],
   "genre_src": "artist",
   "genre_tried": 1794766872,
-  "year_suspect": "1983",
-  "disco_v": 1
+  "disco_v": 2,
+  "year_suspect": "1983"
  },
  {
   "title": "Peasant",
