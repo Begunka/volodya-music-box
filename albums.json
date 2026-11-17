@@ -14375,5 +14375,26 @@
   ],
   "genre_src": "itunes",
   "genre_tried": 1794892343
+ },
+ {
+  "title": "Синий Альбом",
+  "artist": "Aquarium",
+  "date": "2025-02-26",
+  "tracks": 12,
+  "year": "1981",
+  "id": 699,
+  "added": "2026-11-17T06:48:16",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Acoustic",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2025",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
