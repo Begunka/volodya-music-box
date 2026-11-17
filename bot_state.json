@@ -1,16 +1,10 @@
 {
- "offset": 857453167,
+ "offset": 857453168,
  "pending_comments": {},
  "pending_photo": null,
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {
-  "kingcrimson|inthecourtofthecrimsonking": {
-   "post_id": 6382,
-   "chat_id": -1003224722462,
-   "comment_id": 24838
-  }
- },
+ "orphans": {},
  "group_copies": {
   "6282": {
    "chat": {

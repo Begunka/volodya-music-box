@@ -14335,5 +14335,25 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "In The Court Of The Crimson King",
+  "artist": "King Crimson",
+  "date": "1969-10-10",
+  "tracks": 8,
+  "year": "1969",
+  "id": 697,
+  "added": "2026-11-17T03:41:12",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Art Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6382"
  }
 ]
