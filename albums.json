@@ -14420,5 +14420,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6390"
+ },
+ {
+  "title": "Птица",
+  "artist": "Аукцыон",
+  "date": "2014-07-24",
+  "tracks": 12,
+  "year": "1993",
+  "id": 701,
+  "added": "2026-11-17T15:29:08",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "New Wave",
+   "Folk Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2014",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
