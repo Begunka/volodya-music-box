@@ -14364,15 +14364,16 @@
   "year": "2026",
   "id": 698,
   "added": "2026-11-17T05:11:05",
+  "cover_ext": "webp",
+  "year_tried": 1794892303,
+  "disco_v": 2,
   "genres": [
    "Electronic"
   ],
   "styles": [
    "Leftfield"
   ],
-  "genre_src": "artist",
-  "cover_ext": "webp",
-  "year_tried": 1794892303,
-  "disco_v": 2
+  "genre_src": "itunes",
+  "genre_tried": 1794892343
  }
 ]
