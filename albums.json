@@ -14355,5 +14355,24 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6382"
+ },
+ {
+  "title": "mixtape 2011-2022 (rare style)",
+  "artist": "N-trg, Cyber the Maid",
+  "date": "2026-11-17",
+  "tracks": 16,
+  "year": "2026",
+  "id": 698,
+  "added": "2026-11-17T05:11:05",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Leftfield"
+  ],
+  "genre_src": "artist",
+  "cover_ext": "webp",
+  "year_tried": 1794892303,
+  "disco_v": 2
  }
 ]
