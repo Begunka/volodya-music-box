@@ -14396,5 +14396,27 @@
   "reissue_year": "2025",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Крым",
+  "artist": "Звуки Му",
+  "date": "1994-01-01",
+  "tracks": 10,
+  "year": "1988",
+  "id": 700,
+  "added": "2026-11-17T14:03:09",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Avantgarde",
+   "Experimental"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "1994",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
