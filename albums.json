@@ -14559,5 +14559,25 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6453"
+ },
+ {
+  "title": "Space Shanty",
+  "artist": "Khan",
+  "date": "2008-05-22",
+  "tracks": 8,
+  "year": "1972",
+  "id": 707,
+  "added": "2026-11-18T18:23:03",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2008",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
