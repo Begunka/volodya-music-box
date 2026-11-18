@@ -14465,5 +14465,28 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6411"
+ },
+ {
+  "title": "Looking For A Day In The Night",
+  "artist": "The Lilac Time",
+  "date": "2023-10-27",
+  "tracks": 13,
+  "year": "1999",
+  "id": 703,
+  "added": "2026-11-18T06:38:44",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Acoustic",
+   "Indie Pop"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2023",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6426"
  }
 ]
