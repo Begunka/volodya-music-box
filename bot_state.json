@@ -1,10 +1,16 @@
 {
- "offset": 857453481,
+ "offset": 857453495,
  "pending_comments": {},
  "pending_photo": null,
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {},
+ "orphans": {
+  "ghédaliatazartes|diasporas": {
+   "post_id": 6453,
+   "chat_id": -1003224722462,
+   "comment_id": 25067
+  }
+ },
  "group_copies": {
   "6282": {
    "chat": {
