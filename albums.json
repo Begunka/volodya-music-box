@@ -14441,5 +14441,28 @@
   "reissue_year": "2014",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Yellow Submarine",
+  "artist": "The Beatles",
+  "date": "2015-12-24",
+  "tracks": 13,
+  "year": "1966",
+  "title_full": "Yellow Submarine (Remastered)",
+  "id": 702,
+  "added": "2026-11-18T02:16:11",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Beat",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2015",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
