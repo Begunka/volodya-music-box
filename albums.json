@@ -14579,5 +14579,30 @@
   "reissue_year": "2008",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Yeti",
+  "artist": "Amon Düül II",
+  "date": "23-06-2006",
+  "tracks": 13,
+  "duration": "1hr 7min",
+  "genre": "Rock",
+  "label": "SPV",
+  "year": "1970",
+  "listen_url": "https://www.deezer.com/album/905273212",
+  "id": 708,
+  "added": "2026-11-18T19:03:35",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Krautrock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2006",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
