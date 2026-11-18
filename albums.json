@@ -14539,5 +14539,25 @@
   "reissue_year": "1992",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Diasporas",
+  "artist": "Ghédalia Tazartes",
+  "date": "2020-03-27",
+  "tracks": 11,
+  "year": "1979",
+  "id": 706,
+  "added": "2026-11-18T17:30:38",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Experimental"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2020",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6453"
  }
 ]

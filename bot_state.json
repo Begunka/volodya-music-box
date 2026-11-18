@@ -1,16 +1,10 @@
 {
- "offset": 857453495,
+ "offset": 857453509,
  "pending_comments": {},
  "pending_photo": null,
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {
-  "ghédaliatazartes|diasporas": {
-   "post_id": 6453,
-   "chat_id": -1003224722462,
-   "comment_id": 25067
-  }
- },
+ "orphans": {},
  "group_copies": {
   "6282": {
    "chat": {
@@ -118,6 +112,15 @@
    "message_id": 25016,
    "forward_origin": {
     "message_id": 6452
+   }
+  },
+  "6465": {
+   "chat": {
+    "id": -1003224722462
+   },
+   "message_id": 25068,
+   "forward_origin": {
+    "message_id": 6465
    }
   }
  },
