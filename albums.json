@@ -14489,5 +14489,55 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6426"
+ },
+ {
+  "title": "Grace Days",
+  "artist": "I Am Robot and Proud",
+  "date": "24-07-2003",
+  "tracks": 9,
+  "duration": "39min",
+  "genre": "Electro",
+  "label": "Darla Records",
+  "year": "2003",
+  "listen_url": "https://www.deezer.com/album/1007278",
+  "id": 704,
+  "added": "2026-11-18T15:12:44",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "IDM"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
+ },
+ {
+  "title": "Every Man And Woman Is A Star",
+  "artist": "Ultramarine",
+  "date": "01-01-1992",
+  "tracks": 18,
+  "duration": "1hr 30min",
+  "genre": "Electro",
+  "label": "Rough Trade",
+  "year": "1991",
+  "listen_url": "https://www.deezer.com/album/8958517",
+  "id": 705,
+  "added": "2026-11-18T15:12:44",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "House",
+   "Downtempo",
+   "Folk",
+   "Balearic",
+   "Dub",
+   "Leftfield"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "1992",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
