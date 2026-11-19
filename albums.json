@@ -14605,5 +14605,28 @@
   "reissue_year": "2006",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Pipe Dreams",
+  "artist": "Whirr",
+  "date": "21-02-2013",
+  "tracks": 10,
+  "duration": "36min",
+  "genre": "Alternative, Indie Rock, Rock",
+  "label": "Free Whirl",
+  "year": "2012",
+  "listen_url": "https://www.deezer.com/album/809256911",
+  "id": 709,
+  "added": "2026-11-19T16:25:18",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Shoegaze"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2013",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
