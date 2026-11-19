@@ -1,7 +1,47 @@
 {
- "offset": 857453563,
+ "offset": 857453564,
  "pending_comments": {},
- "pending_photo": null,
+ "pending_photo": {
+  "message_id": 36,
+  "photo": [
+   {
+    "file_id": "AgACAgIAAyEFAAMBAAFctMwAAyRq_yNVSkVsp8ZoSDhOJImznaSf9AACdSBrG6wXsEvd5NggsYy0JAEAAwIAA3MAAz0E",
+    "file_unique_id": "AQADdSBrG6wXsEt4",
+    "file_size": 1132,
+    "width": 90,
+    "height": 90
+   },
+   {
+    "file_id": "AgACAgIAAyEFAAMBAAFctMwAAyRq_yNVSkVsp8ZoSDhOJImznaSf9AACdSBrG6wXsEvd5NggsYy0JAEAAwIAA20AAz0E",
+    "file_unique_id": "AQADdSBrG6wXsEty",
+    "file_size": 15571,
+    "width": 320,
+    "height": 320
+   },
+   {
+    "file_id": "AgACAgIAAyEFAAMBAAFctMwAAyRq_yNVSkVsp8ZoSDhOJImznaSf9AACdSBrG6wXsEvd5NggsYy0JAEAAwIAA3gAAz0E",
+    "file_unique_id": "AQADdSBrG6wXsEt9",
+    "file_size": 65807,
+    "width": 800,
+    "height": 800
+   },
+   {
+    "file_id": "AgACAgIAAyEFAAMBAAFctMwAAyRq_yNVSkVsp8ZoSDhOJImznaSf9AACdSBrG6wXsEvd5NggsYy0JAEAAwIAA3kAAz0E",
+    "file_unique_id": "AQADdSBrG6wXsEt-",
+    "file_size": 144307,
+    "width": 1280,
+    "height": 1280
+   },
+   {
+    "file_id": "AgACAgIAAyEFAAMBAAFctMwAAyRq_yNVSkVsp8ZoSDhOJImznaSf9AACdSBrG6wXsEvd5NggsYy0JAEAAwIAA3cAAz0E",
+    "file_unique_id": "AQADdSBrG6wXsEt8",
+    "file_size": 149215,
+    "width": 1416,
+    "height": 1416
+   }
+  ],
+  "date": 1795105621
+ },
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
  "orphans": {},
