@@ -298,14 +298,45 @@ textarea.field{min-height:90px;resize:vertical}
 .cmp .v.n{color:var(--ink)}
 .cmp .v.o{color:var(--muted);font-weight:400}
 .duel .alt{height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font-weight:500;width:100%}
-/* «в этот день»: маленькая обложка и одна кнопка */
-.today{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left}
-.today img,.today .ph{width:52px;height:52px;border-radius:6px;object-fit:cover;flex:none;background:var(--chip)}
+/* дни рождения альбомов: «в этот день» и лента-рулетка «следом» в одной панели */
+.bday{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.today{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:10px 12px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);text-align:left}
+.today .c{position:relative;display:block;flex:none;width:52px;height:52px}
+.today img,.today .ph{width:52px;height:52px;border-radius:6px;object-fit:cover;display:block;background:var(--chip)}
+.today .c em,.tape .c em{position:absolute;left:4px;top:4px;font:500 10px/1 var(--mono);font-style:normal;padding:3px 4px;border-radius:4px;
+  background:rgba(0,0,0,.6);color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:0}
 .today div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.today small{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.today small{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .today span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.today em{flex:none;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+.today .go{flex:none;font-style:normal;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+.tape-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px 6px}
+.tape-head b{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tape-head span{font-family:var(--mono);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+/* лента: каждый альбом — отрезок рулетки 112px (14 делений по 8px), отрезки стыкуются в одну шкалу */
+.tape{--tick:color-mix(in srgb,var(--muted) 55%,transparent);display:flex;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
+  scroll-padding-left:12px;padding:0 12px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tape::-webkit-scrollbar{display:none}
+.tape button{flex:none;width:112px;display:flex;flex-direction:column;gap:2px;padding:0;border:0;background:none;color:var(--ink);text-align:left;scroll-snap-align:start;min-width:0}
+.tape button:last-child{width:auto;padding-right:8px}
+.tape time{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-left:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tape .soon time{color:var(--accent)}
+.tape i{display:block;height:12px;margin:2px 0 8px;
+  background:linear-gradient(var(--accent),var(--accent)) 0 0/2px 100% no-repeat,
+    linear-gradient(var(--tick),var(--tick)) 56px 100%/1px 70% no-repeat,
+    repeating-linear-gradient(90deg,var(--tick) 0 1px,transparent 1px 8px) 0 100%/100% 40% no-repeat,
+    linear-gradient(var(--tick),var(--tick)) 0 100%/100% 1px no-repeat,
+    color-mix(in srgb,var(--accent) 9%,transparent)}
+.tape button:last-child i{width:112px}
+.tape .c{position:relative;width:88px;height:88px;margin-left:6px}
+.tape img,.tape .ph{width:88px;height:88px;border-radius:6px;object-fit:cover;background:var(--chip);display:block;transition:transform .1s}
+.tape button:active img{transform:scale(.97)}
+.tape button:focus-visible{outline:none}
+.tape button:focus-visible img{outline:2px solid var(--accent);outline-offset:2px}
+.tape b,.tape span,.tape small{display:block;max-width:100px;margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tape b{font-weight:600;font-size:13px;margin-top:6px}
+.tape span{color:var(--muted);font-size:12px}
+.tape small{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .tag[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--chip)}
 .lrow{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px}
 .lrow .op{display:flex;gap:10px;align-items:center;flex:1;min-width:0;background:none;border:0;padding:0;color:var(--ink);text-align:left}
@@ -390,7 +421,11 @@ textarea.field{min-height:90px;resize:vertical}
   </div>
 
   <main>
-    <button class="today" id="today" type="button" hidden></button>
+    <section class="bday" id="bday" aria-label="Дни рождения альбомов" hidden>
+      <button class="today" id="today" type="button" hidden></button>
+      <div class="tape-head"><b id="tape-title">Следом</b><span id="tape-note"></span></div>
+      <div class="tape" id="tape"></div>
+    </section>
     <nav class="hub" aria-label="Разделы">
       <button type="button" id="hub-later" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Позже</b><span id="later-count">бот напомнит</span><i id="later-badge"></i></button>
       <button type="button" id="hub-duel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 12l4 4-4 4M21 16H8"/></svg><b>Дуэль</b><span>сравнить вкусы</span></button>
@@ -649,7 +684,7 @@ textarea.field{min-height:90px;resize:vertical}
     $("s-title").textContent = a.title;
     $("s-artist").textContent = a.artist || "Исполнитель неизвестен";
     const facts = [
-      ["Год", a.year || "?"],
+      a.day && a.year ? ["Вышел", fullDate(a)] : ["Год", a.year || "?"],
       ["Треков", a.tracks || "—"],
       ["В архиве", "№" + a.id],
     ];
@@ -907,6 +942,7 @@ textarea.field{min-height:90px;resize:vertical}
     const N = 15;
     let set = [], mine = [], d = null, idx = 0;
     const byId = id => all.find(a => a.id === id);
+    const age = n => n > 0 ? `<em>${n} ${plural(n, "год", "года", "лет")}</em>` : "";
     const cover = a => a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`;
     const top = label => `<div class="duel-top"><span class="step">${label}</span><button class="alt" style="width:auto;padding:0 12px" data-x="close">Закрыть</button></div>`;
     function show(html){ $("duel-in").innerHTML = html; $("duel").hidden = false; $("duel").scrollTop = 0; }
@@ -1515,25 +1551,58 @@ textarea.field{min-height:90px;resize:vertical}
   })();
   function plural(n, one, few, many){ const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; }
 
-  // ---------- «в этот день» ----------
-  // Один альбом, вышедший в сегодняшнее число (если такого нет — в один из шести предыдущих дней).
-  function paintToday(){
-    // Точная дата — «в этот день». Если на сегодня альбома нет, ближайший в пределах трёх дней (сначала прошедшие), с честной датой.
-    const now = new Date(), key = d => String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    for (const shift of [0, -1, 1, -2, 2, -3, 3]) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + shift);
-      const pool = all.filter(a => a.day === key(d) && a.year);
+  // ---------- дни рождения альбомов ----------
+  // Поле day («ММ-ДД») бот ставит, только если дату первого выхода подтвердили два источника
+  // (bot/dates.py). Сверху — альбом, вышедший сегодня (если такого нет — в один из трёх прошедших дней),
+  // под ним лента-рулетка: все дни рождения по порядку, начиная с ближайшего.
+  const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const isLeap = y => y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+  // дата дня рождения в году y (29 февраля в обычный год празднуем 28-го)
+  function bdayIn(a, y){
+    const [m, d] = a.day.split("-").map(Number);
+    return new Date(y, m - 1, m === 2 && d === 29 && !isLeap(y) ? 28 : d);
+  }
+  function fullDate(a){
+    const [m, d] = a.day.split("-").map(Number);
+    return `${d} ${MON[m - 1]} ${a.year}`;
+  }
+  function paintBdays(){
+    const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dated = all.filter(a => a.day && /^\d\d-\d\d$/.test(a.day) && a.year);
+    $("bday").hidden = !dated.length;
+    if (!dated.length) return;
+    const age = n => n > 0 ? `<em>${n} ${plural(n, "год", "года", "лет")}</em>` : "";
+    const cover = a => a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="" loading="lazy" decoding="async">` : `<div class="ph"></div>`;
+    // «в этот день»
+    let top = null;
+    for (const shift of [0, -1, -2, -3]) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + shift);
+      const pool = dated.filter(a => bdayIn(a, d.getFullYear()).getTime() === d.getTime());
       if (!pool.length) continue;
-      const a = pool[(now.getFullYear() + now.getDate()) % pool.length], ago = now.getFullYear() - +a.year;
-      const date = d.toLocaleDateString("ru-RU", {day: "numeric", month: "long"}) + " " + a.year;
-      const head = shift ? "Вышел " + date : `В этот день · ${a.year}`;
-      const sub = ago > 0 ? `${ago} ${plural(ago, "год", "года", "лет")} назад` : "";
-      $("today").innerHTML = `${a.has_cover ? `<img src="covers/${a.id}.${a.cover_ext || "webp"}" alt="">` : `<div class="ph"></div>`}
-        <div><small>${head}</small><b>${esc(a.title)}</b><span>${esc(a.artist || "")}${sub ? " · " + sub : ""}</span></div><em>Об альбоме</em>`;
-      $("today").dataset.id = a.id; $("today").hidden = false;
-      return;
+      const a = pool[(today.getFullYear() + today.getDate()) % pool.length], ago = d.getFullYear() - +a.year;
+      const head = shift ? "Вышел " + d.toLocaleDateString("ru-RU", {day: "numeric", month: "long"}) + " " + a.year : "В этот день · " + a.year;
+      $("today").innerHTML = `<div class="c">${cover(a)}${age(ago)}</div><div><small>${head}</small><b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span></div><i class="go">Об альбоме</i>`;
+      $("today").dataset.id = a.id;
+      top = a;
+      break;
     }
-    $("today").hidden = true;
+    $("today").hidden = !top;
+    // рулетка: от сегодняшнего дня по кругу через год
+    const next = dated.filter(a => a !== top).map(a => {
+      let t = bdayIn(a, today.getFullYear());
+      if (t < today) t = bdayIn(a, today.getFullYear() + 1);
+      return {a, t, n: Math.round((t - today) / 864e5)};
+    }).sort((x, y) => x.n - y.n || x.a.id - y.a.id);
+    const when = n => n === 0 ? "сегодня" : n === 1 ? "завтра" : `через ${n} ${plural(n, "день", "дня", "дней")}`;
+    $("tape-title").textContent = top ? "Следом" : "Ближайшие дни рождения";
+    $("tape-note").textContent = `${dated.length} ${plural(dated.length, "альбом", "альбома", "альбомов")} с точной датой`;
+    $("tape").innerHTML = next.map(({a, t, n}) => {
+      return `<button type="button" data-id="${a.id}"${n <= 7 ? ' class="soon"' : ""} title="${esc(fullDate(a))}">
+        <time datetime="${t.getFullYear()}-${a.day}">${t.getDate()} ${MON[t.getMonth()]}</time><i></i>
+        <div class="c">${cover(a)}${age(t.getFullYear() - +a.year)}</div>
+        <b>${esc(a.title)}</b><span>${esc(a.artist || "")}</span><small>${when(n)}</small></button>`;
+    }).join("");
+    $("tape").scrollLeft = 0;
   }
 
 
@@ -1958,6 +2027,7 @@ textarea.field{min-height:90px;resize:vertical}
   $("s-addpl").addEventListener("click", () => { if (openId) Playlists.addFromAlbum(openId); });
   $("s-later").addEventListener("click", () => { if (openId) Later.toggle(openId); });
   $("today").addEventListener("click", () => open(+$("today").dataset.id));
+  $("tape").addEventListener("click", e => { const b = e.target.closest("[data-id]"); if (b) open(+b.dataset.id); });
   $("don-open").hidden = !(inTg && tgApp.openInvoice && tgApp.isVersionAtLeast && tgApp.isVersionAtLeast("6.1"));
   $("hub-don").hidden = $("don-open").hidden;
   $("don-open").addEventListener("click", () => { $("don").hidden = false; });
@@ -1983,7 +2053,7 @@ textarea.field{min-height:90px;resize:vertical}
     paintVote();
   }
   fetch("data.json").then(r => r.json()).then(d => {
-    all = d; buildGenres(); buildDecades(); paintToday(); Later.paint();
+    all = d; buildGenres(); buildDecades(); paintBdays(); Later.paint();
     apply();                // архив показываем сразу, не дожидаясь оценок
     if (inTg) checkSub();   // заранее, чтобы кнопки не ждали
     loadCounts().then(refreshMeta);

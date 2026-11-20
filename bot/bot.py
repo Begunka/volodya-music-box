@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from parser import parse_post, is_track_post, looks_almost_like_album, album_key, clean_title  # noqa: E402
 from enrich import enrich  # noqa: E402
 from genres import fill_genres, needs_genres, WEAK  # noqa: E402
+from dates import day_for, signature as dates_signature  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE = ROOT / "albums.json"        # полный архив
@@ -234,11 +235,11 @@ def export_site_data(albums):
             d["has_cover"] = True
         if not a.get("year_checked"):
             d["unverified"] = True
-        # «вышел в этот день»: только когда дата в посте полная и её год — год первого выхода
-        # (1 января обычно значит «известен только год»)
-        date = a.get("date") or ""
-        if len(date) == 10 and date[:4] == str(a.get("year")) and date[5:] != "01-01":
-            d["day"] = date[5:]
+        # день рождения альбома: только подтверждённый двумя источниками (bot/dates.py, dates.json);
+        # дата из поста сама по себе не в счёт — у переизданий там дата ремастера
+        day = day_for(a)
+        if day:
+            d["day"] = day
         out.append(d)
     save_json(SITE_DATA, out, compact=True)
 
@@ -836,6 +837,12 @@ class Bot:
                 total += n
                 if n == 0:
                     break
+        # dates.json обновил workflow dates.yml (или поправили dates_fix.json) — пересобрать data.json
+        sig = dates_signature()
+        if self.state.get("dates_sig") != sig:
+            self.archive.changed = True
+            self.archive.save()
+            self.state["dates_sig"] = sig
         try:
             self.archive.recheck()
             self.archive.save()
