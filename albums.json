@@ -14765,5 +14765,25 @@
   "reissue_year": "2012",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "The House in Fata Morgana (Original Sound Track)",
+  "artist": "Novectacle",
+  "date": "2013-05-05",
+  "tracks": 44,
+  "year": "2013",
+  "id": 717,
+  "added": "2026-11-20T19:44:24",
+  "genres": [
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Video Game Music"
+  ],
+  "genre_src": "discogs",
+  "year_src": "discography",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6538"
  }
 ]
