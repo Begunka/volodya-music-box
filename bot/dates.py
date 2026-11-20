@@ -12,7 +12,8 @@
      и Англии в разные дни, день рождения — первый выход.
      Если подтверждения нет, но и возразить некому (у баз нет другой точной даты в этот год,
      а неполная дата MusicBrainz вроде «1987-10» с ней сходится) — тоже берётся. Без английской
-     статьи так же берётся дата из русской.
+     статьи так же берётся дата из русской — но не тогда, когда английская знает только месяц
+     («March 1967»: точный день неизвестен — так у The Velvet Underground & Nico).
   2. Иначе нужна дата, которую
      назвали минимум два разных семейства источников; из таких берётся самая ранняя.
   3. Иначе дня рождения нет: лучше без даты, чем с чужой.
@@ -54,7 +55,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATES = ROOT / "dates.json"
 FIX = ROOT / "dates_fix.json"
 WIKI = ROOT / "wiki"
-RULES = 3             # поменял правила в decide() — увеличь: бот пересоберёт data.json
+RULES = 4             # поменял правила в decide() — увеличь: бот пересоберёт data.json
 RETRY_DAYS = 30       # дата не подтвердилась — спросим базы снова через месяц
 RECHECK_DAYS = 180    # подтвердилась — перепроверим через полгода (базы исправляют ошибки)
 
@@ -110,15 +111,19 @@ def decide(seen, a):
     # 1б. Википедия одна, но никто из баз ей не противоречит: у MusicBrainz, Discogs и Wikidata
     #     нет другой точной даты в этот год, а неполная дата MusicBrainz («1987-10») с ней сходится.
     #     Пост не в счёт — он и так чаще всего ошибается. Русская — только если английской нет.
+    enp = (seen or {}).get("enp", "")
+    enp = enp if enp[:4] == year and len(enp) == 7 else ""
     for lang in ("en", "ru"):
         ds = sorted(srcs.get(lang, []))
         if not ds:
             continue
+        if lang == "ru" and enp:
+            break      # английская статья знает только месяц — русской одной не верим
         d = ds[0]
         rivals = [x for k in ("mb", "dg", "wd", "ru", "en") if k != lang for x in srcs.get(k, []) if x != d]
         mbp = (seen or {}).get("mbp", "")
         if not rivals and (not mbp or d.startswith(mbp) or not mbp.startswith(year)):
-            return d[5:], [lang]
+            return d[5:], [lang] + sorted(k for k, v in srcs.items() if k != lang and d in v)
         break
     # 2. согласие двух семейств
     votes = {}
@@ -128,7 +133,8 @@ def decide(seen, a):
     good = []
     for d, fams in votes.items():
         need = fams - {"post"} if d[5:] == "01-01" else fams   # 1 января любят ставить «для года»
-        if len(need) >= 2:
+        # английская статья знает только месяц — день должен быть в этом месяце
+        if len(need) >= 2 and (not enp or d.startswith(enp)):
             good.append(d)
     if not good:
         return None, []
@@ -406,18 +412,37 @@ def dates_in(val):
     return sorted(set(out))
 
 
-def infobox_dates(text):
+def months_in(val):
+    """Неполные даты «ГГГГ-ММ»: {{Start date|1967|03}}, «May 1978», «март 1967»."""
+    val = re.sub(r"<ref[^>]*>.*?</ref>|<ref[^>]*/>|<!--.*?-->", " ", val, flags=re.S | re.I)
+    out = []
+    for m in re.finditer(r"\{\{\s*start[ _]date[^|{}]*\|\s*(\d{4})\s*\|\s*(\d{1,2})\s*(?:\||\}\})", val, re.I):
+        out.append(f"{m.group(1)}-{int(m.group(2)):02d}")
+    for m in re.finditer(r"([A-Za-zА-Яа-яЁё]+)\.?,?\s+(\d{4})", val):
+        mo = month(m.group(1))
+        if mo:
+            out.append(f"{m.group(2)}-{mo:02d}")
+    return sorted(set(out))
+
+
+def infobox(text):
+    """(полные даты, неполные «ГГГГ-ММ») из поля «Released»/«Выпущен» карточки альбома."""
     m = INFOBOX.search(text or "")
     if not m:
         say("    карточки альбома нет")
-        return []
-    out = []
+        return [], []
+    out, part = [], []
     for p in template_params(text, m.start()):
         name, eq, val = p.partition("=")
         if eq and re.sub(r"[\s_]+", " ", name).strip().lower() in RELEASED:
             say(f"    поле «{name.strip()}»: {' '.join(val.split())[:220]}")
             out += dates_in(val)
-    return sorted(set(out))
+            part += months_in(val)
+    return sorted(set(out)), sorted(set(part))
+
+
+def infobox_dates(text):
+    return infobox(text)[0]
 
 
 def wikitext(lang, title):
@@ -466,9 +491,12 @@ def wiki_part(a, qid, pages):
     for lang in ("en", "ru"):
         if lang in pages:
             say(f"    {lang}: {pages[lang]}")
-            ds = infobox_dates(wikitext(lang, pages[lang]))
+            ds, part = infobox(wikitext(lang, pages[lang]))
             if ds:
                 seen[lang] = ds
+            elif lang == "en" and part:
+                # английская статья знает только месяц: «точная дата неизвестна» — тоже знание
+                seen["enp"] = part[0]
     return seen, qid
 
 
