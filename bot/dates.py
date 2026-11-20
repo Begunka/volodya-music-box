@@ -4,20 +4,24 @@
 часто дата ремастера или случайное число в нужном году (All Things Must Pass стоял
 20 ноября вместо 27-го). Поэтому дата засчитывается только с подтверждением.
 
-Как решается:
-  • каждый источник даёт полные даты (год-месяц-число);
-  • берутся только даты в год первого выхода из архива — другие относятся к переизданиям;
-  • дата засчитана, если её подтвердили минимум два разных семейства источников;
-    из подтверждённых берётся самая ранняя (у альбома, вышедшего в США и Англии
-    в разные дни, день рождения — первый выход);
-  • согласия нет — дня рождения нет: лучше без даты, чем с чужой.
+Как решается (только даты в год первого выхода из архива — другие относятся к переизданиям):
+  1. Английская Википедия (поле «Released» в карточке) — главный источник: так дату видят все,
+     кто её гуглит. Берётся самая ранняя её дата, если её подтвердил кто-то ещё
+     (MusicBrainz, Discogs, пост, Wikidata или русская Википедия — эти две хотя бы
+     страхуют от ошибки разбора). Самая ранняя — потому что у альбома, вышедшего в США
+     и Англии в разные дни, день рождения — первый выход.
+  2. В английской Википедии даты нет или её никто не подтвердил — нужна дата, которую
+     назвали минимум два разных семейства источников; из таких берётся самая ранняя.
+  3. Иначе дня рождения нет: лучше без даты, чем с чужой.
 
 Семейства (внутри одного подтверждения не складываются — они списывают друг у друга):
   mb   — MusicBrainz: first-release-date группы релизов; если там только год или месяц —
          даты самых ранних изданий этого года;
-  wiki — Википедия (карточка альбома, en и ru) и Wikidata (дата публикации P577 с точностью до дня);
-  dg   — Discogs: основное издание мастер-релиза;
+  wiki — Википедия (en, ru) и Wikidata (дата публикации P577 с точностью до дня);
+  dg   — Discogs: основное издание мастер-релиза (или самые ранние издания);
   post — дата из поста (кроме 1 января — так пишут, когда известен только год).
+Почему не «два любых источника» и всё: у The Money Store русская Википедия и Deezer
+сходились на 20 апреля (предрелиз), а вышел альбом 24-го — так написано в английской.
 
 dates.json (корень) — доказательства: {"номер": {"y": год, "seen": {источник: [даты]},
   "ids": {"mb": …, "wd": …, "dg": …}, "at": время проверки}}. Решение (`day_for`) считается
@@ -47,7 +51,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATES = ROOT / "dates.json"
 FIX = ROOT / "dates_fix.json"
 WIKI = ROOT / "wiki"
-RULES = 1             # поменял правила в decide() — увеличь: бот пересоберёт data.json
+RULES = 2             # поменял правила в decide() — увеличь: бот пересоберёт data.json
 RETRY_DAYS = 30       # дата не подтвердилась — спросим базы снова через месяц
 RECHECK_DAYS = 180    # подтвердилась — перепроверим через полгода (базы исправляют ошибки)
 
@@ -87,18 +91,24 @@ def post_date(a):
 # ---------- решение ----------
 
 def decide(seen, a):
-    """(«ММ-ДД», [семейства]) или (None, []). seen — доказательства из dates.json."""
+    """(«ММ-ДД», [кто подтвердил]) или (None, []). seen — доказательства из dates.json."""
     year = str(a.get("year") or "")
-    srcs = {k: list(v) for k, v in (seen or {}).items()}
+    srcs = {k: [d for d in v if d[:4] == year] for k, v in (seen or {}).items()}
     p = post_date(a)
-    if p:
+    if p and p[:4] == year:
         srcs["post"] = [p]
+    srcs = {k: v for k, v in srcs.items() if v and k in FAMILY}
+    # 1. английская Википедия, подтверждённая кем угодно ещё
+    en = srcs.get("en", [])
+    for d in sorted(en):
+        by = sorted(k for k, v in srcs.items() if k != "en" and d in v)
+        if by:
+            return d[5:], ["en"] + by
+    # 2. согласие двух семейств
     votes = {}
     for src, ds in srcs.items():
-        fam = FAMILY.get(src)
         for d in ds:
-            if fam and d[:4] == year:
-                votes.setdefault(d, set()).add(fam)
+            votes.setdefault(d, set()).add(FAMILY[src])
     good = []
     for d, fams in votes.items():
         need = fams - {"post"} if d[5:] == "01-01" else fams   # 1 января любят ставить «для года»
@@ -107,7 +117,7 @@ def decide(seen, a):
     if not good:
         return None, []
     d = min(good)
-    return d[5:], sorted(votes[d])
+    return d[5:], sorted(k for k, v in srcs.items() if d in v)
 
 
 _cache = {}
@@ -180,32 +190,51 @@ def phrase(s):
     return (s or "").replace("\\", "\\\\").replace('"', '\\"')
 
 
-def matches(their_title, their_artist, a):
-    from enrich import similar, first_artist
-    t = similar(their_title, a["title"])
-    if a.get("title_full"):
-        t = max(t, similar(their_title, a["title_full"]))
-    ar = max(similar(their_artist, a["artist"]), similar(their_artist, first_artist(a["artist"])))
-    return (t + ar) if t >= 0.85 and ar >= 0.6 else 0
+def names(artist):
+    """«John Lennon / Plastic Ono Band» → [целиком, «John Lennon», «Plastic Ono Band»]."""
+    parts = re.split(r"\s*(?:/|,|&|\+|\bfeat\.?|\bft\.|\bwith\b|\band\b|\bи\b)\s*", artist or "", flags=re.I)
+    return [artist or ""] + [x for x in parts if x.strip()]
+
+
+def matches(their_title, their_artist, a, artist=None):
+    """Насколько запись из базы похожа на наш альбом: 0 — не он, иначе сумма сходств (до ~2.2)."""
+    from enrich import similar, title_match, norm
+    t = max(title_match(a["title"], their_title or ""),
+            title_match(a["title_full"], their_title or "") if a.get("title_full") else 0)
+    ours = names(artist or a["artist"])
+    ar = max(similar(x, y) for x in names(their_artist) for y in ours)
+    if t < 0.85 or ar < 0.6:
+        return 0
+    return t + ar + (0.2 if norm(their_title) == norm(a["title"]) else 0)
+
+
+def plain_title(title):
+    return re.sub(r"[^\w]+", " ", title or "").strip()
 
 
 # ---------- MusicBrainz ----------
 
 def mb_find(artist, a):
     from enrich import first_artist
-    q = f'releasegroup:"{phrase(a["title"])}" AND artist:"{phrase(first_artist(artist))}"'
-    data = mb("release-group/?fmt=json&limit=10&query=" + urllib.parse.quote(q))
-    best = None
-    for rg in data.get("release-groups", []):
-        credit = " ".join(c.get("name", "") for c in rg.get("artist-credit", []))
-        sc = max(matches(rg.get("title"), credit, a), matches(rg.get("title"), credit, dict(a, artist=artist)))
-        if not sc:
-            continue
-        if (rg.get("first-release-date") or "")[:4] == str(a["year"]):
-            sc += 0.5          # среди тёзок — та, что вышла в наш год
-        if not best or sc > best[0]:
-            best = (sc, rg["id"])
-    return best[1] if best else None
+    year = str(a["year"])
+    for q in (f'releasegroup:"{phrase(a["title"])}" AND artist:"{phrase(first_artist(artist))}"',
+              f'releasegroup:({phrase(plain_title(a["title"]))}) AND artist:"{phrase(first_artist(artist))}"'):
+        data = mb("release-group/?fmt=json&limit=50&query=" + urllib.parse.quote(q))
+        best = None
+        for rg in data.get("release-groups", []):
+            credit = " / ".join(c.get("name", "") for c in rg.get("artist-credit", []))
+            sc = matches(rg.get("title"), credit, a, artist)
+            if not sc:
+                continue
+            if (rg.get("first-release-date") or "")[:4] == year:
+                sc += 0.5          # среди тёзок (концертник, переиздание) — та, что вышла в наш год
+            if not best or sc > best[0]:
+                best = (sc, rg["id"])
+        if best:
+            return best[1]
+        if plain_title(a["title"]) == a["title"]:
+            break
+    return None
 
 
 def mb_part(a, ids):
@@ -253,12 +282,12 @@ def mb_part(a, ids):
 # ---------- Википедия и Wikidata ----------
 
 MONTHS = {}
-for i, names in enumerate([
+for i, words in enumerate([
         "january jan января январь", "february feb февраля февраль", "march mar марта март",
         "april apr апреля апрель", "may мая май", "june jun июня июнь", "july jul июля июль",
         "august aug августа август", "september sep sept сентября сентябрь", "october oct октября октябрь",
         "november nov ноября ноябрь", "december dec декабря декабрь"], 1):
-    for n in names.split():
+    for n in words.split():
         MONTHS[n] = i
 
 
@@ -415,34 +444,52 @@ def dg_part(a, ids):
     did = ids.get("dg")
     if not did:
         for kind in ("master", "release"):
-            data = dg("database/search", type=kind, artist=first_artist(a["artist"]), release_title=a["title"], per_page=10)
-            best = None
-            for r in data.get("results", []):
-                ra, rt = _dg_artist(r)
-                sc = matches(rt, ra, a)
-                if not sc:
-                    continue
-                if str(r.get("year") or "") == year:
-                    sc += 0.5
-                if not best or sc > best[0]:
-                    best = (sc, kind[0] + str(r["id"]))
-            if best:
-                did = best[1]
+            for title in dict.fromkeys([a["title"], plain_title(a["title"])]):
+                data = dg("database/search", type=kind, artist=first_artist(a["artist"]), release_title=title, per_page=20)
+                best = None
+                for r in data.get("results", []):
+                    ra, rt = _dg_artist(r)
+                    sc = matches(rt, ra, a)
+                    if not sc:
+                        continue
+                    if str(r.get("year") or "") == year:
+                        sc += 0.5
+                    if not best or sc > best[0]:
+                        best = (sc, kind[0] + str(r["id"]))
+                if best:
+                    did = best[1]
+                    break
+            if did:
                 break
     if not did:
         return [], None
-    rel_id = dg(f"masters/{did[1:]}").get("main_release") if did[0] == "m" else did[1:]
-    if not rel_id:
-        return [], did
-    d = iso(dg(f"releases/{rel_id}").get("released"))
-    return ([d] if d else []), did
+    if did[0] == "r":
+        d = iso(dg(f"releases/{did[1:]}").get("released"))
+        return ([d] if d else []), did
+    # мастер: основное издание; если у него нет точной даты в наш год — самые ранние издания
+    rel_id = dg(f"masters/{did[1:]}").get("main_release")
+    d = iso(dg(f"releases/{rel_id}").get("released")) if rel_id else None
+    if d and d[:4] == year:
+        return [d], did
+    vs = dg(f"masters/{did[1:]}/versions", sort="released", sort_order="asc", per_page=25)
+    out = sorted({x for x in (iso(v.get("released")) for v in vs.get("versions", [])) if x and x[:4] == year})
+    return (out[:2] or ([d] if d else [])), did
 
 
 # ---------- проход по архиву ----------
 
-def check(a, rec):
-    """Собирает доказательства для одного альбома. Discogs идёт параллельно (у него свой лимит)."""
-    ids = dict(rec.get("ids") or {}) if rec and rec.get("y") == str(a["year"]) else {}
+USEFUL = {"mb": ("mb",), "wd": ("wd", "en", "ru"), "dg": ("dg",)}
+
+
+def check(a, rec, fresh=False):
+    """Собирает доказательства для одного альбома. Discogs идёт параллельно (у него свой лимит).
+    Найденные раньше записи в базах берутся снова, только если они дали дату в наш год
+    (иначе ищем заново: вдруг в прошлый раз нашлась не та запись)."""
+    ids = {}
+    if rec and not fresh and rec.get("y") == str(a["year"]):
+        seen = rec.get("seen") or {}
+        ids = {k: v for k, v in (rec.get("ids") or {}).items()
+               if any(d[:4] == rec["y"] for s in USEFUL.get(k, ()) for d in seen.get(s, []))}
     with ThreadPoolExecutor(max_workers=1) as ex:
         fut = ex.submit(dg_part, a, ids)
         mbd, rid, qid, pages = mb_part(a, ids)
@@ -526,7 +573,7 @@ def main():
             break
         key = str(a["id"])
         try:
-            rec = check(a, dates.get(key))
+            rec = check(a, dates.get(key), fresh="--all" in args)
         except Exception as e:      # сеть: не запоминаем, спросим в следующий раз
             print(f"  ошибка ({str(e)[:120]}): №{key} {a['artist']} — {a['title']}")
             continue
