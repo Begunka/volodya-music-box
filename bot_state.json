@@ -1,5 +1,5 @@
 {
- "offset": 857453605,
+ "offset": 857453616,
  "pending_comments": {
   "6476": 709
  },
@@ -205,6 +205,15 @@
    "message_id": 25123,
    "forward_origin": {
     "message_id": 6488
+   }
+  },
+  "6498": {
+   "chat": {
+    "id": -1003224722462
+   },
+   "message_id": 25135,
+   "forward_origin": {
+    "message_id": 6498
    }
   }
  },
