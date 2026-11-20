@@ -4115,29 +4115,6 @@
   "genre_tried": 1794828076
  },
  {
-  "title": "The Complete Recordings",
-  "artist": "Joe Meek",
-  "date": "1960-11-26",
-  "tracks": 15,
-  "year": "1960",
-  "id": 201,
-  "added": "2026-04-18T19:37:41",
-  "cover_ext": "webp",
-  "year_tried": 1794849320,
-  "genres": [
-   "Rock",
-   "Pop"
-  ],
-  "styles": [
-   "Surf",
-   "Novelty",
-   "Avantgarde"
-  ],
-  "genre_src": "artist",
-  "genre_tried": 1794768134,
-  "disco_v": 2
- },
- {
   "title": "Pieces of a Man",
   "artist": "Gil Scott-Heron",
   "date": "1971-01-01",
