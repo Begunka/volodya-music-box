@@ -14671,5 +14671,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6489"
+ },
+ {
+  "title": "The Noise Made By People",
+  "artist": "Broadcast",
+  "date": "2000-03-20",
+  "tracks": 12,
+  "year": "2000",
+  "id": 712,
+  "added": "2026-11-20T08:52:13",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Downtempo",
+   "Experimental",
+   "Indie Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
