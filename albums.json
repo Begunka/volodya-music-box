@@ -14739,5 +14739,31 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6521"
+ },
+ {
+  "title": "Alturas de Macchu Picchu",
+  "artist": "Los Jaivas",
+  "date": "31-07-2012",
+  "tracks": 7,
+  "duration": "37min",
+  "genre": "Rock",
+  "label": "Los Jaivas",
+  "year": "1981",
+  "listen_url": "https://www.deezer.com/album/721733541",
+  "id": 716,
+  "added": "2026-11-20T19:00:37",
+  "genres": [
+   "Rock",
+   "Latin",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2012",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
