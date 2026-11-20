@@ -14785,5 +14785,23 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6538"
+ },
+ {
+  "title": "Man It Feels Like Space Again",
+  "artist": "Pond",
+  "date": "2015-01-23",
+  "tracks": 9,
+  "year": "2015",
+  "id": 718,
+  "added": "2026-11-20T19:52:11",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
