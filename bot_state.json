@@ -1,8 +1,7 @@
 {
- "offset": 857453595,
+ "offset": 857453605,
  "pending_comments": {
-  "6476": 709,
-  "6489": 0
+  "6476": 709
  },
  "pending_photo": {
   "message_id": 36,
@@ -49,7 +48,9 @@
  "diary_chat_id": -1004301042892,
  "orphans": {
   "lamp|forlovers": {
-   "post_id": 6489
+   "post_id": 6489,
+   "chat_id": -1003224722462,
+   "comment_id": 25133
   }
  },
  "group_copies": {
@@ -195,6 +196,15 @@
    "message_id": 25117,
    "forward_origin": {
     "message_id": 6487
+   }
+  },
+  "6488": {
+   "chat": {
+    "id": -1003224722462
+   },
+   "message_id": 25123,
+   "forward_origin": {
+    "message_id": 6488
    }
   }
  },
