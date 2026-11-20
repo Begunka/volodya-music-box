@@ -10,7 +10,10 @@
      (MusicBrainz, Discogs, пост, Wikidata или русская Википедия — эти две хотя бы
      страхуют от ошибки разбора). Самая ранняя — потому что у альбома, вышедшего в США
      и Англии в разные дни, день рождения — первый выход.
-  2. В английской Википедии даты нет или её никто не подтвердил — нужна дата, которую
+     Если подтверждения нет, но и возразить некому (у баз нет другой точной даты в этот год,
+     а неполная дата MusicBrainz вроде «1987-10» с ней сходится) — тоже берётся. Без английской
+     статьи так же берётся дата из русской.
+  2. Иначе нужна дата, которую
      назвали минимум два разных семейства источников; из таких берётся самая ранняя.
   3. Иначе дня рождения нет: лучше без даты, чем с чужой.
 
@@ -51,7 +54,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATES = ROOT / "dates.json"
 FIX = ROOT / "dates_fix.json"
 WIKI = ROOT / "wiki"
-RULES = 2             # поменял правила в decide() — увеличь: бот пересоберёт data.json
+RULES = 3             # поменял правила в decide() — увеличь: бот пересоберёт data.json
 RETRY_DAYS = 30       # дата не подтвердилась — спросим базы снова через месяц
 RECHECK_DAYS = 180    # подтвердилась — перепроверим через полгода (базы исправляют ошибки)
 
@@ -93,7 +96,7 @@ def post_date(a):
 def decide(seen, a):
     """(«ММ-ДД», [кто подтвердил]) или (None, []). seen — доказательства из dates.json."""
     year = str(a.get("year") or "")
-    srcs = {k: [d for d in v if d[:4] == year] for k, v in (seen or {}).items()}
+    srcs = {k: [d for d in v if d[:4] == year] for k, v in (seen or {}).items() if k in FAMILY}
     p = post_date(a)
     if p and p[:4] == year:
         srcs["post"] = [p]
@@ -104,6 +107,19 @@ def decide(seen, a):
         by = sorted(k for k, v in srcs.items() if k != "en" and d in v)
         if by:
             return d[5:], ["en"] + by
+    # 1б. Википедия одна, но никто из баз ей не противоречит: у MusicBrainz, Discogs и Wikidata
+    #     нет другой точной даты в этот год, а неполная дата MusicBrainz («1987-10») с ней сходится.
+    #     Пост не в счёт — он и так чаще всего ошибается. Русская — только если английской нет.
+    for lang in ("en", "ru"):
+        ds = sorted(srcs.get(lang, []))
+        if not ds:
+            continue
+        d = ds[0]
+        rivals = [x for k in ("mb", "dg", "wd", "ru", "en") if k != lang for x in srcs.get(k, []) if x != d]
+        mbp = (seen or {}).get("mbp", "")
+        if not rivals and (not mbp or d.startswith(mbp) or not mbp.startswith(year)):
+            return d[5:], [lang]
+        break
     # 2. согласие двух семейств
     votes = {}
     for src, ds in srcs.items():
@@ -184,6 +200,13 @@ def wapi(host, **params):
 
 
 DISCOGS_TOKEN = os.environ.get("DISCOGS_TOKEN", "").strip()
+VERBOSE = False        # подробности (что нашлось в каждой базе) — при --only
+PARTIAL = {}           # неполная дата MusicBrainz текущего альбома
+
+
+def say(msg):
+    if VERBOSE:
+        print(msg)
 
 
 def phrase(s):
@@ -201,6 +224,10 @@ def matches(their_title, their_artist, a, artist=None):
     from enrich import similar, title_match, norm
     t = max(title_match(a["title"], their_title or ""),
             title_match(a["title_full"], their_title or "") if a.get("title_full") else 0)
+    # в базах бывает «John Lennon/Plastic Ono Band», а в посте просто «Plastic Ono Band»
+    parts = [x for x in re.split(r"\s*/\s*", their_title or "") if x.strip()]
+    if len(parts) > 1:
+        t = max([t] + [0.95 * title_match(a["title"], x) for x in parts])
     ours = names(artist or a["artist"])
     ar = max(similar(x, y) for x in names(their_artist) for y in ours)
     if t < 0.85 or ar < 0.6:
@@ -230,6 +257,7 @@ def mb_find(artist, a):
                 sc += 0.5          # среди тёзок (концертник, переиздание) — та, что вышла в наш год
             if not best or sc > best[0]:
                 best = (sc, rg["id"])
+        say(f"    MB поиск {q[:60]}…: {len(data.get('release-groups', []))} групп, выбрана {best}")
         if best:
             return best[1]
         if plain_title(a["title"]) == a["title"]:
@@ -261,9 +289,11 @@ def mb_part(a, ids):
         if r.get("type") == "wikipedia" and m:
             pages[m.group(1)] = urllib.parse.unquote(m.group(2)).replace("_", " ")
     frd = rg.get("first-release-date") or ""
+    say(f"    MB: {rg.get('title')} · {frd or '—'} · {rid}")
     d = iso(frd)
     if d:
         return [d], rid, qid, pages
+    PARTIAL["mbp"] = frd
     dates = set()
     if frd[:4] == year:
         # у группы известен только год (или месяц) — смотрим даты её изданий в этот год
@@ -374,11 +404,13 @@ def dates_in(val):
 def infobox_dates(text):
     m = INFOBOX.search(text or "")
     if not m:
+        say("    карточки альбома нет")
         return []
     out = []
     for p in template_params(text, m.start()):
         name, eq, val = p.partition("=")
         if eq and re.sub(r"[\s_]+", " ", name).strip().lower() in RELEASED:
+            say(f"    поле «{name.strip()}»: {' '.join(val.split())[:220]}")
             out += dates_in(val)
     return sorted(set(out))
 
@@ -428,6 +460,7 @@ def wiki_part(a, qid, pages):
                 pages[lang] = links[lang + "wiki"]["title"]
     for lang in ("en", "ru"):
         if lang in pages:
+            say(f"    {lang}: {pages[lang]}")
             ds = infobox_dates(wikitext(lang, pages[lang]))
             if ds:
                 seen[lang] = ds
@@ -461,6 +494,7 @@ def dg_part(a, ids):
                     break
             if did:
                 break
+    say(f"    Discogs: {did}")
     if not did:
         return [], None
     if did[0] == "r":
@@ -489,12 +523,15 @@ def check(a, rec, fresh=False):
     if rec and not fresh and rec.get("y") == str(a["year"]):
         seen = rec.get("seen") or {}
         ids = {k: v for k, v in (rec.get("ids") or {}).items()
-               if any(d[:4] == rec["y"] for s in USEFUL.get(k, ()) for d in seen.get(s, []))}
+               if any(d[:4] == rec["y"] for s in USEFUL.get(k, ()) for d in (seen.get(s) or []) if isinstance(d, str))}
+    PARTIAL.clear()
     with ThreadPoolExecutor(max_workers=1) as ex:
         fut = ex.submit(dg_part, a, ids)
         mbd, rid, qid, pages = mb_part(a, ids)
         seen, qid = wiki_part(a, qid or ids.get("wd"), pages)
         dgd, did = fut.result()
+    if PARTIAL.get("mbp"):
+        seen["mbp"] = PARTIAL["mbp"]
     if mbd:
         seen["mb"] = mbd
     if dgd:
@@ -556,6 +593,8 @@ def main():
     if "--report" in args:
         report(albums, dates)
         return
+    global VERBOSE
+    VERBOSE = bool(only)
     now, deadline = time.time(), time.time() + minutes * 60
     if only:
         todo = [a for a in albums if str(a["id"]) in only]
@@ -579,7 +618,8 @@ def main():
             continue
         dates[key] = rec
         day, fams = decide(rec["seen"], a)
-        seen = " ".join(f"{k}:{','.join(d[5:] if d[:4] == rec['y'] else d for d in v)}" for k, v in sorted(rec["seen"].items()))
+        seen = " ".join(f"{k}:{','.join(d[5:] if d[:4] == rec['y'] else d for d in v)}" if isinstance(v, list) else f"{k}:{v}"
+                        for k, v in sorted(rec["seen"].items()))
         p = post_date(a)
         print(f"{day or '  -  '} {'+'.join(fams):<16} №{key} {a['artist']} — {a['title']} ({a['year']})  "
               f"[{seen}{' post:' + (p[5:] if p[:4] == rec['y'] else p) if p else ''}]")
