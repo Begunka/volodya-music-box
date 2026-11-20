@@ -14716,5 +14716,25 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6499"
+ },
+ {
+  "title": "Delaware",
+  "artist": "Drop Nineteens",
+  "date": "2009-04-21",
+  "tracks": 10,
+  "year": "1992",
+  "id": 714,
+  "added": "2026-11-20T10:41:13",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Indie Rock",
+   "Shoegaze"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2009",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
