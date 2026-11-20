@@ -255,6 +255,11 @@ def mb_find(artist, a):
                 continue
             if (rg.get("first-release-date") or "")[:4] == year:
                 sc += 0.5          # среди тёзок (концертник, переиздание) — та, что вышла в наш год
+            # одноимённые синглы и сборники («Black Sabbath» — и альбом, и песня, и сборник)
+            sc += {"Album": 0.3, "EP": 0.1}.get(rg.get("primary-type"), 0)
+            if set(rg.get("secondary-types") or []) & {"Compilation", "Live", "Remix", "DJ-mix"} and \
+                    not re.search(r"live|концерт|best|greatest|collection|сборник|remix", a["title"], re.I):
+                sc -= 0.3
             if not best or sc > best[0]:
                 best = (sc, rg["id"])
         say(f"    MB поиск {q[:60]}…: {len(data.get('release-groups', []))} групп, выбрана {best}")
@@ -297,8 +302,8 @@ def mb_part(a, ids):
     dates = set()
     if frd[:4] == year:
         # у группы известен только год (или месяц) — смотрим даты её изданий в этот год
-        for off in (0, 100, 200):
-            r = mb(f"release?release-group={rid}&fmt=json&limit=100&offset={off}")
+        for off in range(0, 800, 100):     # у классики бывают сотни изданий, бутлеги не нужны
+            r = mb(f"release?release-group={rid}&status=official&fmt=json&limit=100&offset={off}")
             for rel in r.get("releases", []):
                 for ev in rel.get("release-events") or [{"date": rel.get("date")}]:
                     x = iso(ev.get("date"))
