@@ -14652,5 +14652,24 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "For Lovers",
+  "artist": "Lamp",
+  "date": "2004-02-11",
+  "tracks": 8,
+  "year": "2004",
+  "id": 711,
+  "added": "2026-11-20T08:30:04",
+  "genres": [
+   "Pop"
+  ],
+  "styles": [
+   "J-pop"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6489"
  }
 ]
