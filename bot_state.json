@@ -220,5 +220,6 @@
  "fast_job_id": 8850719,
  "mode": "worker",
  "fast_off_at": 1795151175,
- "commands_v": 2
+ "commands_v": 2,
+ "dates_sig": "563ab5ce596cb882"
 }
