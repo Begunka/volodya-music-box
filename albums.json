@@ -14714,5 +14714,29 @@
   "reissue_year": "2009",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Plants Vs. Zombies (Original Video Game Soundtrack)",
+  "artist": "Laura Shigihara",
+  "date": "2010-11-22",
+  "tracks": 29,
+  "year": "2010",
+  "id": 715,
+  "added": "2026-11-20T16:04:08",
+  "genres": [
+   "Electronic",
+   "Pop",
+   "Classical",
+   "Children's"
+  ],
+  "styles": [
+   "Modern Classical",
+   "Synth-pop",
+   "Classical"
+  ],
+  "genre_src": "discogs",
+  "year_src": "discography",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
