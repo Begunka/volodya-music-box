@@ -1,7 +1,8 @@
 {
- "offset": 857453587,
+ "offset": 857453595,
  "pending_comments": {
-  "6476": 709
+  "6476": 709,
+  "6489": 0
  },
  "pending_photo": {
   "message_id": 36,
@@ -46,7 +47,11 @@
  },
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {},
+ "orphans": {
+  "lamp|forlovers": {
+   "post_id": 6489
+  }
+ },
  "group_copies": {
   "6282": {
    "chat": {

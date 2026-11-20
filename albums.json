@@ -14629,5 +14629,28 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6476"
+ },
+ {
+  "title": "Titanic Rising",
+  "artist": "Weyes Blood",
+  "date": "2019-04-05",
+  "tracks": 10,
+  "year": "2019",
+  "id": 710,
+  "added": "2026-11-20T05:19:34",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Dream Pop",
+   "Indie Rock",
+   "Indie Pop",
+   "Soft Rock",
+   "Art Rock",
+   "Baroque Pop"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
