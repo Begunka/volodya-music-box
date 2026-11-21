@@ -14833,5 +14833,23 @@
   "reissue_year": "2009",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Neptune's Lair",
+  "artist": "Drexciya",
+  "date": "1999-11-02",
+  "tracks": 21,
+  "year": "1999",
+  "id": 720,
+  "added": "2026-11-21T14:51:21",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Electro"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
