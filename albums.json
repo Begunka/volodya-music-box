@@ -14803,5 +14803,35 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "ŽIVI BILI PA VIDJELI",
+  "artist": "Buldožer",
+  "date": "28-11-2009",
+  "tracks": 15,
+  "duration": "20min",
+  "genre": "Filme/Videospiele, Filmmusik",
+  "label": "Croatia Records, Boris Bele",
+  "year": "1979",
+  "listen_url": "https://www.deezer.com/album/82377522",
+  "title_full": "ŽIVI BILI PA VIDJELI 🅴",
+  "id": 719,
+  "added": "2026-11-21T08:51:50",
+  "genres": [
+   "Rock",
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack",
+   "Punk",
+   "Country Rock",
+   "Avantgarde",
+   "Blues Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2009",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
