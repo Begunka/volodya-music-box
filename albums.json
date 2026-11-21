@@ -14852,5 +14852,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6550"
+ },
+ {
+  "title": "The Yellow Balloon",
+  "artist": "The Yellow Balloon",
+  "date": "2017-04-07",
+  "tracks": 20,
+  "year": "1967",
+  "id": 721,
+  "added": "2026-11-21T16:47:44",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Pop Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2017",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
