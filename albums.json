@@ -14899,5 +14899,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6595"
+ },
+ {
+  "artist": "Sacred Spirit",
+  "title": "Vol.8 Jazzy Chill Out",
+  "year": "2003",
+  "free_form": true,
+  "id": 723,
+  "added": "2026-11-21T18:31:34",
+  "genres": [
+   "Electronic",
+   "Jazz"
+  ],
+  "styles": [
+   "Smooth Jazz",
+   "Downtempo",
+   "Cool Jazz"
+  ],
+  "genre_src": "discogs",
+  "year_src": "discography",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
