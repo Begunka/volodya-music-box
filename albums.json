@@ -14961,5 +14961,31 @@
   "reissue_year": "2009",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "The Rainbow Children",
+  "artist": "Prince",
+  "date": "2001-11-20",
+  "tracks": 15,
+  "year": "2001",
+  "id": 726,
+  "added": "2026-11-22T16:30:24",
+  "genres": [
+   "Jazz",
+   "Funk / Soul",
+   "Non-Music"
+  ],
+  "styles": [
+   "Minneapolis Sound",
+   "Funk",
+   "Soul",
+   "Jazz-Funk",
+   "Spoken Word",
+   "Sermon"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6606"
  }
 ]
