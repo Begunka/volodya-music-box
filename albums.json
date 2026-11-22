@@ -14920,5 +14920,26 @@
   "year_src": "discography",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Sangam (Original Motion Picture Soundtrack)",
+  "artist": "Shankar - Jaikishan",
+  "date": "1953-12-01",
+  "tracks": 9,
+  "year": "1953",
+  "id": 724,
+  "added": "2026-11-22T10:54:19",
+  "genres": [
+   "Pop",
+   "Stage & Screen"
+  ],
+  "styles": [
+   "Soundtrack",
+   "Bollywood"
+  ],
+  "genre_src": "artist",
+  "cover_ext": "webp",
+  "year_tried": 1795344887,
+  "disco_v": 2
  }
 ]
