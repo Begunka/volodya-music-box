@@ -14942,5 +14942,24 @@
   ],
   "genre_src": "discogs",
   "genre_tried": 1795345034
+ },
+ {
+  "artist": "Tadeo",
+  "title": "Contacto",
+  "year": "2008",
+  "free_form": true,
+  "id": 725,
+  "added": "2026-11-22T14:37:27",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Techno",
+   "Minimal"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2009",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
