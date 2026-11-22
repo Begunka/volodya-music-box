@@ -14929,6 +14929,9 @@
   "year": "1953",
   "id": 724,
   "added": "2026-11-22T10:54:19",
+  "cover_ext": "webp",
+  "year_tried": 1795344887,
+  "disco_v": 2,
   "genres": [
    "Pop",
    "Stage & Screen"
@@ -14937,9 +14940,7 @@
    "Soundtrack",
    "Bollywood"
   ],
-  "genre_src": "artist",
-  "cover_ext": "webp",
-  "year_tried": 1795344887,
-  "disco_v": 2
+  "genre_src": "discogs",
+  "genre_tried": 1795345034
  }
 ]
