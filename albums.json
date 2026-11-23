@@ -15054,5 +15054,27 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Mysterium",
+  "artist": "Hammock",
+  "date": "2017-08-25",
+  "tracks": 11,
+  "year": "2017",
+  "id": 730,
+  "added": "2026-11-23T22:10:14",
+  "genres": [
+   "Electronic",
+   "Rock",
+   "Classical"
+  ],
+  "styles": [
+   "Ambient",
+   "Modern Classical",
+   "Post Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
