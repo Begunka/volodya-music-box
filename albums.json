@@ -15011,5 +15011,47 @@
   "reissue_year": "2012",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Vision´s Fugitives",
+  "artist": "Sensations´ Fix",
+  "date": "2017-04-18",
+  "tracks": 13,
+  "year": "1977",
+  "id": 728,
+  "added": "2026-11-23T16:23:04",
+  "year_src": "discography",
+  "reissue_year": "2017",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Electronic"
+  ],
+  "styles": [
+   "Prog Rock"
+  ],
+  "genre_src": "artist",
+  "genre_tried": 1795451062
+ },
+ {
+  "title": "Fuchsia",
+  "artist": "Fuchsia",
+  "date": "1971-10-27",
+  "tracks": 9,
+  "year": "1971",
+  "id": 729,
+  "added": "2026-11-23T16:23:29",
+  "genres": [
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
