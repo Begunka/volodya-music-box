@@ -14987,5 +14987,29 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6606"
+ },
+ {
+  "title": "M.I.U. Album",
+  "artist": "The Beach Boys",
+  "date": "21-09-2012",
+  "tracks": 12,
+  "duration": "32min",
+  "genre": "Pop",
+  "label": "Capitol Records",
+  "year": "1978",
+  "listen_url": "https://www.deezer.com/album/5953902",
+  "title_full": "M.I.U. Album (Remastered)",
+  "id": 727,
+  "added": "2026-11-23T08:07:47",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Pop Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2012",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
