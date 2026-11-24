@@ -15076,5 +15076,28 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Snowbug",
+  "artist": "The High Llamas",
+  "date": "01-01-1999",
+  "tracks": 13,
+  "duration": "58min",
+  "genre": "Pop",
+  "label": "UMC (Universal Music Catalogue)",
+  "year": "1999",
+  "listen_url": "https://www.deezer.com/album/645514",
+  "id": 731,
+  "added": "2026-11-24T10:09:21",
+  "genres": [
+   "Electronic",
+   "Pop"
+  ],
+  "styles": [
+   "Leftfield"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
