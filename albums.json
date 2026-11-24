@@ -15099,5 +15099,31 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Yellow",
+  "artist": "Sean O'Hagan",
+  "date": "20-11-2026",
+  "tracks": 5,
+  "duration": "20min",
+  "genre": "Alternative, Indie Pop, Pop, International Pop",
+  "label": "Tricatel",
+  "year": "2026",
+  "listen_url": "https://www.deezer.com/album/1128910501",
+  "id": 732,
+  "added": "2026-11-24T11:08:34",
+  "year_src": "discography",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Alternative Rock",
+   "Indie Pop"
+  ],
+  "genre_src": "deezer",
+  "genre_tried": 1795518549
  }
 ]
