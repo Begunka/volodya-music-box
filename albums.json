@@ -15125,5 +15125,27 @@
   ],
   "genre_src": "deezer",
   "genre_tried": 1795518549
+ },
+ {
+  "title": "The Jewel In The Lotus",
+  "artist": "Bennie Maupin",
+  "date": "2007-09-04",
+  "tracks": 8,
+  "year": "1974",
+  "id": 733,
+  "added": "2026-11-24T11:13:29",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Fusion",
+   "Avant-garde Jazz",
+   "Post Bop",
+   "Spiritual Jazz"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2007",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
