@@ -15171,5 +15171,27 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Akritas",
+  "artist": "Akritas",
+  "date": "05-04-1994",
+  "tracks": 13,
+  "duration": "33min",
+  "genre": "Pop",
+  "label": "Sony Music Entertainment Greece",
+  "year": "1994",
+  "listen_url": "https://t.me/MusicsHuntersbot?start=YXJ0aXN0LWRlZXplci03MjY2NzM2",
+  "id": 735,
+  "added": "2026-11-24T18:03:32",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
