@@ -15147,5 +15147,29 @@
   "reissue_year": "2007",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "A Salty Dog",
+  "artist": "Procol Harum",
+  "date": "02-06-1969",
+  "tracks": 10,
+  "duration": "40min",
+  "genre": "Rock",
+  "label": "Fly Records",
+  "year": "1969",
+  "listen_url": "https://www.deezer.com/album/423545687",
+  "title_full": "A Salty Dog (2009 Remaster)",
+  "id": 734,
+  "added": "2026-11-24T16:01:19",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
