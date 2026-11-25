@@ -15194,5 +15194,29 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6637"
+ },
+ {
+  "title": "The Death Defying Unicorn",
+  "artist": "Motorpsycho",
+  "date": "2012-02-17",
+  "tracks": 13,
+  "year": "2012",
+  "id": 736,
+  "added": "2026-11-25T14:26:52",
+  "genres": [
+   "Electronic",
+   "Jazz",
+   "Rock",
+   "Classical"
+  ],
+  "styles": [
+   "Modern Classical",
+   "Prog Rock"
+  ],
+  "genre_src": "discogs",
+  "year_src": "discography",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6651"
  }
 ]
