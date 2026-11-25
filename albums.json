@@ -15218,5 +15218,26 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6651"
+ },
+ {
+  "title": "Fantastic Something",
+  "artist": "Fantastic Something",
+  "date": "1985-01-01",
+  "tracks": 10,
+  "year": "1985",
+  "id": 737,
+  "added": "2026-11-25T18:14:39",
+  "genres": [
+   "Rock",
+   "Pop"
+  ],
+  "styles": [
+   "Indie Pop",
+   "Soft Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
