@@ -15239,5 +15239,26 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Ceremony - Buddha Meet Rock",
+  "artist": "People",
+  "date": "2022-04-20",
+  "tracks": 8,
+  "year": "1971",
+  "title_full": "Ceremony - Buddha Meet Rock (Remastered 2022)",
+  "id": 738,
+  "added": "2026-11-25T19:02:20",
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2022",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
