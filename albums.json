@@ -15282,5 +15282,30 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6676"
+ },
+ {
+  "title": "O Amor, O Sorriso e a Flor",
+  "artist": "João Gilberto",
+  "date": "03-09-2019",
+  "tracks": 12,
+  "duration": "21min",
+  "genre": "Jazz",
+  "label": "Ipanema Records",
+  "year": "1960",
+  "listen_url": "https://www.deezer.com/album/330010957",
+  "title_full": "O Amor, O Sorriso e a Flor (Ultimate Mix)",
+  "id": 740,
+  "added": "2026-11-26T19:07:36",
+  "genres": [
+   "Jazz",
+   "Latin"
+  ],
+  "styles": [
+   "Bossa Nova"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2019",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
