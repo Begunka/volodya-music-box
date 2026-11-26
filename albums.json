@@ -15261,5 +15261,25 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6666"
+ },
+ {
+  "title": "Wave",
+  "artist": "Antonio Carlos Jobim",
+  "date": "2018-08-31",
+  "tracks": 10,
+  "year": "1967",
+  "id": 739,
+  "added": "2026-11-26T08:03:09",
+  "genres": [
+   "Jazz"
+  ],
+  "styles": [
+   "Bossa Nova",
+   "Latin Jazz"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2018",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
