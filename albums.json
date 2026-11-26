@@ -15327,5 +15327,26 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "A Bossa Nova De Roberto Menescal E Seu Conjunto",
+  "artist": "Roberto Menescal",
+  "date": "1962-04-28",
+  "tracks": 12,
+  "year": "1962",
+  "id": 742,
+  "added": "2026-11-26T20:13:30",
+  "genres": [
+   "Jazz",
+   "Latin"
+  ],
+  "styles": [
+   "Samba",
+   "Bossanova",
+   "Latin Jazz"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
