@@ -1,5 +1,5 @@
 {
- "offset": 857454400,
+ "offset": 857454413,
  "pending_comments": {
   "6476": 709
  },
@@ -46,7 +46,13 @@
  },
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {},
+ "orphans": {
+  "sweetwater|sweetwater": {
+   "post_id": 6715,
+   "chat_id": -1003224722462,
+   "comment_id": 25600
+  }
+ },
  "group_copies": {
   "6282": {
    "chat": {
