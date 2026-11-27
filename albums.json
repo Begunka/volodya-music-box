@@ -15389,5 +15389,27 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6715"
+ },
+ {
+  "title": "KENSO",
+  "artist": "Kenso",
+  "date": "1980-12-01",
+  "tracks": 6,
+  "year": "1980",
+  "id": 745,
+  "added": "2026-11-27T14:51:13",
+  "genres": [
+   "Jazz",
+   "Rock",
+   "Folk, World, & Country"
+  ],
+  "styles": [
+   "Fusion",
+   "Prog Rock",
+   "Experimental"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
