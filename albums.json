@@ -15412,5 +15412,29 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6728"
+ },
+ {
+  "title": "Birds Of Fire",
+  "artist": "Mahavishnu Orchestra",
+  "date": "26-03-1973",
+  "tracks": 10,
+  "duration": "40min",
+  "genre": "Jazz",
+  "label": "Columbia/Legacy",
+  "year": "1973",
+  "listen_url": "https://www.deezer.com/album/97632",
+  "id": 746,
+  "added": "2026-11-27T16:00:22",
+  "genres": [
+   "Jazz",
+   "Rock"
+  ],
+  "styles": [
+   "Fusion",
+   "Jazz-Rock"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
