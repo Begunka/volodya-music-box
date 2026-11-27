@@ -15437,5 +15437,24 @@
   "year_checked": true,
   "cover_ext": "webp",
   "post_url": "https://t.me/volodyamusicbox/6736"
+ },
+ {
+  "title": "Velvet and Velvet Dolls",
+  "artist": "Velvet and Velvet Dolls",
+  "date": "1988",
+  "tracks": 8,
+  "year": "1988",
+  "id": 747,
+  "added": "2026-11-27T19:03:31",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Experimental",
+   "Shoegaze"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
