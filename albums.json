@@ -15367,5 +15367,27 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Sweetwater",
+  "artist": "Sweetwater",
+  "date": "15-06-2005",
+  "tracks": 11,
+  "year": "1968",
+  "listen_url": "https://t.me/MusicsHuntersbot?start=YXJ0aXN0LWRlZXplci02NDczNA",
+  "id": 744,
+  "added": "2026-11-27T14:03:35",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Folk Rock",
+   "Psychedelic Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2005",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6715"
  }
 ]

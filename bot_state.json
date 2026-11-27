@@ -1,5 +1,5 @@
 {
- "offset": 857454413,
+ "offset": 857454427,
  "pending_comments": {
   "6476": 709
  },
@@ -46,13 +46,7 @@
  },
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {
-  "sweetwater|sweetwater": {
-   "post_id": 6715,
-   "chat_id": -1003224722462,
-   "comment_id": 25600
-  }
- },
+ "orphans": {},
  "group_copies": {
   "6282": {
    "chat": {
@@ -313,6 +307,15 @@
    "message_id": 25563,
    "forward_origin": {
     "message_id": 6701
+   }
+  },
+  "6727": {
+   "chat": {
+    "id": -1003224722462
+   },
+   "message_id": 25601,
+   "forward_origin": {
+    "message_id": 6727
    }
   }
  },
