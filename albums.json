@@ -15349,5 +15349,23 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Trilogie de la Mort",
+  "artist": "Éliane Radigue",
+  "date": "1994",
+  "tracks": 3,
+  "year": "1994",
+  "id": 743,
+  "added": "2026-11-27T11:07:34",
+  "genres": [
+   "Electronic"
+  ],
+  "styles": [
+   "Drone"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
