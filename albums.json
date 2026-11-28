@@ -15522,5 +15522,51 @@
   "reissue_year": "1971",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "The Groop Played Space Age Batchelor Pad Music",
+  "artist": "Stereolab",
+  "date": "1993-03-22",
+  "tracks": 8,
+  "year": "1993",
+  "id": 751,
+  "added": "2026-11-28T18:45:50",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Krautrock",
+   "Space Rock",
+   "Indie Rock",
+   "Lounge"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp",
+  "post_url": "https://t.me/volodyamusicbox/6765"
+ },
+ {
+  "title": "Transient Random-Noise Bursts With Announcements",
+  "artist": "Stereolab",
+  "date": "2005-06-07",
+  "tracks": 10,
+  "year": "1993",
+  "id": 752,
+  "added": "2026-11-28T18:46:06",
+  "genres": [
+   "Electronic",
+   "Rock"
+  ],
+  "styles": [
+   "Krautrock",
+   "Indie Rock",
+   "Experimental",
+   "Post Rock"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2005",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]

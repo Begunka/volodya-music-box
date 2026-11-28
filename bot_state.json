@@ -1,5 +1,5 @@
 {
- "offset": 857454601,
+ "offset": 857454611,
  "pending_comments": {
   "6476": 709
  },
@@ -46,13 +46,7 @@
  },
  "scan_pos": 6571,
  "diary_chat_id": -1004301042892,
- "orphans": {
-  "stereolab|thegroopplayedspaceagebatchelorpadmusic": {
-   "post_id": 6765,
-   "chat_id": -1003224722462,
-   "comment_id": 25719
-  }
- },
+ "orphans": {},
  "group_copies": {
   "6282": {
    "chat": {
