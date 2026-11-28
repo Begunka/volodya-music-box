@@ -15474,5 +15474,32 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Peng!",
+  "artist": "Stereolab",
+  "date": "01-01-2004",
+  "tracks": 11,
+  "duration": "48min",
+  "genre": "Alternative",
+  "label": "Too Pure",
+  "year": "1992",
+  "listen_url": "https://www.deezer.com/album/6508934",
+  "title_full": "Peng! 🅴",
+  "id": 749,
+  "added": "2026-11-28T17:20:59",
+  "genres": [
+   "Rock"
+  ],
+  "styles": [
+   "Experimental",
+   "Indie Rock",
+   "Shoegaze",
+   "Noise"
+  ],
+  "genre_src": "discogs",
+  "reissue_year": "2004",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
