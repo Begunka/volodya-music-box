@@ -15456,5 +15456,23 @@
   "genre_src": "discogs",
   "year_checked": true,
   "cover_ext": "webp"
+ },
+ {
+  "title": "Sacred Ceremonies: Ritual Music of Tibetan Buddhism",
+  "artist": "Monks of the Dip Tse Chok Ling Monastery",
+  "date": "1990-01-01",
+  "tracks": 6,
+  "year": "1990",
+  "id": 748,
+  "added": "2026-11-28T16:58:50",
+  "genres": [
+   "Non-Music"
+  ],
+  "styles": [
+   "Religious"
+  ],
+  "genre_src": "discogs",
+  "year_checked": true,
+  "cover_ext": "webp"
  }
 ]
